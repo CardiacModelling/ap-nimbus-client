@@ -10,7 +10,7 @@ ENV POSTGRES_HOST=ap_nimbus_postgres
 ENV POSTGRES_PORT=5432
 ENV DJANGO_PORT=8000
 
-RUM mkdir /opt/django
+RUN mkdir /opt/django
 WORKDIR /opt/django
 
 # install required components
