@@ -27,6 +27,7 @@ RUN git clone --recursive https://github.com/CardiacModelling/ap-nimbus-client.g
 RUN /opt/django/venv/bin/python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
+RUN chmox +x /opt/django/ap-nimbus-client/docker/kick_off.sh
 
 
 WORKDIR /opt/django/ap-nimbus-client/client
