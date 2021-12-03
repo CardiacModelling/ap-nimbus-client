@@ -1,8 +1,8 @@
 #!/bin/sh -e
-/opt/django/ap-nimbus-client/venv/bin/python /clientdirect/create_database.py
-/opt/django/ap-nimbus-client/venv/bin/python /clientdirect/manage.py  migrate
-/opt/django/ap-nimbus-client/venv/bin/python /clientdirect/manage.py  collectstatic
+/opt/django/venv/bin/python /opt/django/ap-nimbus-client/docker/create_database.py
+/opt/django/venv/bin/python /opt/django/ap-nimbus-client/client/manage.py migrate
+/opt/django/venv/bin/python /opt/django/ap-nimbus-client/client/manage.py collectstatic
 export DJANGO_SUPERUSER_USERNAME="${DJANGO_SUPERUSER_USERNAME:=$DJANGO_SUPERUSER_EMAIL}"
-/opt/django/ap-nimbus-client/venv/bin/python /clientdirect/manage.py createsuperuser --noinput || true
+/opt/django/venv/bin/python /opt/django/ap-nimbus-client/client/manage.py createsuperuser --noinput || true
 /etc/init.d/nginx restart
-/opt/django/ap-nimbus-client/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --logto2 /var/log/uwsgi.log
+/opt/django/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --logto2 /var/log/uwsgi.log
