@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      {% block title %}{% endblock %}Web Lab - Cardiac Electrophysiology
+    </title>
+
+    {% include "head.html" %}
+    {% block head %}{% endblock %}
+  </head>
+
+  <body id="{% block body_id %}{% endblock %}" >
+    <div id="page">
+
+    <header>
+      <div id="logo">
+        <br /><br />
+      </div>
+
+      { include "includes/navbar.html" %}
+
+      <div id="breadcrumb"></div>
+    </header>
+
+    {% include "notifications.html" %}
+
+    <div id="body">
+      {% block content %}
+      {% endblock %}
+    </div>
+
+    <footer>
+      Cardiac Electrophysiology Web Lab &copy; 2013-2021 University of Oxford, 2016-{% now 'Y' %} University College London, and 2016-{% now 'Y' %} University of Nottingham
+      <br />
+      <nav>
+        <ul class="footer-navbar">
+          <li><a href="{% url 'contact' %}">Contact/Team</a></li>
+          <li><a href="{% url 'privacy' %}">Privacy</a></li>
+        </ul>
+      </nav>
+    </footer>
+
+    </div>
+
+  </body>
+</html>

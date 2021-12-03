@@ -1,0 +1,24 @@
+
+<div id="notifications">
+
+  <div id="error" {% if not ERROR_MESSAGES %}class="invisible"{% endif %}>
+    <h3>The following errors occurred:</h3>
+    <ul id='errorlist'>
+      {% for message in ERROR_MESSAGES %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    <a class="pointer" id="dismisserrors">dismiss</a>
+  </div>
+
+  <div id="info" {% if not INFO_MESSAGES %}class="invisible"{% endif %}>
+    <h3>Note:</h3>
+    <ul id='infolist'>
+      {% for message in INFO_MESSAGES %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    <a class="pointer" id="dismissnotes">dismiss</a>
+  </div>
+
+</div>
