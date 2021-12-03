@@ -1,0 +1,888 @@
+@charset "UTF-8";
+
+@font-face {
+  font-family: 'Cousine';
+  font-style: normal;
+  font-weight: 400;
+  src: local("Cousine"), url(Cousine-Regular.ttf) format("truetype"); }
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local("Open Sans"), local("OpenSans"), url(OpenSans-Regular.ttf) format("truetype"); }
+
+.flotDiv table {
+  width: auto;
+  min-width: 0;
+  display: table; }
+
+#choices {
+  clear: both;
+  margin-top: 10px; }
+
+.legend-fade {
+  position: relative;
+  height: 100px;
+  overflow: hidden; }
+
+.fadings {
+  display: none; }
+
+.legend-fade .fadings {
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+  padding-top: 80px;
+  text-align: center; }
+
+#flot-buttons-div input {
+  margin-left: 5px; }
+
+#flot-buttons-div {
+  float: right;
+  text-align: right; }
+
+.flotLegendEntity {
+  float: left;
+  min-width: 32.5%;
+  padding-right: 5px;
+  font-size: .8em; }
+
+span.flotColour {
+  padding: 1px;
+  display: inline;
+  display: inline-block;
+  line-height: 0.8em;
+  vertical-align: middle; }
+
+div.flotDiv {
+  overflow: hidden; }
+
+.flotTooltip {
+  position: absolute;
+  display: none;
+  border: 1px solid #ccc;
+  padding: 2px;
+  background-color: #ddd;
+  opacity: 0.9; }
+
+.displayContentsTable td {
+  border-right: 1px dashed #ddd;
+  border-left: 1px dashed #ddd;
+  /*	border-top:1px dashed #ddd;
+	border-bottom:1px dashed #ddd;*/ }
+
+/*
+ * Styling specific to the metadata editing plugin.
+ */
+/* The main divs holding our content */
+#editmeta_modelvars_div, #editmeta_ontoterms_div {
+  width: 47%;
+  margin: 0.5%;
+  padding: 0.5%;
+  height: 90vh;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: auto;
+  position: relative;
+  /* Autocomplete search boxes for variables / terms */ }
+
+#editmeta_modelvars_div .ui-autocomplete, #editmeta_ontoterms_div .ui-autocomplete {
+  max-height: 6em;
+  overflow-y: auto;
+  /* prevent horizontal scrollbar */
+  overflow-x: hidden; }
+
+#editmeta_modelvars_div {
+  float: left; }
+
+#editmeta_ontoterms_div {
+  float: right; }
+
+/* The name of a component containing variables */
+.editmeta_cname {
+  cursor: pointer;
+  font-weight: bold; }
+
+/* The name of a variable */
+/* When an annotation is hovering over this variable */
+li.ui-droppable-hover {
+  color: #39578e;
+  font-weight: bold; }
+
+/* An annotation for a variable */
+.editmeta_annotation {
+  padding-left: 2px;
+  padding-right: 2px;
+  font-style: italic;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #ddd; }
+
+.editmeta_annotation_used {
+  background-image: url(../img/pattern.png); }
+
+/* The available annotations */
+li.editmeta_annotation {
+  cursor: pointer; }
+
+.editmeta_spaced {
+  margin-left: 5px; }
+
+.editmeta_category_name {
+  cursor: pointer; }
+
+/* Indications of sublists/divs that can be expanded. */
+.editmeta_content_shown:before {
+  content: "[-]\00a0"; }
+
+.editmeta_content_hidden:before {
+  content: "[+]\00a0"; }
+
+/* Make the lists more compact, and use our sublist markers above rather than bullets. */
+#editmeta_modelvars_div ul, #editmeta_ontoterms_div ul {
+  list-style-type: none;
+  padding-left: 25px; }
+
+#editmeta_modelvars_div > ul, #editmeta_ontoterms_div > ul {
+  padding-left: 5px; }
+
+/* Autocomplete menu styling */
+.ui-autocomplete {
+  width: 20em; }
+
+.ui-widget-content {
+  border: 1px solid;
+  background: #ffffff;
+  color: #333333; }
+
+.ui-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  outline: 0; }
+
+.unixDiffSelected {
+  font-weight: bold; }
+
+.unixDiffDisplayer {
+  margin-top: 20px;
+  font-size: .8em; }
+
+.unixDiffDel {
+  color: #890000; }
+
+.unixDiffIns {
+  color: #100089; }
+
+.bivesDiffDisplayer {
+  margin-top: 20px;
+  font-size: .8em; }
+
+.bivesDiffDel {
+  color: #890000; }
+
+.bivesDiffIns {
+  color: #008900; }
+
+.bivesDiffUpdate {
+  color: #aba500; }
+
+.bivesDiffMove {
+  color: #100089; }
+
+.bivesTabLine {
+  margin: 10px 0; }
+
+.bivesTab {
+  border: 1px solid #263e6a;
+  margin-right: 5px;
+  padding: 5px;
+  color: #263e6a;
+  cursor: default; }
+
+.bivesTabSelected {
+  border: 2px solid #000;
+  background-color: #263e6a;
+  color: #fff; }
+
+.bivesDiffDisplayer table {
+  width: auto; }
+
+.bivesDiffDisplayer table tr {
+  border: none; }
+
+.bives-insert {
+  color: #008900; }
+
+.bives-delete {
+  color: #890000; }
+
+.bives-attr {
+  font-weight: bold; }
+
+.bives-suppl {
+  color: #999; }
+
+.bives-annotation {
+  color: #999; }
+
+.bivesLegend {
+  width: 100%;
+  text-align: right; }
+
+.bivesLegend .bivesLegendItem {
+  padding: 5px; }
+
+/* Add some extra spacing between MathML identifiers to avoid confusion */
+.mi:not([style*="padding"]),
+.mn:not([style*="padding"]) {
+  padding-left: 0.1em; }
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px; }
+
+code, input {
+  font-family: 'Cousine', monospace, sans-serif; }
+
+#page {
+  width: 850px;
+  margin: auto; }
+
+#logo {
+  /*      float:left;*/ }
+
+/* support for historic browsers */
+header, section, footer, aside, nav, article, figure {
+  display: block; }
+
+header {
+  position: relative;
+  /*	background-color: #bbb;*/ }
+
+button {
+  box-sizing: content-box; }
+
+button,
+.button {
+  background-color: #263e6a;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  height: 20px;
+  vertical-align: bottom;
+  display: inline-block; }
+
+button, button:visited, button:active, button:hover,
+.button,
+.button:visited,
+.button:active,
+.button:hover {
+  color: #fff;
+  border: 1px solid #39578e; }
+
+button:active,
+.button:active {
+  background-color: #192844; }
+
+button:hover, button.selected,
+.button:hover,
+.button.selected {
+  background-color: #335490; }
+
+.button::-moz-focus-inner {
+  border: 0; }
+
+.navbar {
+  height: 60px;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  /* Ensures that the menu doesn’t affect other elements */
+  bottom: 0;
+  right: 0; }
+
+.navbar li {
+  height: auto;
+  float: left;
+  /* This lines up the menu items horizontally */
+  text-align: center;
+  /* All text is placed in the center of the box */
+  list-style: none;
+  /* Removes the default styling (bullets) for the list */
+  padding: 10px;
+  margin-right: 20px; }
+
+.navbar li ul li a::before {
+  content: '\00BB\00A0'; }
+
+.navbar a, .navbar a:hover, .navbar a:active {
+  padding: 7px 0;
+  /* Reduce padding so as to fit number of lines in sub menu */
+  text-decoration: none;
+  /* Removes the default hyperlink styling. */
+  display: block;
+  border: none; }
+
+.footer-navbar {
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  bottom: 0;
+  right: 0; }
+
+.footer-navbar li {
+  height: auto;
+  float: left;
+  /* This lines up the menu items horizontally */
+  text-align: center;
+  /* All text is placed in the center of the box */
+  list-style: none;
+  /* Removes the default styling (bullets) for the list */
+  padding: 2px;
+  margin-right: 20px;
+  font-size: 80%; }
+
+.footer-navbar li a::before {
+  content: '\00BB\00A0'; }
+
+.footer-navbar li a, .footer-navbar li a:hover, .footer-navbar li a:active {
+  padding: 2px 0;
+  /* Adds a padding on the top and bottom so the text appears centered vertically */
+  text-decoration: none;
+  /* Removes the default hyperlink styling. */
+  display: block;
+  border: none;
+  color: white; }
+
+.navbar-submenu {
+  min-width: 100px;
+  position: relative;
+  z-index: 99;
+  background-color: #ffffff; }
+
+.navbar-submenu ul {
+  display: none;
+  /* Hides the drop-down menu */
+  height: auto;
+  width: 100px;
+  margin: 0;
+  /* Aligns drop-down box underneath the menu item */
+  padding: 0;
+  /* Aligns drop-down box underneath the menu item */
+  background-color: #ffffff; }
+
+.navbar-submenu ul li, .navbar-submenu ul a, .navbar-submenu ul a:hover, .navbar-submenu ul a:active {
+  text-align: left;
+  padding: 0;
+  white-space: nowrap; }
+
+.navbar-submenu:hover ul {
+  display: block;
+  /* Displays the drop-down box when the menu item is hovered over */ }
+
+/* A general horizontal list of links, typically also using class button */
+.link-list button, .link-list .button {
+  vertical-align: top;
+  margin-right: 5px;
+  /* Put some space between items */ }
+
+/* Used for drop-down menus on hover over a parent */
+.hover-menu {
+  /* The drop-down menu */
+  /* Display when the menu item is hovered over */ }
+
+.hover-menu ul {
+  display: none;
+  /* Hidden by default */
+  height: auto;
+  padding: 0;
+  /* Aligns drop-down box underneath the parent */
+  margin: 0;
+  /* Aligns drop-down box underneath the parent */
+  background-color: #335490;
+  list-style: none;
+  z-index: 10;
+  position: relative; }
+
+.hover-menu ul li, .hover-menu ul li a {
+  text-align: left;
+  color: white;
+  padding: 0;
+  margin: 0; }
+
+.hover-menu ul li a::before {
+  content: '\00BB\00A0'; }
+
+.hover-menu:hover ul {
+  display: block; }
+
+.hover-menu:hover {
+  height: auto;
+  position: absolute; }
+
+#body {
+  clear: both;
+  /*background-color: #ccc;*/
+  padding: 10px; }
+
+footer {
+  background-color: #263e6a;
+  color: white;
+  padding: 15px;
+  clear: both; }
+
+a, a:active, a:visited {
+  text-decoration: none;
+  cursor: pointer;
+  /*border-bottom: 1px solid #263e6a;*/ }
+
+a, a:active, a:visited, #comparisonModeIndicator {
+  color: #263eca; }
+
+h1, h2, h3, h4, h5 {
+  color: #263e6a; }
+
+h1 a, h2 a, h3 a, h4 a, h5 a {
+  border-bottom: none; }
+
+p.right {
+  text-align: right;
+  width: 100%; }
+
+form label {
+  display: inline; }
+
+form input {
+  display: block; }
+
+form input[type=text], form input[type=email], form input[type=password] {
+  width: 20em; }
+
+form textarea {
+  display: block; }
+
+form small, form .helptext, form p + ul, form td > ul {
+  color: #aaa;
+  font-size: small;
+  display: block; }
+
+form td > .errorlist {
+  margin-top: 0;
+  margin-bottom: 0; }
+
+form .errorlist {
+  color: red;
+  list-style-type: none;
+  padding-left: 0; }
+
+form .add-row::before {
+  content: url("../img/add.png"); }
+
+form #add-description::before {
+  content: url("../img/add.png"); }
+
+form #add-graph::before {
+  content: url("../img/add.png"); }
+
+/* Useful for checkbox-style inputs */
+input.inline {
+  display: inline;
+  margin-left: 0; }
+
+input.inline + span {
+  display: inline; }
+
+#notifications {
+  position: absolute;
+  width: 850px; }
+
+/* Useful for checkbox-style inputs */
+input.inline {
+  display: inline;
+  margin-left: 0; }
+
+input.inline + span {
+  display: inline; }
+
+#notifications {
+  position: absolute;
+  width: 850px; }
+
+#error {
+  background-color: #e5cece;
+  border: 2px solid #7d3e3e;
+  padding: 0px 10px; }
+
+#info, .info {
+  background-color: #ced5e5;
+  border: 2px solid #263e6a;
+  padding: 0px 10px; }
+
+.pointer {
+  cursor: pointer; }
+
+.invisible {
+  display: none; }
+
+table.leftright th {
+  text-align: left;
+  padding-right: 15px;
+  padding-top: 5px; }
+
+.failed {
+  color: red; }
+
+.success {
+  color: green; }
+
+/*file uploads*/
+#dropbox {
+  background-color: #eee;
+  padding: 40px 50px;
+  margin-bottom: 30px;
+  border: 3px dashed #bbb;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: bold;
+  color: #bbb; }
+
+#dropbox a {
+  background-color: #263e6a;
+  padding: 12px 26px;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 12px;
+  line-height: 1; }
+
+#dropbox input {
+  display: none; }
+
+.uploadedfiles code {
+  font-weight: bold; }
+
+/* model page */
+/*#modelversion,
+#modelversionfiledetails
+{
+}*/
+.closebtn {
+  float: right;
+  cursor: pointer; }
+
+h1#entityname,
+h2#entityversionname,
+h3#entityversionfilename {
+  margin-top: 0.5em;
+  margin-bottom: 0; }
+
+.suppl {
+  color: #888;
+  font-size: .8em; }
+
+#entityversion,
+#entityversionfiledetails,
+#filedetails, .filedetails {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: auto; }
+
+#entityversionfiledisplay {
+  overflow: auto; }
+
+td.right {
+  text-align: right; }
+
+table {
+  width: 100%;
+  border-collapse: collapse; }
+
+th {
+  text-align: left; }
+
+tr:nth-child(5n+1) {
+  border-bottom: 1px dashed #ccc; }
+
+tr:nth-child(1) {
+  border-top: 1px dashed #ccc; }
+
+/*#modellist ul,
+#protocollist ul,
+#experimentlist ul,*/
+#batchlist ul,
+#entityversionfilestable,
+#filestable,
+#accounttable {
+  font-size: .8em;
+  text-align: left; }
+
+#entityversionfilestable .deleting {
+  text-decoration: line-through;
+  opacity: 0.3; }
+
+#entityversionfilestable .new-file {
+  font-weight: bold;
+  background-color: #ffffe0; }
+
+#experimentlist li.experiment-QUEUED,
+#entitydetails p.experiment-QUEUED,
+.experiment-QUEUED {
+  background-color: #d9e3f6; }
+
+#experimentlist li.experiment-RUNNING,
+#entitydetails p.experiment-RUNNING,
+.experiment-RUNNING {
+  background-color: #93b4f6; }
+
+#experimentlist li.experiment-INAPPLICABLE,
+#entitydetails p.experiment-INAPPLICABLE,
+.experiment-INAPPLICABLE {
+  background-color: #bdbdbd; }
+
+#experimentlist li.experiment-FAILED,
+#entitydetails p.experiment-FAILED,
+.experiment-FAILED {
+  background-color: #ffe0e0; }
+
+#experimentlist li.experiment-PARTIAL,
+#entitydetails p.experiment-PARTIAL,
+.experiment-PARTIAL {
+  background-color: #f7be81; }
+
+#experiment-files-switcher,
+#entityexperimentlist {
+  border-width: 3px;
+  border-style: solid;
+  border-color: white;
+  min-height: 40px;
+  width: 100%; }
+
+#experiment-files-switcher {
+  display: none; }
+
+/* new experiment creator */
+#newexpicon, #newexp {
+  float: left; }
+
+#newexp {
+  margin-left: 20px; }
+
+#newexpheadline {
+  font-weight: bold; }
+
+#newexpcontainer {
+  margin-top: 20px;
+  padding: 5px;
+  font-size: .8em;
+  overflow: hidden;
+  background-color: #dee9fd;
+  border: 1px solid #263e6a;
+  border-radius: 5px; }
+
+#newexpmodel,
+#newexpprotocol {
+  color: #263e6a;
+  font-style: italic; }
+
+p.entityviz-RESTRICTED {
+  padding-left: 20px;
+  background: url(../img/yellow-dot.png) no-repeat left top 5px; }
+
+p.entityviz-PRIVATE {
+  padding-left: 20px;
+  background: url(../img/red-dot.png) no-repeat left top 5px; }
+
+p.entityviz-PUBLIC,
+p.entityviz-MODERATED {
+  padding-left: 20px;
+  background: url(../img/green-dot.png) no-repeat left top 5px; }
+
+/*#modellist ul,
+#protocollist ul,
+#experimentlist ul
+{
+	list-style: none;
+    padding:0;
+    margin:0;
+}*/
+li.entityviz-RESTRICTED,
+li.entityviz-PRIVATE,
+li.entityviz-PUBLIC,
+li.entityviz-MODERATED {
+  padding-left: 25px;
+  background-repeat: no-repeat;
+  background-position: 0px 5px; }
+
+li.entityviz-PUBLIC,
+li.entityviz-MODERATED {
+  background-image: url(../img/green-dot.png); }
+
+li.entityviz-RESTRICTED {
+  background-image: url(../img/yellow-dot.png); }
+
+li.entityviz-PRIVATE {
+  background-image: url(../img/red-dot.png); }
+
+#expversioncolorlegend {
+  font-size: .8em; }
+
+#entityversionfilesreadme {
+  font-size: .8em;
+  background-color: #dddddd;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  margin: 10px; }
+
+.filesTable-header-shown:before {
+  content: "[-]  "; }
+
+.filesTable-header-hidden:before {
+  content: "[+]  "; }
+
+.filesTable-plots {
+  background-color: #eee; }
+
+.filesTable-defaults {
+  background-color: #F7D358; }
+
+.filesTable-text {
+  background-color: #A9D0F5; }
+
+#cluetip {
+  font-size: .8em; }
+
+#entityexperimentlistpartnersact a {
+  font-size: .8em; }
+
+.matrixTableCol,
+.matrixTableRow {
+  font-size: .8em; }
+
+/* Highlight row & column labels when the mouse is over the related cell. */
+.matrixHover {
+  font-weight: bold; }
+
+.vertical-text {
+  display: inline-block;
+  overflow: hidden;
+  width: 1.5em; }
+
+.vertical-text__inner {
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.5;
+  /*transform: translate(0,100%) rotate(-90deg);
+	transform-origin: 0 0;*/
+  transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg); }
+
+/* This element stretches the parent to be square
+   by using the mechanics of vertical margins  */
+.vertical-text__inner:after {
+  content: "";
+  display: block;
+  margin: -1.5em 0 100%; }
+
+.matrixTable .experiment-QUEUED {
+  background-color: #66cfff; }
+
+.matrixTable .experiment-RUNNING {
+  background-color: #4996f3; }
+
+.matrixTable .experiment-INAPPLICABLE {
+  background-color: #bdbdbd; }
+
+.matrixTable .experiment-FAILED {
+  background-color: #db0000; }
+
+.matrixTable .experiment-PARTIAL {
+  background-color: #ff8000; }
+
+.matrixTable .experiment-SUCCESS {
+  background-color: #05db00; }
+
+.matrixTable td {
+  border-bottom: 1px dashed #ccc;
+  border-right: 1px dashed #ccc;
+  border-top: 1px dashed #ccc;
+  border-left: 1px dashed #ccc; }
+
+.center {
+  text-align: center; }
+
+.small {
+  font-size: .8em; }
+
+.masterFile {
+  background-color: #bbd3ff; }
+
+.clearer {
+  clear: both; }
+
+.patternized {
+  background-image: url(../img/pattern.png); }
+
+.google-icon {
+  display: inline-block; }
+
+.github-icon {
+  display: inline-block;
+  padding: 5px 7px;
+  border: 1px solid #ddd;
+  font-size: 90%; }
+
+.github-icon img {
+  vertical-align: middle; }
+
+.github-icon span {
+  padding-left: 1em; }
+
+#downloadArchive img {
+  vertical-align: middle;
+  line-height: 24px; }
+
+#taskHeader {
+  display: flex;
+  align-items: baseline; }
+
+#taskRefreshPage {
+  padding-left: 10px; }
+
+#taskList {
+  list-style: none; }
+
+.taskCancelCheckBox {
+  float: left; }
+
+#taskDetailBox {
+  overflow: hidden; }
+
+#taskVersionDetailBox {
+  display: flex; }
+
+.dataset-column-mapper input[type=text] {
+  width: 10em; }
+
+.dataset-column-mapper .older-version-mappings {
+  display: none; }
+
+.checkboxesList {
+  color: black;
+  display: inline-block;
+  margin: auto;
+  vertical-align: middle; }
