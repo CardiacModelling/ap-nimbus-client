@@ -10,7 +10,7 @@ class RegistrationForm(auth_forms.UserCreationForm):
         model = User
         fields = ('full_name', 'institution', 'email')
         help_texts = {
-            'email': 'For recovering your password, and for metadata of your files',
+            'email': 'For recovering your password',
             'full_name': 'For metadata of your files',
             'institution': 'For our records',
         }
