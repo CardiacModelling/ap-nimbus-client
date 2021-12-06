@@ -16,10 +16,12 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:80')
 
 
 subfolder = os.environ.get('subfolder', '')
 FORCE_SCRIPT_NAME = '/%s/' % subfolder if subfolder else ''
+AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME
 LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
@@ -39,7 +41,7 @@ ALLOWED_HOSTS = ['*']
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +49,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+LOCAL_APPS = [
+    'accounts',
+]
+
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

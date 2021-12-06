@@ -23,11 +23,6 @@ class User(PermissionsMixin, AbstractBaseUser):
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
 
-    receive_emails = models.BooleanField(
-        default=False,
-        help_text='User wants to receive emails',
-    )
-
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name', 'institution']
 
@@ -48,15 +43,4 @@ class User(PermissionsMixin, AbstractBaseUser):
         Note that we do this here so tests can override the settings.
         """
         super().__init__(*args, **kwargs)
-        # Per-user on-disk storage locations (NB Experiments are not per-user!)
-        self.STORAGE_DIRS = {
-            'repo': settings.REPO_BASE,
-            'dataset': settings.DATASETS_BASE,
-        }
 
-    def get_storage_dir(self, kind):
-        """Find out where on disk to store files of the given kind for this user.
-
-        :return: `Path` object
-        """
-        return self.STORAGE_DIRS[kind] / str(self.id)
