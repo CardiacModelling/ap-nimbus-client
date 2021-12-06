@@ -1,4 +1,4 @@
-A new WebLab user was created.
+A new AP Portal user was created.
 
 Email address: {{ user.email }}
 Full name: {{ user.full_name }}
