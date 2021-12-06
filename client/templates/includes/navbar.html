@@ -1,0 +1,21 @@
+
+<nav>
+  <ul class="navbar">
+    <li><a href="{% url 'home' %}">Home</a></li>
+    {% if user.is_authenticated %}
+        <li class="navbar-submenu">
+          <a>{{ user.full_name }}</a>
+          <ul>
+            <li><a href="{% url 'accounts:myaccount' %}">Account</a></li>
+            {% if user.is_superuser %}
+              <li><a href="{% url 'admin:index' %}">Admin</a></li>
+            {% endif %}
+            <li><a href="{% url 'logout' %}">Log out</a></li>
+          </ul>
+        </li>
+    {% else %}
+      <li><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a></li>
+      <li><a href="{% url 'accounts:register' %}">Register</a></li>
+    {% endif %}
+  </ul>
+</nav>

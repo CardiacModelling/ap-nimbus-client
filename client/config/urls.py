@@ -25,4 +25,5 @@ urlpatterns = [
     url(r'^privacy$', TemplateView.as_view(template_name='privacy.html'), name="privacy"),
 
     url(r'^admin/', admin.site.urls),
-] + static('/static/', document_root=settings.STATIC_ROOT)
+    url(r'^accounts/', include('accounts.urls', namespace='accounts')),
+]
