@@ -18,7 +18,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:80')
 
-
+# running in subfolder
 subfolder = os.environ.get('subfolder', '')
 FORCE_SCRIPT_NAME = '/%s/' % subfolder if subfolder else ''
 AUTH_USER_MODEL = 'accounts.User'
@@ -26,6 +26,10 @@ LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME
 LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
 
+# email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.nottingham.ac.uk'
+SERVER_EMAIL = os.environ.get('server_mail', os.environ['DJANGO_SUPERUSER_EMAIL'])
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
