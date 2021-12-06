@@ -17,6 +17,11 @@ class RegistrationView(FormView):
     class Meta:
         fields = ('email', 'full_name', 'institution')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
     def form_valid(self, form):
         user = form.save()
         login(

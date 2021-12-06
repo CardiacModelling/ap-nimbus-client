@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import forms as auth_forms
 from django.core.exceptions import ValidationError
 
+from .emails import send_user_creation_email
 from .models import User
 
 
@@ -15,6 +16,18 @@ class RegistrationForm(auth_forms.UserCreationForm):
             'institution': 'For our records',
         }
 
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            user.save()
+            send_user_creation_email(user, self.request)
+        return user
+
+
 
 class MyAccountForm(forms.ModelForm):
     class Meta(forms.ModelForm):
@@ -23,26 +36,3 @@ class MyAccountForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
-class OwnershipTransferForm(forms.Form):
-    """Used for transferring an existing entity.ownership of an existing entity or dataset """
-
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'placeholder': 'Email address of user'})
-    )
-
-    def _get_user(self, email):
-        try:
-            return User.objects.get(email=email)
-        except User.DoesNotExist:
-            return None
-
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        user = self._get_user(email)
-        if not user:
-            raise ValidationError('User not found')
-
-        self.cleaned_data['user'] = user
-        return email

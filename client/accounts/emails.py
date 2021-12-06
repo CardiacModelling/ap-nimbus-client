@@ -1,13 +1,15 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 
-def send_user_creation_email(user):
+def send_user_creation_email(user, request):
     """
     Email all admin users when a new user is created
     """
+
 
     # Don't email the created user about it
     admin_emails = list(
@@ -17,6 +19,8 @@ def send_user_creation_email(user):
         {
             'user': user,
             'base_url': settings.BASE_URL,
+            'protocol': request.scheme,
+            'domain': get_current_site(request).domain,
         }
     )
 

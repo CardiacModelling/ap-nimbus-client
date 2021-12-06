@@ -5,4 +5,4 @@ Full name: {{ user.full_name }}
 Institution: {{ user.institution }}
 
 
-Edit this user: {{ base_url }}{% url 'admin:accounts_user_change' user.id %}
+Edit this user: {{ protocol }}://{{ domain }}{% url 'admin:accounts_user_change' user.id %}
