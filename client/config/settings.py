@@ -16,7 +16,6 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:80')
 
 # running in subfolder
 subfolder = os.environ.get('subfolder', '')
@@ -28,8 +27,8 @@ LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
 
 # email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.nottingham.ac.uk'
-SERVER_EMAIL = 'maurice.hendrix@nottingham.ac.uk' #os.environ.get('server_mail', os.environ['DJANGO_SUPERUSER_EMAIL'])
+EMAIL_HOST = os.environ.get('smtp_server', 'localhost')'smtp.nottingham.ac.uk'
+SERVER_EMAIL = os.environ.get('django_email_from_addr', os.environ['DJANGO_SUPERUSER_EMAIL'])
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
