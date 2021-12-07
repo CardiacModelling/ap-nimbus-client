@@ -12,7 +12,7 @@ class RegistrationForm(auth_forms.UserCreationForm):
         fields = ('full_name', 'institution', 'email')
         help_texts = {
             'email': 'For recovering your password',
-            'full_name': 'For metadata of your files',
+            'full_name': 'For addressing you',
             'institution': 'For our records',
         }
 
