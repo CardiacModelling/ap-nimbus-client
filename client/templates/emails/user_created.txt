@@ -8,7 +8,7 @@ Email address: {{ user.email }}
 Full name: {{ user.full_name }}
 Institution: {{ user.institution }}
 
-Privacy information and general terms can be found on: {{ protocol }}://{{ domain }}{% url 'privacy' user.id %}
+Privacy information and general terms can be found on: {{ protocol }}://{{ domain }}{% url 'privacy' %}
 
 best regads,
 {{ admin_names }}
