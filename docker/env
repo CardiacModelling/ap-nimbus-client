@@ -16,7 +16,7 @@ subfolder=
 POSTGRES_PASSWORD=
 
 # set the smtp server used to send emails from
-smtp_server=smtp_server=
+smtp_server=
 
 # this email address is used as the from address in any emails sent by the client
 django_email_from_addr=
