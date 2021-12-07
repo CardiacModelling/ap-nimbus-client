@@ -19,7 +19,6 @@ def send_user_creation_email(user, request):
         'emails/user_created.txt',
         {
             'user': user,
-            'base_url': settings.BASE_URL,
             'protocol': request.scheme,
             'domain': get_current_site(request).domain,
             'admin_names': (', '.join(admin_names))
