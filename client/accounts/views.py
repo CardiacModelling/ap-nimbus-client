@@ -35,29 +35,7 @@ class RegistrationView(FormView):
 class MyAccountView(LoginRequiredMixin, UpdateView):
     form_class = MyAccountForm
     template_name = 'registration/myaccount.html'
-
-    def get_object(self):
-        return self.request.user
-
-    def get_success_url(self):
-        return reverse('accounts:myaccount')
-
-    def get_context_data(self, **kwargs):
-        perms = {
-            'entities.create_fittingspec',
-            'entities.create_protocol',
-            'entities.create_model',
-        }
-
-        codes = self.get_object().get_all_permissions() & perms
-        code_names = {code.split('.')[-1] for code in codes}
-
-        user_perms = Permission.objects.filter(codename__in=code_names)
-
-        kwargs.update(**{
-            'user_permissions': user_perms,
-        })
-        return super().get_context_data(**kwargs)
+    success_url = reverse_lazy('accounts:myaccount')
 
 
 class UserDeleteView(UserPassesTestMixin, DeleteView):
@@ -66,10 +44,8 @@ class UserDeleteView(UserPassesTestMixin, DeleteView):
        """
     template_name = 'registration/account_confirm_delete.html'
     model = User
+    success_url = reverse_lazy('home')
 
     def test_func(self):
         """A user can only delete their own account."""
         return self.get_object() == self.request.user
-
-    def get_success_url(self, *args, **kwargs):
-        return reverse('home')
