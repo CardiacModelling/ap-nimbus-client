@@ -27,7 +27,7 @@ LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
 
 # email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('smtp_server', 'localhost')'smtp.nottingham.ac.uk'
+EMAIL_HOST = os.environ.get('smtp_server', 'localhost')
 SERVER_EMAIL = os.environ.get('django_email_from_addr', os.environ['DJANGO_SUPERUSER_EMAIL'])
 
 # Quick-start development settings - unsuitable for production
