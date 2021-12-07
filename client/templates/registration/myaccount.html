@@ -28,20 +28,6 @@
         </td>
       </tr>
       <tr>
-        <th>Permissions</th>
-        <td>
-          {% if user.is_super_user %}
-            Administrator - you have full administrative privileges
-          {% else %}
-            <ul class="permissions">
-              {% for perm in user_permissions %}
-                <li>{{ perm.name }}</li>
-              {% endfor %}
-            <ul>
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
         <th>Registered since</th>
         <td><time>{{ user.date_joined|date:"Y-m-d H:i:s" }}</time></td>
       </tr>
