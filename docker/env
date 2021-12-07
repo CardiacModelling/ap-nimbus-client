@@ -1,0 +1,22 @@
+# The environment variable used by the docker components for AP Nimbus (claudified AP predict) are listed below. They are listed as VAR=VALUE pairs (without any spaces)
+
+# please pick a secret key a long random string is ideal
+DJANGO_SECRET_KEY=
+
+# please replace the email by the address of your first superuser, which will be able to long into django as admin
+DJANGO_SUPERUSER_EMAIL=
+
+# please pick a secure password for the superuse
+DJANGO_SUPERUSER_PASSWORD=
+
+# this is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
+subfolder=
+
+# please pick a secure password for use with the postgres database
+POSTGRES_PASSWORD=
+
+# set the smtp server used to send emails from
+smtp_server=smtp_server=
+
+# this email address is used as the from address in any emails sent by the client
+django_email_from_addr=
