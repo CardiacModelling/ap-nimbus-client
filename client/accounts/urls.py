@@ -1,29 +1,29 @@
-from django.conf.urls import url
+from django.conf.urls import re_path
 from django.contrib.auth import views as auth_views
 
 from . import views
 
 
 urlpatterns = [
-    url(
+    re_path(
         r'^login/$',
         auth_views.LoginView.as_view(),
         name='login',
     ),
 
-    url(
+    re_path(
         r'^register/$',
         views.RegistrationView.as_view(),
         name='register',
     ),
 
-    url(
+    re_path(
         r'^myaccount/$',
         views.MyAccountView.as_view(),
         name='myaccount',
     ),
 
-    url(
+    re_path(
         r'^(?P<pk>\d+)/delete/$',
         views.UserDeleteView.as_view(),
         name='delete',

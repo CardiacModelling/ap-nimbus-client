@@ -37,6 +37,9 @@ class MyAccountView(LoginRequiredMixin, UpdateView):
     template_name = 'registration/myaccount.html'
     success_url = reverse_lazy('accounts:myaccount')
 
+    def get_object(self):
+        return self.request.user
+
 
 class UserDeleteView(UserPassesTestMixin, DeleteView):
     """
