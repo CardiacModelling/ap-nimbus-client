@@ -1,5 +1,5 @@
 [run]
-omit = **/migrations/*,**/settings/*,**/wsgi.py,**/tests/*,**/manage.py,**/functional_tests/*
+omit = **/migrations/*,**/settings.py/*,**/asgi.py,**/wsgi.py,**/tests/*,**/manage.py,**/functional_tests/*
 source = .
 branch = True
 

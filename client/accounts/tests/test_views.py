@@ -1,6 +1,7 @@
+from django.urls import reverse
+from django.core import mail
 import pytest
 from accounts.models import User
-from django.urls import reverse
 
 
 def test_my_account_view_requires_login(client):
@@ -72,10 +73,48 @@ def test_logged_in_admin_can_see_admin(client, logged_in_admin):
 
 
 @pytest.mark.django_db
-def test_register(client):
+def test_can_register(client):
 
     response = client.post(
         '/accounts/register/',
+    )
+
+    assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_register(client):
+    num_mails = len(mail.outbox)
+    data = {'email': 'test@test.com',
+            'institution': 'uon',
+            'full_name': 'testuser',
+            'password1': 'qwertyuiopasdfghjkl',
+            'password2': 'qwertyuiopasdfghjkl'}
+
+    assert not User.objects.filter(email=data['email']).exists()
+
+    response = client.post(
+        '/accounts/register/',
+        data=data
+    )
+    assert User.objects.filter(email=data['email']).exists()
+    assert len(mail.outbox) == num_mails + 1
+    assert User.objects.get(email=data['email']).is_authenticated
+
+@pytest.mark.django_db
+def test_my_account_not_logged_in(client, user):
+
+    response = client.post(
+        '/accounts/myaccount/',
+    )
+
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_my_account_logged_in(client, logged_in_user):
+
+    response = client.post(
+        '/accounts/myaccount/',
     )
 
     assert response.status_code == 200
