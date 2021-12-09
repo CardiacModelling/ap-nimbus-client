@@ -1,7 +1,7 @@
 import pytest
-from django.test.client import RequestFactory
 from accounts.forms import MyAccountForm, RegistrationForm
 from accounts.models import User
+from django.test.client import RequestFactory
 
 
 @pytest.mark.django_db
@@ -118,7 +118,7 @@ class TestMyAccountForm:
                 'institution': user.institution}
         assert not TestMyAccountForm.data_equals_user(data, user)
         form = MyAccountForm(instance=user, data=data)
-        assert not form.is_valid() # can't change email to one of an existing user
+        assert not form.is_valid()  # can't change email to one of an existing user
 
     def test_no_email(self, user):
         data = {'institution': 'uon',

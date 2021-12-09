@@ -1,7 +1,7 @@
-from django.urls import reverse
-from django.core import mail
 import pytest
 from accounts.models import User
+from django.core import mail
+from django.urls import reverse
 
 
 def test_my_account_view_requires_login(client):
@@ -81,6 +81,7 @@ def test_can_register(client):
 
     assert response.status_code == 200
 
+
 @pytest.mark.django_db
 def test_register(client):
     num_mails = len(mail.outbox)
@@ -92,13 +93,14 @@ def test_register(client):
 
     assert not User.objects.filter(email=data['email']).exists()
 
-    response = client.post(
+    client.post(
         '/accounts/register/',
         data=data
     )
     assert User.objects.filter(email=data['email']).exists()
     assert len(mail.outbox) == num_mails + 1
     assert User.objects.get(email=data['email']).is_authenticated
+
 
 @pytest.mark.django_db
 def test_my_account_not_logged_in(client, user):
