@@ -49,7 +49,7 @@ jobs:
         DJANGO_SUPERUSER_EMAIL: django@test.com
         POSTGRES_DB: django
         POSTGRES_USER: client
-        POSTGRES_PASSWORD: not-so-secret
+        POSTGRES_PASSWORD: not-so-secret django db password
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
         DJANGO_SECRET_KEY: 'django very secret key, honest'
