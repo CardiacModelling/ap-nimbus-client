@@ -1,8 +1,7 @@
 import pytest
-from django.test.client import RequestFactory
-
+from accounts.forms import MyAccountForm, RegistrationForm
 from accounts.models import User
-from accounts.forms import RegistrationForm, MyAccountForm
+from django.test.client import RequestFactory
 
 
 @pytest.mark.django_db

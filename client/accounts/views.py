@@ -1,7 +1,7 @@
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic.edit import DeleteView, FormView, UpdateView
 from django.urls import reverse_lazy
+from django.views.generic.edit import DeleteView, FormView, UpdateView
 
 from .forms import MyAccountForm, RegistrationForm
 from .models import User
