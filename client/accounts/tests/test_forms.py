@@ -21,6 +21,20 @@ class TestRegistrationForm:
         assert form.is_valid()
         form.save()
         assert User.objects.filter(email=data['email']).exists()
+        form = RegistrationForm(data=data, request=accounts_request)
+        assert not form.is_valid()  # can't register same email twice
+
+    def test_create_user_no_commit(self, accounts_request):
+        data = {'email': 'test@test.com',
+                'institution': 'uon',
+                'full_name': 'testuser',
+                'password1': 'qwertyuiopasdfghjkl',
+                'password2': 'qwertyuiopasdfghjkl'}
+        assert not User.objects.filter(email=data['email']).exists()
+        form = RegistrationForm(data=data, request=accounts_request)
+        assert form.is_valid()
+        form.save(commit=False)
+        assert not User.objects.filter(email=data['email']).exists()
 
     def test_password_too_simple(self, accounts_request):
         data = {'email': 'test@test.com',
@@ -98,27 +112,35 @@ class TestMyAccountForm:
         form.save()
         assert TestMyAccountForm.data_equals_user(data, user)
 
-        def test_no_email(self, user):
-            data = {'institution': 'uon',
-                    'full_name': 'testuser'}
-            form = MyAccountForm(instance=user, data=data)
-            assert not form.is_valid()
+    def test_same_email_user(self, user, admin_user):
+        data = {'email': admin_user.email,
+                'full_name': user.full_name,
+                'institution': user.institution}
+        assert not TestMyAccountForm.data_equals_user(data, user)
+        form = MyAccountForm(instance=user, data=data)
+        assert not form.is_valid()  # can't change email to one of an existing user
 
-        def test_invalid_email(self, user):
-            data = {'email': 'bla',
-                    'institution': 'uon',
-                    'full_name': 'testuser'}
-            form = MyAccountForm(instance=user, data=data)
-            assert not form.is_valid()
+    def test_no_email(self, user):
+        data = {'institution': 'uon',
+                'full_name': 'testuser'}
+        form = MyAccountForm(instance=user, data=data)
+        assert not form.is_valid()
 
-        def test_institution_optional(self, user):
-            data = {'email': 'test@test.com',
-                    'institution': 'uon'}
-            form = MyAccountForm(instance=user, data=data)
-            assert form.is_valid()
+    def test_invalid_email(self, user):
+        data = {'email': 'bla',
+                'institution': 'uon',
+                'full_name': 'testuser'}
+        form = MyAccountForm(instance=user, data=data)
+        assert not form.is_valid()
 
-        def test_no_name(self, user):
-            data = {'email': 'test@test.com',
-                    'institution': 'uon'}
-            form = MyAccountForm(instance=user, data=data)
-            assert not form.is_valid()
+    def test_institution_optional(self, user):
+        data = {'email': 'test@test.com',
+                'full_name': 'testuser'}
+        form = MyAccountForm(instance=user, data=data)
+        assert form.is_valid()
+
+    def test_no_name(self, user):
+        data = {'email': 'test@test.com',
+                'institution': 'uon'}
+        form = MyAccountForm(instance=user, data=data)
+        assert not form.is_valid()
