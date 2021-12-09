@@ -39,9 +39,6 @@ jobs:
     - name: Test sorting with isort
       run: |
         python -m isort --verbose --check-only --diff recursive client
-    - name: Setup secrets
-      run: |
-        tar -xvf .actions.tar
     - name: Test with pytest
       run: |
         python -m pytest --cov=client --cov-config=client/.coveragerc client
