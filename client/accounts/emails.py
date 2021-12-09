@@ -10,7 +10,6 @@ def send_user_creation_email(user, request):
     Email all admin users when a new user is created
     """
 
-
     # Don't email the created user about it
     admins = get_user_model().objects.admins().exclude(pk=user.pk)
     admin_emails = list(admins.values_list('email', flat=True))
@@ -25,10 +24,9 @@ def send_user_creation_email(user, request):
         }
     )
 
-    email = EmailMessage( subject='[AP Portal] Welcome',
-                          body=body,
-                          from_email=settings.SERVER_EMAIL,
-                          to=[user.email],
-                          cc=admin_emails,
-    )
+    email = EmailMessage(subject=settings.WELCOME_SUBJECT,
+                         body=body,
+                         from_email=settings.SERVER_EMAIL,
+                         to=[user.email],
+                         cc=admin_emails)
     email.send(fail_silently=True)

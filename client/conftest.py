@@ -1,5 +1,4 @@
 import pytest
-import recipes
 from accounts.models import User
 
 

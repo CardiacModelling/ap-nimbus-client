@@ -1,6 +1,5 @@
 from django import forms
 from django.contrib.auth import forms as auth_forms
-from django.core.exceptions import ValidationError
 
 from .emails import send_user_creation_email
 from .models import User
@@ -26,7 +25,6 @@ class RegistrationForm(auth_forms.UserCreationForm):
             user.save()
             send_user_creation_email(user, self.request)
         return user
-
 
 
 class MyAccountForm(forms.ModelForm):
