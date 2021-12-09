@@ -42,7 +42,6 @@ def test_cannot_delete_other_account(client, logged_in_user, other_user):
     assert User.objects.filter(pk=other_user.pk).exists()
 
 
-
 @pytest.mark.django_db
 def test_admin_requires_login(client, admin_user):
 
@@ -72,9 +71,12 @@ def test_logged_in_admin_can_see_admin(client, logged_in_admin):
 
     assert response.status_code == 200
 
+
 @pytest.mark.django_db
 def test_register(client):
 
     response = client.post(
-        'accounts/register/',
+        '/accounts/register/',
     )
+
+    assert response.status_code == 200
