@@ -46,7 +46,13 @@ jobs:
       run: |
         python -m pytest --cov=client --cov-config=client/.coveragerc client
       env:
-        DATABASE_URL: postgres://client:not-so-secret django db password@localhost:5432/client
+        DJANGO_SUPERUSER_EMAIL: django@test.com
+        POSTGRES_DB: django
+        POSTGRES_USER: client
+        POSTGRES_PASSWORD: not-so-secret
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        DJANGO_SECRET_KEY: 'django very secret key, honest'
     - uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
