@@ -55,4 +55,4 @@ jobs:
         DJANGO_SECRET_KEY: 'django very secret key, honest'
     - uses: codecov/codecov-action@v1
       with:
-        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        token: 8bb2c432-b415-4a43-adab-ff5a9016de64 # not required for public repos
