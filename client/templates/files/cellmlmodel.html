@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create CellML model - {% endblock title %}
+
+{% block content %}
+<div id='cellmlmodelform'>
+  <h1>Create CellMl Model</h1>
+
+  <form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <p>
+    <button id="savebutton" type="submit">Save</button>
+    </p>
+  </form>
+</div>
+{% endblock content %}

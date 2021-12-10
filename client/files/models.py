@@ -1,13 +1,13 @@
 from django.db import models
 
-class Model(models.Model):
+class CellmlModel(models.Model):
     name = models.CharField(max_length=255,
                             help_text = "The name of the model, e.g. <em>O'Hara-Rudy</em>.")
     description = models.CharField(
                       max_length=255, default='',
                       help_text = "A short description e.g. <em>human ventricular cell model (endocardial)</em>."
                   )
-    version = models.CharField(max_length=255, default='',
+    version = models.CharField(max_length=255, default='', blank=True,
                                help_text = "An (optional) version, e.g. <em>CiPA-v1.0</em>.")
     year = models.IntegerField(blank=True,
                                help_text = "The year this specific model (version) was published e.g. <em>2017</em>.")

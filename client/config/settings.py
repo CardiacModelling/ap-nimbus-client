@@ -159,5 +159,5 @@ USE_X_FORWARDED_HOST = True
 
 
 # Media files (Uploaded files)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = str(BASE_DIR / 'media')
+MEDIA_URL = '' # '/media/'
+MEDIA_ROOT = '/opt/django/'

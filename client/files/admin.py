@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Model
+from .models import CellmlModel
 
 
-admin.site.register(Model)
+admin.site.register(CellmlModel)
 #admin.site.register(PKdata)

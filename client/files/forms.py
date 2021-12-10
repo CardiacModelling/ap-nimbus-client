@@ -1,18 +1,16 @@
 from django.forms import ModelForm
-from .models import Model
+from .models import CellmlModel
 
-class ModelForm(ModelForm):
+class CellmlModelForm(ModelForm):
     class Meta: 
-        model = Model
+        model = CellmlModel
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
         # predefined is only available to admin
-        if not self.request.user.is_superuser:
+        if not self.user.is_superuser:
             self.fields.pop('predefined')
 
-# restrict upload to cellml
-# edit viewitems
-# list view

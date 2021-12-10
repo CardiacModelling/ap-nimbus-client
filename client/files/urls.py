@@ -5,9 +5,9 @@ from . import views
 
 urlpatterns = [
     re_path(
-        r'^model/$',
-        views.ModelView.as_view(),
-        name='login',
+        r'^models/new/$',
+        views.CellmlModelView.as_view(),
+        name='create_model',
     ),
 
 ]
