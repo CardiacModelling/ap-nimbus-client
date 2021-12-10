@@ -1,7 +1,7 @@
 from django.db import models
 
 class CellmlModel(models.Model):
-    name = models.CharField(max_length=255,
+    name = models.CharField(max_length=255, unique=True,
                             help_text = "The name of the model, e.g. <em>O'Hara-Rudy</em>.")
     description = models.CharField(
                       max_length=255, default='',
@@ -23,5 +23,5 @@ class CellmlModel(models.Model):
                      max_length=200, blank=True, null=True,
                      help_text = "An (optional) link to a paper related to the model."
                  )
-    cellml_file = models.FileField(blank=False, upload_to="media",
+    cellml_file = models.FileField(blank=False, upload_to="media", unique=True,
                                    help_text = "Please upload the cellml file here.")
