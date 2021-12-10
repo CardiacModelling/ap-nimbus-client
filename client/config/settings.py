@@ -56,6 +56,7 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'accounts',
+    'files'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
@@ -155,3 +156,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Use forwarded headers for anything that requires a hostname.
 USE_X_FORWARDED_HOST = True
+
+
+# Media files (Uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = str(BASE_DIR / 'media')
