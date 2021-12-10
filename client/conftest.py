@@ -1,5 +1,6 @@
 import pytest
 from accounts.models import User
+from django.contrib.auth.models import AnonymousUser
 
 
 @pytest.fixture
@@ -34,6 +35,11 @@ def other_user():
     )
     yield user
 
+
+@pytest.fixture
+def anon_user():
+    return AnonymousUser()
+    
 
 @pytest.fixture
 def logged_in_user(client, user):
