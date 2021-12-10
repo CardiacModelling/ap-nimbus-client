@@ -39,7 +39,7 @@ def other_user():
 @pytest.fixture
 def anon_user():
     return AnonymousUser()
-    
+
 
 @pytest.fixture
 def logged_in_user(client, user):
