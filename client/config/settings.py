@@ -18,7 +18,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # running in subfolder
-subfolder = os.environ.get('subfolder', '')
+subfolder = os.environ.get('subfolder', None)
 FORCE_SCRIPT_NAME = '/%s/' % subfolder if subfolder else ''
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
@@ -159,5 +159,5 @@ USE_X_FORWARDED_HOST = True
 
 
 # Media files (Uploaded files)
-MEDIA_URL = '' # '/media/'
-MEDIA_ROOT = '/opt/django/'
+MEDIA_URL =  FORCE_SCRIPT_NAME + 'media/'
+MEDIA_ROOT = '/opt/django/media/'

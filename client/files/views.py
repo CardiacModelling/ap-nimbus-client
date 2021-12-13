@@ -14,8 +14,16 @@ class CellmlModelView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     template_name = 'files/cellmlmodel.html'
     success_url = reverse_lazy('home')
 
-# test non-admin user can't see predefined checkbox
-# restrict upload to cellml
+
+class CellmlModelListView(LoginRequiredMixin, ListView):
+    """
+    List all visible models
+    """
+    template_name = 'files/model_list.html'
+
+    def get_queryset(self):
+        return [model for model in CellmlModel.objects.all() if self.request.user in model.viewers]
+
 # edit view
 # list view
 # deploy

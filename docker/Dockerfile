@@ -18,6 +18,7 @@ RUN apt-get update
 RUN apt-get install git -y
 RUN apt-get install build-essential -y
 RUN apt-get install nginx -y
+RUN apt-get install libmagic-dev -y
 
 # Set up python virtual environment
 RUN python3 -m venv venv

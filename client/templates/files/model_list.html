@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Cellml models - {% endblock title %}
+
+{% block content %}
+  <section id="modellist">
+    <h1>CellML models</h1>
+    <a href="{% url 'files:create_model' %}">Upload a new Model</a>
+
+    <h2>Moderated models</h2>
+
+    <ul>
+      {% for model in object_list %}
+        {% if model.visibility == 'moderated' %}
+          <li title="{{ model.name }}">
+              <a class="storylink" href=""><strong>{{ model.name }}{% if model.version %} {{ model.version }} {% endif %} {{ model.year }}</strong></a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+    <h2>Uploaded models</h2>
+
+    <ul>
+      {% for model in object_list %}
+        {% if model.visibility != 'moderated' %}
+          <li title="{{ model.name }}">
+              <a class="storylink" href=""><strong>{{ model.name }}{% if model.version %} {{ model.version }} {% endif %} {{ model.year }}</strong></a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+{% endblock content %}
