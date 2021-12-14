@@ -3,7 +3,6 @@ from datetime import datetime
 import magic
 from core import visibility
 from django import forms
-from django.core.exceptions import ValidationError
 
 from .models import CellmlModel
 
@@ -33,20 +32,21 @@ class CellmlModelForm(forms.ModelForm):
         if not self.user.is_superuser:
             self.fields.pop('ap_predict_model_call')
 
-    def clean(self):
-        cleaned_data = super().clean()
-        if (cleaned_data['ap_predict_model_call'] is None) == (cleaned_data['cellml_file'] is None):
-            if 'ap_predict_model_call' not in self.fields:
-                raise ValidationError("A Cellml file is required")
-            else:
-                raise ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
+    def clean_ap_predict_model_call(self):
+        if self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
+            raise forms.ValidationError("Ap predict model call should not include the --model flag")
 
-        if cleaned_data.get('cellml_file', None):
-            mime_type = str(magic.from_file(cleaned_data['cellml_file'].temporary_file_path(), mime=True))
+        return self.cleaned_data['ap_predict_model_call']
+
+    def clean_cellml_file(self):
+        if 'ap_predict_model_call' in self.cleaned_data and \
+                (self.cleaned_data['ap_predict_model_call'] is None) == (self.cleaned_data['cellml_file'] is None):
+            raise forms.ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
+        if self.cleaned_data.get('cellml_file', None):
+            mime_type = str(magic.from_file(self.cleaned_data['cellml_file'].temporary_file_path(), mime=True))
             if mime_type not in ['text/xml', 'application/xml']:
-                raise ValidationError('Unsupported file type, expecting a cellml file.')
-
-        return cleaned_data
+                raise forms.ValidationError('Unsupported file type, expecting a cellml file.')
+        return self.cleaned_data['cellml_file']
 
     def save(self, **kwargs):
         model = super().save(commit=False)

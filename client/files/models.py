@@ -28,9 +28,9 @@ class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
     )
     ap_predict_model_call = models.CharField(
         max_length=255, null=True, blank=True,
-        help_text="--model call to pass to Ap Predict e.g. <em>--model 1</em> or "
-                  "<em>--model shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and "
-                  "cannot be combianed with uploading a cellml file."
+        help_text="call to pass to Ap Predict with --model parameter e.g. <em> 1</em> or <em> "
+                  "shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and cannot be "
+                  "combianed with uploading a cellml file."
     )
     cellml_file = models.FileField(null=True, blank=True, upload_to="",
                                    help_text="Please upload the cellml file here.")
