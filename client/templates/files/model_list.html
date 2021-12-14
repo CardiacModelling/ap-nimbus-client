@@ -25,7 +25,7 @@
       {% for model in object_list %}
         {% if model.visibility != 'moderated' %}
           <li title="{{ model.name }}">
-              <a class="storylink" href=""><strong>{{ model.name }}{% if model.version %} {{ model.version }} {% endif %} {{ model.year }}</strong></a>
+              <a class="storylink" href="{% url 'files:model_detail' model.pk %}"><strong>{{ model.name }}{% if model.version %} {{ model.version }} {% endif %} {{ model.year }}</strong></a>
           </li>
         {% endif %}
       {% endfor %}

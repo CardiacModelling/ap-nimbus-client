@@ -15,6 +15,10 @@ urlpatterns = [
         views.CellmlModelView.as_view(),
         name='create_model',
     ),
-
+    re_path(
+        r'^models/(?P<pk>\d+)/$',
+        views.CellmlModelDetailView.as_view(),
+        name='model_detail',
+    ),
 ]
 app_name = 'files'

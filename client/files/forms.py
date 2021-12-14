@@ -33,7 +33,7 @@ class CellmlModelForm(forms.ModelForm):
             self.fields.pop('ap_predict_model_call')
 
     def clean_ap_predict_model_call(self):
-        if self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
+        if self.cleaned_data['ap_predict_model_call'] and self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
             raise forms.ValidationError("Ap predict model call should not include the --model flag")
 
         return self.cleaned_data['ap_predict_model_call']

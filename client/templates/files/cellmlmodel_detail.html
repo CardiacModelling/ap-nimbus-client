@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}CellML model - {{ object.name }}{% endblock title %}
+
+{% block content %}
+<div id='cellmlmodeldetail'>
+  <h1>CellMl Model {{ model.name }}{% if model.version %} {{ model.version }} {% endif %} {{ model.year }}</h1>
+
+<table>
+<tr><td><strong>Name:</strong></td><td>{{ object.name }}</td></tr>
+<tr><td><strong>Version: </strong></td><td>{{ object.version }}</td></tr>
+<tr><td><strong>Year: </strong></td><td>{{ object.year }}</td></tr>
+<tr><td><strong>CellMl_link: </strong></td><td><a href="{{ object.cellml_link }}" target="_blank">{% if object.cellml_link %}{{ object.cellml_link }} {% endif %}</a></td></tr>
+<tr><td><strong>Paper link: </strong></td><td><a href="{{ object.paper_link }}" target="_blank">{% if object.paper_link %}{{ object.paper_link }} {% endif %}</a></td></tr>
+<tr><td><strong>Uploaded by: </strong></td><td>{{ object.author.full_name }}</td></tr>
+<tr><td><strong>Uploaded at: </strong></td><td>{{ object.created_at }}</td></tr>
+{% if object.ap_predict_model_call %}<tr><td><strong>Ap Predict call:</strong></td><td>--model {{ object.ap_predict_model_call }}</td></tr>{% endif %}
+{% if object.cellml_file %}<tr><td><strong>CellML files:</strong></td><td><a href="{{ object.cellml_file.url }}">{{ object.cellml_file }}</a></td></tr>{% endif %}
+</table>
+
+
+</div>
+{% endblock content %}
