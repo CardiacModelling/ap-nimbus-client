@@ -1,12 +1,9 @@
-import urllib.parse
-
+from accounts.models import User
 from django.conf import settings
 from django.db import models
-from django.urls import reverse
 
 from . import visibility
 from .visibility import HELP_TEXT as VIS_HELP_TEXT
-from accounts.models import User
 
 
 class VisibilityModelMixin(models.Model):

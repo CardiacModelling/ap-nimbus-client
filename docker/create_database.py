@@ -16,6 +16,6 @@ try:
     cur.execute("CREATE DATABASE %s;" % (os.environ['POSTGRES_DB']))
 except errors.DuplicateDatabase:
     pass  #exists
-    
+ 
 cur.close()
 conn.close()
