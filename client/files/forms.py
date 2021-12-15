@@ -1,13 +1,14 @@
 from datetime import datetime
 
 import magic
+from braces.forms import UserKwargModelFormMixin
 from core import visibility
 from django import forms
 
 from .models import CellmlModel
 
 
-class CellmlModelForm(forms.ModelForm):
+class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
     visibility = forms.ChoiceField(
         choices=visibility.CHOICES,
         help_text=visibility.HELP_TEXT,
@@ -33,7 +34,8 @@ class CellmlModelForm(forms.ModelForm):
             self.fields.pop('ap_predict_model_call')
 
     def clean_ap_predict_model_call(self):
-        if self.cleaned_data['ap_predict_model_call'] and self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
+        if self.cleaned_data['ap_predict_model_call'] and \
+                self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
             raise forms.ValidationError("Ap predict model call should not include the --model flag")
 
         return self.cleaned_data['ap_predict_model_call']

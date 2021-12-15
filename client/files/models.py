@@ -35,6 +35,9 @@ class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
     cellml_file = models.FileField(null=True, blank=True, upload_to="",
                                    help_text="Please upload the cellml file here.")
 
+    def __str__(self):
+        return self.name + (self.version + " " if self.version else '') + " " + str(self.year)
+
 
 @receiver(models.signals.post_delete, sender=CellmlModel)
 def auto_delete_file_on_delete(sender, instance, **kwargs):

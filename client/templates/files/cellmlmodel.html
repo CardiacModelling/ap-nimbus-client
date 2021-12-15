@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Create CellML model - {% endblock title %}
+{% block title %}{% if object.id %}Edit{% else %}Create{% endif %} CellML model - {% if object.id %}: {{ object }}{% endif %}{% endblock title %}
 
 {% block content %}
 <div id='cellmlmodelform'>
-  <h1>Create CellMl Model</h1>
+  <h1>{% if object.id %}Edit{% else %}Create{% endif %} CellML Model{% if object.id %}: {{ object }}{% endif %}</h1>
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
@@ -14,6 +14,7 @@
 
     <p>
     <button id="savebutton" type="submit">Save</button>
+    <a class="button" href="javascript:history.back()" title="Do not delete">Cancel</a>
     </p>
   </form>
 </div>
