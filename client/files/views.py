@@ -26,7 +26,7 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     model = CellmlModel
     form_class = CellmlModelForm
     template_name = 'files/cellmlmodel.html'
-    success_url = reverse_lazy('home')
+    success_url = reverse_lazy('files:model_list')
 
 
 class CellmlModelUpdateView(UserPassesTestMixin, UserFormKwargsMixin, UpdateView):
@@ -36,7 +36,7 @@ class CellmlModelUpdateView(UserPassesTestMixin, UserFormKwargsMixin, UpdateView
     model = CellmlModel
     form_class = CellmlModelForm
     template_name = 'files/cellmlmodel.html'
-    success_url = reverse_lazy('home')
+    success_url = reverse_lazy('files:model_list')
 
     def test_func(self):
         return self.get_object().is_editable_by(self.request.user)

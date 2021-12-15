@@ -13,8 +13,8 @@
     <tr><td><strong>Year: </strong></td><td>{{ object.year }}</td></tr>
     <tr><td><strong>CellMl_link: </strong></td><td><a href="{{ object.cellml_link }}" target="_blank">{% if object.cellml_link %}{{ object.cellml_link }} {% endif %}</a></td></tr>
     <tr><td><strong>Paper link: </strong></td><td><a href="{{ object.paper_link }}" target="_blank">{% if object.paper_link %}{{ object.paper_link }} {% endif %}</a></td></tr>
-    <tr><td><strong>Uploaded by: </strong></td><td>{{ object.author.full_name }}</td></tr>
-    <tr><td><strong>Uploaded at: </strong></td><td>{{ object.created_at }}</td></tr>
+    <tr><td><strong>Created by: </strong></td><td>{{ object.author.full_name }}</td></tr>
+    <tr><td><strong>Created at at: </strong></td><td>{{ object.created_at }}</td></tr>
     {% if object.ap_predict_model_call %}<tr><td><strong>Ap Predict call:</strong></td><td><em>--model</em> {{ object.ap_predict_model_call }}</td></tr>{% endif %}
     {% if object.cellml_file %}<tr><td><strong>CellML file:</strong></td><td><a href="{{ object.cellml_file.url }}">{{ object.cellml_file }}</a></td></tr>{% endif %}
   </table>

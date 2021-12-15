@@ -44,12 +44,12 @@ class UserCreatedModelMixin(models.Model):
         """
         Users who have permission to view this object
 
-        - i.e. the author and anybody listed as a collaborator
-
-        This overrides the 'private' visibility for the object. A 'public'
-        object is visible to all anyway.
+        - i.e. the author and superusers if the object is private else everybody.
         """
-        return set(User.objects.filter(is_superuser=True)) | {self.author}
+        if self.visibility == visibility.Visibility.PRIVATE:
+            return set(User.objects.filter(is_superuser=True)) | {self.author}
+        else:
+            return User.objects.all()
 
     class Meta:
         abstract = True

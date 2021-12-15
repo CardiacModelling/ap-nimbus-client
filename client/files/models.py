@@ -32,11 +32,11 @@ class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
                   "shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and cannot be "
                   "combianed with uploading a cellml file."
     )
-    cellml_file = models.FileField(null=True, blank=True, upload_to="",
+    cellml_file = models.FileField(blank=True, upload_to="",
                                    help_text="Please upload the cellml file here.")
 
     def __str__(self):
-        return self.name + (self.version + " " if self.version else '') + " " + str(self.year)
+        return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
 
 
 @receiver(models.signals.post_delete, sender=CellmlModel)
@@ -57,15 +57,9 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
     when corresponding `CellmlModel` object is updated
     with new file.
     """
-    if not instance.pk:
-        return False
-
-    try:
+    if instance.pk:
         old_file = CellmlModel.objects.get(pk=instance.pk).cellml_file
-    except CellmlModel.DoesNotExist:
-        return False
+        if old_file and (not instance.cellml_file or old_file.path != instance.cellml_file.path):
+            if os.path.isfile(old_file.path):
+                os.remove(old_file.path)
 
-    new_file = instance.cellml_file
-    if not old_file == new_file:
-        if os.path.isfile(old_file.path):
-            os.remove(old_file.path)

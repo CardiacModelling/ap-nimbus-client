@@ -67,31 +67,6 @@ class VisibilityMixin(AccessMixin):
     If an object is not visible to a logged in user, we generate a 404
     If an object is not visible to an anonymous visitor, redirect to login page
     """
-
-    def check_access_token(self, token):
-        """
-        Check an access token passed in by HTTP header.
-        By default, token access is not allowed. Certain views can override
-        this.
-        """
-        return False  # Token access not used by default
-
-    def get_visibility(self):
-        """
-        Get the visibility applicable to this view
-
-        :return: string representing visibility
-        """
-        return self.get_object().visibility
-
-    def get_viewers(self):
-        """
-        Get users who are permitted to view the object regardless of visibility
-
-        :return: set of `User` objects
-        """
-        return self.get_object().viewers
-
     def dispatch(self, request, *args, **kwargs):
         # We want to treat "not visible" the same way as "does not exist" -
         # so defer any exception handling until later

@@ -4,6 +4,7 @@ import magic
 from braces.forms import UserKwargModelFormMixin
 from core import visibility
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
 
 from .models import CellmlModel
 
@@ -22,7 +23,7 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
     class Meta:
         model = CellmlModel
         exclude = ('author', )
-        widgets = {'cellml_file': forms.FileInput(attrs={'accept': '.cellml'})}
+        widgets = {'cellml_file': forms.ClearableFileInput(attrs={'accept': '.cellml'})}
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -34,20 +35,27 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
             self.fields.pop('ap_predict_model_call')
 
     def clean_ap_predict_model_call(self):
-        if self.cleaned_data['ap_predict_model_call'] and \
-                self.cleaned_data['ap_predict_model_call'].lower().strip().startswith('--model'):
+        model_call = self.cleaned_data.get('ap_predict_model_call', None)
+        if model_call and model_call.lower().strip().startswith('--model'):
             raise forms.ValidationError("Ap predict model call should not include the --model flag")
 
         return self.cleaned_data['ap_predict_model_call']
 
     def clean_cellml_file(self):
-        if 'ap_predict_model_call' in self.cleaned_data and \
-                (self.cleaned_data['ap_predict_model_call'] is None) == (self.cleaned_data['cellml_file'] is None):
+        cellml_file = self.cleaned_data.get('cellml_file', None)
+        model_call = self.cleaned_data.get('ap_predict_model_call', None)
+
+        if cellml_file is False:  # clearing file upload
+            cellml_file = None
+
+        if (model_call is None) == (cellml_file is None):  # Need either a file or model call
             raise forms.ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
-        if self.cleaned_data.get('cellml_file', None):
-            mime_type = str(magic.from_file(self.cleaned_data['cellml_file'].temporary_file_path(), mime=True))
+
+        if cellml_file and isinstance(cellml_file, UploadedFile):  # check mime type of uploaded dile
+            mime_type = str(magic.from_file(cellml_file.temporary_file_path(), mime=True))
             if mime_type not in ['text/xml', 'application/xml']:
                 raise forms.ValidationError('Unsupported file type, expecting a cellml file.')
+
         return self.cleaned_data['cellml_file']
 
     def save(self, **kwargs):
