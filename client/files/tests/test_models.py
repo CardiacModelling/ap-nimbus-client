@@ -36,7 +36,7 @@ def test_CellmlModel_private(o_hara_model, user, other_user, admin_user):
     assert CellmlModel.objects.filter(name=o_hara_model.name).exists()
     assert o_hara_model.visibility == Visibility.PRIVATE
     assert o_hara_model.ap_predict_model_call == '8'
-    assert o_hara_model.cellml_file is None
+    assert str(o_hara_model.cellml_file) == ''
     assert user in o_hara_model.viewers
     assert other_user not in o_hara_model.viewers
     assert admin_user in o_hara_model.viewers
