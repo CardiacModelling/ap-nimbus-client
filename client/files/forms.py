@@ -52,7 +52,7 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
             raise forms.ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
 
         if cellml_file and isinstance(cellml_file, UploadedFile):  # check mime type of uploaded dile
-            mime_type = str(magic.from_file(cellml_file.temporary_file_path(), mime=True))
+            mime_type = str(magic.from_buffer(cellml_file.file.read(), mime=True))
             if mime_type not in ['text/xml', 'application/xml']:
                 raise forms.ValidationError('Unsupported file type, expecting a cellml file.')
 

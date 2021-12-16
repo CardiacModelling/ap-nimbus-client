@@ -161,6 +161,3 @@ USE_X_FORWARDED_HOST = True
 # Media files (Uploaded files)
 MEDIA_URL = FORCE_SCRIPT_NAME + 'media/'
 MEDIA_ROOT = '/opt/django/media/'
-
-# set file upload handler to use temporary file so we can check it's contents
-FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
