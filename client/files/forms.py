@@ -15,15 +15,11 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         help_text=visibility.HELP_TEXT,
     )
 
-    year = forms.ChoiceField(
-        choices=[(y, y) for y in range(datetime.now().year + 1, 1949, - 1)],
-        initial=datetime.now().year
-    )
-
     class Meta:
         model = CellmlModel
         exclude = ('author', )
-        widgets = {'cellml_file': forms.ClearableFileInput(attrs={'accept': '.cellml'})}
+        widgets = {'cellml_file': forms.ClearableFileInput(attrs={'accept': '.cellml'}),
+                   'year': forms.widgets.Select(choices=[(y, y) for y in range(datetime.now().year + 1, 1949, - 1)])}
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -31,6 +27,8 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
 
         self.fields['visibility'].choices = visibility.get_visibility_choices(self.user)
         self.fields['visibility'].help_text = visibility.get_help_text(self.user)
+        self.fields['year'].initial = datetime.now().year
+
         if not self.user.is_superuser:
             self.fields.pop('ap_predict_model_call')
 

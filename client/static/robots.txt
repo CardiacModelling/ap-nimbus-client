@@ -3,6 +3,8 @@ User-agent: *
 # Bots can't log in, so don't bother trying
 Disallow: /accounts
 Disallow: /admin
+Disallow: /files
+Disallow: /experiments
 
 # Robots can kill Web Lab responsiveness if left unchecked.
 # We could potentially let them view the top-level public stuff, but restricting the
