@@ -19,11 +19,11 @@ class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
         help_text="The year this specific model (version) was published e.g. <em>2017</em>."
     )
     cellml_link = models.URLField(
-        max_length=200, blank=True, null=True,
+        max_length=255, blank=True, null=True,
         help_text="An (optional) link to a description of the cellml. e.g. on <em>www.cellml.org</em>."
     )
     paper_link = models.URLField(
-        max_length=200, blank=True, null=True,
+        max_length=255, blank=True, null=True,
         help_text="An (optional) link to a paper related to the model."
     )
     ap_predict_model_call = models.CharField(

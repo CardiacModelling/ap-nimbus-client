@@ -13,7 +13,7 @@
       {% for model in object_list %}
         {% if model.visibility == 'moderated' %}
           <li title="{{ model.name }}">
-              <a href="{% url 'files:model_detail' model.pk %}"><strong>{{ model }}</strong>
+              <a href="{% url 'files:model_detail' model.pk %}"><strong>{{ model }}</strong></a>
           </li>
         {% endif %}
       {% endfor %}
