@@ -4,6 +4,9 @@
     <li><a href="{% url 'home' %}">Home</a></li>
     {% if user.is_authenticated %}
         <li class="navbar-submenu">
+          <a href="{% url 'files:model_list' %}">Cellml Models</a>
+        </li>
+        <li class="navbar-submenu">
           <a>{{ user.full_name }}</a>
           <ul>
             <li><a href="{% url 'accounts:myaccount' %}">Account</a></li>
