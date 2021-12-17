@@ -189,8 +189,12 @@ h1, h2, h3, h4, h5 {
 form input[type=text], form input[type=email], form input[type=password] {
   width: 20em; }
 
-#cellmlmodelform, label[for=cellml_file-clear_id]{
-    color: #FF5733;
+#cellmlmodelform{
+    color: #339933;
+}
+
+label[for=cellml_file-clear_id]{
+    color: #e64d00;
 }
 
 form label{
