@@ -4,13 +4,12 @@ from core.visibility import Visibility
 from files.models import CellmlModel
 
 
-
 @pytest.mark.django_db
 class TestCellmlModelListView:
     def test_ListView(self, logged_in_user, other_user, admin_user, client):
         models = recipes.cellml_model.make(author=logged_in_user, _quantity=3)
         other_models = recipes.cellml_model.make(author=other_user, _quantity=3, visibility=Visibility.PUBLIC)
-        private_models = recipes.cellml_model.make(author=other_user, _quantity=3, visibility=Visibility.PRIVATE)
+        recipes.cellml_model.make(author=other_user, _quantity=3, visibility=Visibility.PRIVATE)  # private models
         moderated_models = recipes.cellml_model.make(author=admin_user, _quantity=3, visibility=Visibility.MODERATED)
 
         response = client.get('/files/models/')
@@ -57,7 +56,7 @@ class TestCellmlModelUpdateView:
             year=2017,
             cellml_link='https://models.cellml.org/e/4e8/',
             paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
-            ap_predict_model_call= '8',
+            ap_predict_model_call='8',
         )
         assert CellmlModel.objects.count() == 1
         data = {

@@ -1,7 +1,6 @@
 import pytest
 from accounts.models import User
 from core.visibility import Visibility
-from django.contrib.auth.models import AnonymousUser
 from files.models import CellmlModel
 
 
@@ -13,11 +12,6 @@ def admin_user():
         institution='UCL',
         password='password',
     )
-
-
-@pytest.fixture
-def anonymous_user():
-    return AnonymousUser()
 
 
 @pytest.fixture
