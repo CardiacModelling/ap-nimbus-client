@@ -54,8 +54,7 @@ class CellmlModel(models.Model):
         """
         return user.is_superuser or user == self.author
 
-    @property
-    def can_view(self, user):
+    def is_visible_by(self, user):
         """
         Can the user view this model?
         """

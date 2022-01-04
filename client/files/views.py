@@ -16,7 +16,7 @@ class CellmlModelListView(LoginRequiredMixin, ListView):
     template_name = 'files/cellmlmodel_list.html'
 
     def get_queryset(self):
-        return [model for model in CellmlModel.objects.all() if model.can_view(self.request.user)]
+        return [model for model in CellmlModel.objects.all() if model.is_visible_by(self.request.user)]
 
 
 class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
