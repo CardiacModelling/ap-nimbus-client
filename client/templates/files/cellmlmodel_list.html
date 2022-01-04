@@ -11,7 +11,7 @@
 
     <ul>
       {% for model in object_list %}
-        {% if model.visibility == 'moderated' %}
+        {% if model.predefined %}
           <li title="{{ model.name }}">
               <a href="{% url 'files:model_detail' model.pk %}"><strong>{{ model }}</strong></a>
           </li>
@@ -23,7 +23,7 @@
 
     <ul>
       {% for model in object_list %}
-        {% if model.visibility != 'moderated' %}
+        {% if not model.predefined %}
           <li title="{{ model.name }}">
               <a href="{% url 'files:model_detail' model.pk %}"><strong>{{ model }}</strong> (by {{model.author.full_name}})</a>
           </li>

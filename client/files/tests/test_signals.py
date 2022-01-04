@@ -3,7 +3,6 @@ import shutil
 import uuid
 
 import pytest
-from core.visibility import Visibility
 from django.conf import settings
 from files.models import CellmlModel
 
@@ -30,7 +29,7 @@ def test_CellmlModel_file(user):
         description='human ventricular cell model (endocardial)',
         year=2017,
         author=user,
-        visibility=Visibility.MODERATED,
+        predefined=False,
         cellml_file=cellml_file1,
     )
     CellmlModel.objects.filter(name="O'Hara-Rudy-CiPA").exists()

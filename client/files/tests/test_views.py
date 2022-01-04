@@ -1,20 +1,17 @@
 import pytest
-from core import recipes
-from core.visibility import Visibility
 from files.models import CellmlModel
 
 
 @pytest.mark.django_db
 class TestCellmlModelListView:
-    def test_ListView(self, logged_in_user, other_user, admin_user, client):
-        models = recipes.cellml_model.make(author=logged_in_user, _quantity=3)
-        other_models = recipes.cellml_model.make(author=other_user, _quantity=3, visibility=Visibility.PUBLIC)
-        recipes.cellml_model.make(author=other_user, _quantity=3, visibility=Visibility.PRIVATE)  # private models
-        moderated_models = recipes.cellml_model.make(author=admin_user, _quantity=3, visibility=Visibility.MODERATED)
+    def test_ListView(self, logged_in_user, other_user, admin_user, client, cellml_model_recipe):
+        models = cellml_model_recipe.make(author=logged_in_user, _quantity=3)
+        predef_models = cellml_model_recipe.make(author=other_user, _quantity=3, predefined=True)
+        cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False)  # uploaded (private) models
 
         response = client.get('/files/models/')
         assert response.status_code == 200
-        assert set(response.context['object_list']) == set(models + other_models + moderated_models)
+        assert set(response.context['object_list']) == set(models + predef_models)
 
 
 @pytest.mark.django_db
@@ -30,7 +27,7 @@ class TestCellmlModelCreateView:
     def test_create_cellml_model(self, logged_in_admin, client):
         assert CellmlModel.objects.count() == 0
         data = {
-            'visibility': Visibility.PUBLIC,
+            'predefined': True,
             'name': "O'Hara-Rudy-CiPA",
             'description': 'human ventricular cell model (endocardial)',
             'version': 'v1.0',
@@ -46,10 +43,10 @@ class TestCellmlModelCreateView:
 
 @pytest.mark.django_db
 class TestCellmlModelUpdateView:
-    def test_update(self, logged_in_admin, client):
-        model = recipes.cellml_model.make(
+    def test_update(self, logged_in_admin, client, cellml_model_recipe):
+        model = cellml_model_recipe.make(
             author=logged_in_admin,
-            visibility=Visibility.PUBLIC,
+            predefined=True,
             name="O'Hara-Rudy-CiPA",
             description='human ventricular cell model (endocardial)',
             version='v1.0',
@@ -60,7 +57,7 @@ class TestCellmlModelUpdateView:
         )
         assert CellmlModel.objects.count() == 1
         data = {
-            'visibility': model.visibility,
+            'predefined': model.predefined,
             'name': 'new test name',
             'description': model.description,
             'version': model.version,
@@ -83,18 +80,18 @@ class TestCellmlModelDetailView:
         response = client.get('/files/models/%d/' % o_hara_model.pk)
         assert response.status_code == 302
 
-    def test_non_owner_cannot_see_private(self, logged_in_user, other_user, client):
-        model = recipes.cellml_model.make(author=other_user, visibility=Visibility.PRIVATE)
+    def test_non_owner_cannot_see_non_predef(self, logged_in_user, other_user, client, cellml_model_recipe):
+        model = cellml_model_recipe.make(author=other_user, predefined=False)
         response = client.get('/files/models/%d/' % model.pk)
         assert response.status_code == 403
 
-    def test_non_owner_cannot_see_public(self, logged_in_user, other_user, client):
-        model = recipes.cellml_model.make(author=other_user, visibility=Visibility.PUBLIC)
+    def test_non_owner_can_see_predef(self, logged_in_user, other_user, client, cellml_model_recipe):
+        model = cellml_model_recipe.make(author=other_user, predefined=True)
         response = client.get('/files/models/%d/' % model.pk)
         assert response.status_code == 200
 
-    def test_admin_can_see_private(self, logged_in_admin, other_user, client):
-        model = recipes.cellml_model.make(author=other_user, visibility=Visibility.PRIVATE)
+    def test_admin_can_see_non_predef_non_owner(self, logged_in_admin, other_user, client, cellml_model_recipe):
+        model = cellml_model_recipe.make(author=other_user, predefined=False)
         response = client.get('/files/models/%d/' % model.pk)
         assert response.status_code == 200
 
@@ -113,8 +110,8 @@ class TestCellmlModelDeleteView:
         assert response.status_code == 302
         assert CellmlModel.objects.count() == 0
 
-    def test_non_owner_cannot_delete(self, logged_in_user, other_user, client):
-        model = recipes.cellml_model.make(author=other_user)
+    def test_non_owner_cannot_delete(self, logged_in_user, other_user, client, cellml_model_recipe):
+        model = cellml_model_recipe.make(author=other_user)
         assert CellmlModel.objects.count() == 1
         response = client.post('/stories/%d/delete' % model.pk)
         assert response.status_code == 404
