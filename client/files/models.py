@@ -42,8 +42,8 @@ class CellmlModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
   
-class Meta:
-    unique_together = ('name', 'author')
+    class Meta:
+        unique_together = ('name', 'author')
 
     def __str__(self):
         return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
