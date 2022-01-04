@@ -1,7 +1,6 @@
 import os
 
 import django.db.models.deletion
-from accounts.models import User
 from django.conf import settings
 from django.db import models
 from django.dispatch import receiver
@@ -54,16 +53,11 @@ class CellmlModel(models.Model):
         """
         return user.is_superuser or user == self.author
 
-    @property
-    def viewers(self):
+    def is_visible_to(self, user):
         """
-        Users who have permission to view this object
-        - i.e. the author and superusers if the object is private else everybody.
+        Can the user view this model?
         """
-        if self.predefined:
-            return set(User.objects.all())
-        else:
-            return set(User.objects.filter(is_superuser=True)) | {self.author}
+        return self.predefined or user.is_superuser or user == self.author
 
 
 @receiver(models.signals.post_delete, sender=CellmlModel)

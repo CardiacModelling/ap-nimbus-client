@@ -15,9 +15,9 @@ def test_CellmlModel_predef(o_hara_model, user, other_user, admin_user):
     assert o_hara_model.paper_link == 'https://www.ncbi.nlm.nih.gov/pubmed/28878692'
     assert o_hara_model.ap_predict_model_call is None
     assert o_hara_model.cellml_file == 'OHara-Rudy-CiPA-v1.0.cellml'
-    assert user in o_hara_model.viewers
-    assert other_user in o_hara_model.viewers
-    assert admin_user in o_hara_model.viewers
+    assert o_hara_model.is_visible_to(user)
+    assert o_hara_model.is_visible_to(other_user)
+    assert o_hara_model.is_visible_to(admin_user)
     assert o_hara_model.is_editable_by(user)
     assert not o_hara_model.is_editable_by(other_user)
     assert o_hara_model.is_editable_by(admin_user)
@@ -36,9 +36,9 @@ def test_CellmlModel_uploaded(o_hara_model, user, other_user, admin_user):
     assert not o_hara_model.predefined
     assert o_hara_model.ap_predict_model_call == '8'
     assert str(o_hara_model.cellml_file) == ''
-    assert user in o_hara_model.viewers
-    assert other_user not in o_hara_model.viewers
-    assert admin_user in o_hara_model.viewers
+    assert o_hara_model.is_visible_to(user)
+    assert not o_hara_model.is_visible_to(other_user)
+    assert o_hara_model.is_visible_to(admin_user)
     assert o_hara_model.is_editable_by(user)
     assert not o_hara_model.is_editable_by(other_user)
     assert o_hara_model.is_editable_by(admin_user)
