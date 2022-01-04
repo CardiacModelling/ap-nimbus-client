@@ -53,7 +53,7 @@ class CellmlModel(models.Model):
         """
         return user.is_superuser or user == self.author
 
-    def is_visible_by(self, user):
+    def is_visible_to(self, user):
         """
         Can the user view this model?
         """
