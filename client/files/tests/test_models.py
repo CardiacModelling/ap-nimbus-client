@@ -6,7 +6,7 @@ from files.models import CellmlModel
 def test_CellmlModel_predef(o_hara_model, user, other_user, admin_user):
     assert CellmlModel.objects.filter(name=o_hara_model.name).exists()
     assert o_hara_model.author == user
-    assert o_hara_model.predefined == True
+    assert o_hara_model.predefined
     assert o_hara_model.name == "O'Hara-Rudy-CiPA"
     assert o_hara_model.description == 'human ventricular cell model (endocardial)'
     assert o_hara_model.version == 'v1.0'

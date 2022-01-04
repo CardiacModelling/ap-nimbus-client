@@ -7,7 +7,7 @@ class TestCellmlModelListView:
     def test_ListView(self, logged_in_user, other_user, admin_user, client, cellml_model_recipe):
         models = cellml_model_recipe.make(author=logged_in_user, _quantity=3)
         predef_models = cellml_model_recipe.make(author=other_user, _quantity=3, predefined=True)
-        cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False) #  uploaded (private) models
+        cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False)  # uploaded (private) models
 
         response = client.get('/files/models/')
         assert response.status_code == 200

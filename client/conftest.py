@@ -9,6 +9,7 @@ def cellml_model_recipe():
     return Recipe('CellmlModel', name=seq('my model'), description=seq('my descr'),
                   year=2021, predefined=True)
 
+
 @pytest.fixture
 def admin_user():
     return User.objects.create_superuser(
