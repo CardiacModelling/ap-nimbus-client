@@ -11,7 +11,7 @@ class CellmlModel(models.Model):
         default=False,
         help_text="Show this model as a predefined model to all users. (This option is only available to admins)."
     )
-    name = models.CharField(max_length=255, unique=True,
+    name = models.CharField(max_length=255,
                             help_text="The name of the model, e.g. <em>O'Hara-Rudy</em>.")
     description = models.CharField(
         max_length=255, default='',
@@ -41,6 +41,9 @@ class CellmlModel(models.Model):
                                    help_text="Please upload the cellml file here.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
+  
+class Meta:
+    unique_together = ('name', 'author')
 
     def __str__(self):
         return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
