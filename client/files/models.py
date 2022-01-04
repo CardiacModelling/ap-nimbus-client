@@ -41,7 +41,7 @@ class CellmlModel(models.Model):
                                    help_text="Please upload the cellml file here.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
-  
+
     class Meta:
         unique_together = ('name', 'author')
 
