@@ -2,7 +2,6 @@ import os
 import uuid
 
 import pytest
-from core.visibility import Visibility
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from files.forms import CellmlModelForm
@@ -37,7 +36,7 @@ class TestCellmlModelForm:
     def data(self, admin_user):
         return {
             'author': admin_user,
-            'visibility': Visibility.PUBLIC,
+            'predfeined': True,
             'name': "O'Hara-Rudy-CiPA",
             'description': 'human ventricular cell model (endocardial)',
             'version': 'v1.0',
@@ -49,14 +48,13 @@ class TestCellmlModelForm:
     def test_non_admin(self, user):
         form = CellmlModelForm(user=user)
         assert 'ap_predict_model_call' not in form.fields
-        assert str(form.fields['visibility'].choices) == "[('public', 'Public'), ('private', 'Private')]"
+        assert 'predefined' not in form.fields
 
     def test_create(self, admin_user, data):
         assert not CellmlModel.objects.filter(name="O'Hara-Rudy-CiPA").exists()
         form = CellmlModelForm(user=admin_user, data=data)
         assert 'ap_predict_model_call' in form.fields
-        assert str(form.fields['visibility'].choices) == \
-            "[('public', 'Public'), ('moderated', 'Moderated'), ('private', 'Private')]"
+        assert 'predefined' in form.fields
 
         assert not form.is_valid()  # no call and no file
         data['ap_predict_model_call'] = '--model 1'

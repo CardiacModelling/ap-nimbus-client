@@ -1,8 +1,13 @@
 import pytest
 from accounts.models import User
-from core.visibility import Visibility
 from files.models import CellmlModel
+from model_bakery.recipe import Recipe, seq
 
+
+@pytest.fixture
+def cellml_model_recipe():
+    return Recipe('CellmlModel', name=seq('my model'), description=seq('my descr'),
+                  year=2021, predefined=True)
 
 @pytest.fixture
 def admin_user():
@@ -50,7 +55,7 @@ def logged_in_admin(client, admin_user):
 def o_hara_model(user):
     return CellmlModel.objects.create(
         author=user,
-        visibility=Visibility.PUBLIC,
+        predefined=True,
         name="O'Hara-Rudy-CiPA",
         description='human ventricular cell model (endocardial)',
         version='v1.0',

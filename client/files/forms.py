@@ -2,7 +2,6 @@ from datetime import datetime
 
 import magic
 from braces.forms import UserKwargModelFormMixin
-from core import visibility
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
 
@@ -10,11 +9,6 @@ from .models import CellmlModel
 
 
 class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
-    visibility = forms.ChoiceField(
-        choices=visibility.CHOICES,
-        help_text=visibility.HELP_TEXT,
-    )
-
     class Meta:
         model = CellmlModel
         exclude = ('author', )
@@ -24,12 +18,10 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-
-        self.fields['visibility'].choices = visibility.get_visibility_choices(self.user)
-        self.fields['visibility'].help_text = visibility.get_help_text(self.user)
         self.fields['year'].initial = datetime.now().year
 
         if not self.user.is_superuser:
+            self.fields.pop('predefined')
             self.fields.pop('ap_predict_model_call')
 
     def clean_ap_predict_model_call(self):

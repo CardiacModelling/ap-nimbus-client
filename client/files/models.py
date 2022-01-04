@@ -1,11 +1,17 @@
 import os
 
-from core.models import UserCreatedModelMixin, VisibilityModelMixin
+import django.db.models.deletion
+from accounts.models import User
+from django.conf import settings
 from django.db import models
 from django.dispatch import receiver
 
 
-class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
+class CellmlModel(models.Model):
+    predefined = models.BooleanField(
+        default=False,
+        help_text="Show this model as a predefined model to all users. (This option is only available to admins)."
+    )
     name = models.CharField(max_length=255, unique=True,
                             help_text="The name of the model, e.g. <em>O'Hara-Rudy</em>.")
     description = models.CharField(
@@ -34,9 +40,30 @@ class CellmlModel(UserCreatedModelMixin, VisibilityModelMixin):
     )
     cellml_file = models.FileField(blank=True, upload_to="",
                                    help_text="Please upload the cellml file here.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
 
     def __str__(self):
         return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
+
+    def is_editable_by(self, user):
+        """
+        Is the entity editable by the given user?
+        :param user: User object
+        :return: True if deletable, False otherwise
+        """
+        return user.is_superuser or user == self.author
+
+    @property
+    def viewers(self):
+        """
+        Users who have permission to view this object
+        - i.e. the author and superusers if the object is private else everybody.
+        """
+        if self.predefined:
+            return set(User.objects.all())
+        else:
+            return set(User.objects.filter(is_superuser=True)) | {self.author}
 
 
 @receiver(models.signals.post_delete, sender=CellmlModel)
