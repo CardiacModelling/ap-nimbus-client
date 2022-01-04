@@ -55,15 +55,11 @@ class CellmlModel(models.Model):
         return user.is_superuser or user == self.author
 
     @property
-    def viewers(self):
+    def can_view(self, user):
         """
-        Users who have permission to view this object
-        - i.e. the author and superusers if the object is private else everybody.
+        Can the user view this model?
         """
-        if self.predefined:
-            return set(User.objects.all())
-        else:
-            return set(User.objects.filter(is_superuser=True)) | {self.author}
+        return self.predefined or user.is_superuser or user == self.author
 
 
 @receiver(models.signals.post_delete, sender=CellmlModel)
