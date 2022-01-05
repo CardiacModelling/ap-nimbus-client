@@ -11,7 +11,7 @@
     {% csrf_token %}
 
     {{ form.as_p }}
-
+    {% if user.is_superuser %}<p><label for="id_cellml_file">Ion Currents:</label> <span class="helptext">Ion currents are processed automatically for uploaded cellml files. To edit ion currents please use the <a href="{% url 'admin:files_cellmlmodel_changelist' %}">admin interface.</a></span></p>{% endif %}
     <p>
     <button id="savebutton" type="submit">Save</button>
     <a class="button" href="{% url 'files:model_list'%}">Cancel</a>

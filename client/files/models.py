@@ -6,6 +6,7 @@ from django.db import models
 from django.dispatch import receiver
 
 
+
 class IonCurrent(models.Model):
     name = models.CharField(max_length=255, unique=True,
                             help_text="A (unique) short name for the kurrent e.g. <em>IKr</em>.")
