@@ -17,6 +17,7 @@
     <tr><td><strong>Created at at: </strong></td><td>{{ object.created_at }}</td></tr>
     {% if object.ap_predict_model_call %}<tr><td><strong>Ap Predict call:</strong></td><td><em>--model</em> {{ object.ap_predict_model_call }}</td></tr>{% endif %}
     {% if object.cellml_file %}<tr><td><strong>CellML file:</strong></td><td><a href="{{ object.cellml_file.url }}">{{ object.cellml_file }}</a></td></tr>{% endif %}
+   <tr><td><strong>Ion currents: </strong></td><td>{% for current in object.ion_currents.all %}{% if not forloop.first %}, {% endif %}{{current}}{% endfor %}</td></tr>
   </table>
   <br/>
   {% can_edit object as can_edit %}
