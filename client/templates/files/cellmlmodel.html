@@ -11,7 +11,6 @@
     {% csrf_token %}
 
     {{ form.as_p }}
-
     <p>
     <button id="savebutton" type="submit">Save</button>
     <a class="button" href="{% url 'files:model_list'%}">Cancel</a>

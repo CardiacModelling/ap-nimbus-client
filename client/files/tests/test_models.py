@@ -1,5 +1,5 @@
 import pytest
-from files.models import CellmlModel
+from files.models import CellmlModel, IonCurrent
 
 
 @pytest.mark.django_db
@@ -44,3 +44,13 @@ def test_CellmlModel_uploaded(o_hara_model, user, other_user, admin_user):
     assert o_hara_model.is_editable_by(admin_user)
     o_hara_model.delete()
     assert not CellmlModel.objects.filter(name=o_hara_model.name).exists()
+
+
+@pytest.mark.django_db
+def test_IonCurrent(user):
+    assert IonCurrent.objects.count() == 0
+    IonCurrent.objects.create(author=user, name='INaL', default_hill_coefficient=1, default_saturation_level=0,
+                              metadata_tags="membrane_persistent_sodium_current_conductance, "
+                                            "membrane_persistent_sodium_current_conductance_scaling_factor",
+                              default_spread_of_uncertainty=0.2)
+    assert IonCurrent.objects.count() == 1

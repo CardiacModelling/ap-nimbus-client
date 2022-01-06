@@ -1,36 +1,43 @@
 import os
 import uuid
+from shutil import copyfile
 
 import pytest
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from files.forms import CellmlModelForm
-from files.models import CellmlModel
+from files.models import CellmlModel, IonCurrent
 
 
 @pytest.mark.django_db
 class TestCellmlModelForm:
-    def upload_file(self, file_name):
+    def upload_file(self, tmp_path, file_name):
         test_file = os.path.join(settings.BASE_DIR, 'files', 'tests', file_name + ".cellml")
+        cellml_file = file_name + str(uuid.uuid4()) + '.cellml.temp'
+        temp_file = os.path.join(tmp_path, cellml_file)
         assert os.path.isfile(test_file)
+        copyfile(test_file, temp_file)
+        assert os.path.isfile(temp_file)
 
-        cellml_file = file_name + str(uuid.uuid4()) + '.cellml'
-        file_data = None
-        with open(test_file, 'rb') as f:
-            file_data = f.read()
-        return SimpleUploadedFile(cellml_file, file_data)
-
-    @pytest.fixture
-    def file1(self):
-        return self.upload_file('ohara_rudy_cipa_v1_2017')
+        tempfile = TemporaryUploadedFile(cellml_file, 'text/xml', os.path.getsize(test_file), 'utf-8')
+        tempfile.file = open(temp_file, 'rb')
+        return tempfile
 
     @pytest.fixture
-    def file2(self):
-        return self.upload_file('ohara_rudy_2011_epi')
+    def file1(self, tmp_path):
+        return self.upload_file(tmp_path, 'ohara_rudy_cipa_v1_2017')
 
     @pytest.fixture
-    def file3(self):
-        return self.upload_file('chaste-197x61')
+    def file2(self, tmp_path):
+        return self.upload_file(tmp_path, 'ohara_rudy_2011_epi')
+
+    @pytest.fixture
+    def file3(self, tmp_path):
+        return self.upload_file(tmp_path, 'chaste-197x61')
+
+    @pytest.fixture
+    def file4(self, tmp_path):
+        return self.upload_file(tmp_path, 'ohara_rudy_2011_epi_missing_unit')
 
     @pytest.fixture
     def data(self, admin_user):
@@ -73,17 +80,20 @@ class TestCellmlModelForm:
         form.save()
         assert o_hara_model.name == 'changed model'
 
-    def test_file(self, data, file1, file2, admin_user):
+    def test_file(self, data, file1, file2, admin_user, ion_currents):
         # file upload
         assert not CellmlModel.objects.filter(name="O'Hara-Rudy-CiPA").exists()
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
-        assert form.is_valid()
+        assert form.is_valid(), str(form.errors)
         model = form.save()
         assert os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         assert model == CellmlModel.objects.get(name="O'Hara-Rudy-CiPA")
         assert model.cellml_file == str(file1)
+        # check ion currents are automatically assigned
+        assert list(model.ion_currents.all()) == list(IonCurrent.objects.all())
+        assert [str(c) for c in IonCurrent.objects.all()] == ['IKr (herg)', 'INa', 'ICaL', 'IKs', 'IK1', 'Ito', 'INaL']
 
         # change file
         form = CellmlModelForm(data, {'cellml_file': file2}, instance=model, user=admin_user)
@@ -92,6 +102,8 @@ class TestCellmlModelForm:
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         assert os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file2)))
         assert model.cellml_file == str(file2)
+        # check ion currents are automatically assigned
+        assert list(model.ion_currents.all()) == list(IonCurrent.objects.all())
 
         model.delete()
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file2)))
@@ -119,3 +131,9 @@ class TestCellmlModelForm:
     def test_wrong_file_type(self, data, file3, admin_user):
         form = CellmlModelForm(data, {'cellml_file': file3}, user=admin_user)
         assert not form.is_valid()  # This is an image not really an xml file
+        assert "Unsupported file type, expecting a cellml file." in form.errors['cellml_file']
+
+    def test_incorrect_cellml(self, data, file4, admin_user):
+        form = CellmlModelForm(data, {'cellml_file': file4}, user=admin_user)
+        assert not form.is_valid()  # This is an image not really an xml file
+        assert "Could not process cellml model: \n    'Unknown unit <coulomb_per_mole>.'" in form.errors['cellml_file']
