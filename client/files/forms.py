@@ -2,14 +2,15 @@ from datetime import datetime
 
 import magic
 from braces.forms import UserKwargModelFormMixin
+from cellmlmanip import load_model
 from django import forms
-from django.core.files.uploadedfile import UploadedFile, TemporaryUploadedFile
+from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 
 from .models import CellmlModel, IonCurrent
-from cellmlmanip import load_model
 
 
 OXMETA = 'https://chaste.comlab.ox.ac.uk/cellml/ns/oxford-metadata#'
+
 
 class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
     class Meta:
@@ -23,10 +24,10 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         super().__init__(*args, **kwargs)
         self.fields['year'].initial = datetime.now().year
 
-        self.fields.pop('ion_currents')
         if not self.user.is_superuser:
             self.fields.pop('predefined')
             self.fields.pop('ap_predict_model_call')
+            self.fields.pop('ion_currents')
 
     def clean_ap_predict_model_call(self):
         model_call = self.cleaned_data.get('ap_predict_model_call', None)
@@ -45,7 +46,8 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         if (model_call is None) == (cellml_file is None):  # Need either a file or model call
             raise forms.ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
 
-        if cellml_file and isinstance(cellml_file, UploadedFile):  # check mime type of any uploaded file (should be XML)
+        # check mime type of any uploaded file (should be XML)
+        if cellml_file and isinstance(cellml_file, UploadedFile):
             mime_type = str(magic.from_buffer(cellml_file.file.read(), mime=True))
             if mime_type not in ['text/xml', 'application/xml']:
                 raise forms.ValidationError('Unsupported file type, expecting a cellml file.')

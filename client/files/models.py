@@ -6,20 +6,35 @@ from django.db import models
 from django.dispatch import receiver
 
 
-
 class IonCurrent(models.Model):
     name = models.CharField(max_length=255, unique=True,
                             help_text="A (unique) short name for the kurrent e.g. <em>IKr</em>.")
+    alternative_name = models.CharField(max_length=255, blank=True, help_text="Alternative name to display alongside "
+                                                                              "the name, e.g. <em>herg</em> for the "
+                                                                              "name <em>IKr</em> which would be "
+                                                                              "displayed as <em>IKr (herg)</em>.")
     metadata_tag = models.CharField(max_length=255, unique=True,
-                                    help_text="A (unique) metadata tag in the cellml that confirms the presence of the current e.g. <em>membrane_fast_sodium_current_conductance</em>.")
-    default_hill_coefficient = models.FloatField(default=1, help_text="Default hill coefficient (between 0.1 and 5).")
-    default_saturation_level = models.FloatField(default=0, help_text="The (default) level of peak current relative to control at a very large compound concentration. For an inhibitor this is in the range 0% (default) to <100% (compound has no effect).<br /> For an activator Minimum > 100% (no effect) to Maximum 500% (as a guideline).")
-    default_spread_of_uncertainty = models.FloatField(default=1, help_text="Default guiding value for the ion current (between 0 and 2).")
+                                    help_text="A (unique) metadata tag in the cellml that confirms the presence "
+                                              "of the current e.g. <em>membrane_fast_sodium_current_conductance</em>.")
+    default_hill_coefficient = models.FloatField(default=1,
+                                                 help_text="Default hill coefficient (between 0.1 and 5).")
+    default_saturation_level = models.FloatField(default=0, help_text="The (default) level of peak current "
+                                                                      "relative to control at a very large "
+                                                                      "compound concentration. For an inhibitor "
+                                                                      "this is in the range 0% (default) to <100%"
+                                                                      " (compound has no effect).<br /> For an "
+                                                                      "activator Minimum > 100% (no effect) to "
+                                                                      "Maximum 500% (as a guideline).")
+    default_spread_of_uncertainty = models.FloatField(default=1, help_text="Default guiding value for the ion "
+                                                                           "current (between 0 and 2).")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
 
     def __str__(self):
-        return self.name
+        if self.alternative_name:
+            return self.name + (' (' + self.alternative_name + ')')
+        else:
+            return self.name
 
 
 class CellmlModel(models.Model):
@@ -57,7 +72,10 @@ class CellmlModel(models.Model):
                                    help_text="Please upload the cellml file here.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
-    ion_currents = models.ManyToManyField(IonCurrent)
+    ion_currents = models.ManyToManyField(IonCurrent, help_text="Ion currents used. This selection is ignored when a"
+                                                                " cellml file is uploaded. To edit the selection for"
+                                                                " modules using a cellml file, see the admin "
+                                                                "interface.")
 
     class Meta:
         unique_together = ('name', 'author')

@@ -7,6 +7,7 @@ from django.db import migrations
 
 PREDEF_ION_CURRENTS = [
     {'name': 'IKr',
+     'alternative_name': 'herg',
      'metadata_tag': 'membrane_rapid_delayed_rectifier_potassium_current_conductance',
      'default_hill_coefficient': 1,
      'default_saturation_level': 0,

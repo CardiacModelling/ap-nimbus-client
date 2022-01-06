@@ -163,4 +163,4 @@ MEDIA_URL = FORCE_SCRIPT_NAME + 'media/'
 MEDIA_ROOT = '/opt/django/media/'
 
 # Force using temporary fiile for upload
-FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
+FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
