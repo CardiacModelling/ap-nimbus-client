@@ -56,7 +56,8 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'accounts',
-    'files'
+    'files',
+    'simulations',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS

@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from .models import CellmlModel
+from .models import Simulation, SimulationIonCurrentParam
 
 
-admin.site.register(Siumulation)
+admin.site.register(Simulation)
+admin.site.register(SimulationIonCurrentParam)
 
