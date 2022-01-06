@@ -57,7 +57,7 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
             try:
                 self.cellmlmanip_model = load_model(cellml_file.temporary_file_path())
             except Exception as e:
-                raise forms.ValidationError('Could not load cellml model: \n    ' + str(e))
+                raise forms.ValidationError('Could not process cellml model: \n    ' + str(e))
         return self.cleaned_data['cellml_file']
 
     def save(self, **kwargs):
@@ -70,12 +70,12 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         if hasattr(self, 'cellmlmanip_model'):
             model.ion_currents.clear()
             for current in IonCurrent.objects.all():
-                current.metadata_tag
-                try:
-                    self.cellmlmanip_model.get_variable_by_ontology_term((OXMETA, current.metadata_tag))
-                    model.ion_currents.add(current)
-                except KeyError:
-                    pass  # model does not have current)
+                for metadata_tag in [tag.strip() for tag in current.metadata_tags.split(',')]:
+                    try:
+                        self.cellmlmanip_model.get_variable_by_ontology_term((OXMETA, metadata_tag))
+                        model.ion_currents.add(current)
+                    except KeyError:
+                        pass  # model does not have current)
 
         model.save()
         return model
