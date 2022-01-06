@@ -93,6 +93,7 @@ class TestCellmlModelForm:
         assert model.cellml_file == str(file1)
         # check ion currents are automatically assigned
         assert list(model.ion_currents.all()) == list(IonCurrent.objects.all())
+        assert [str(c) for c in IonCurrent.objects.all()] == ['IKr (herg)', 'INa', 'ICaL', 'IKs', 'IK1', 'Ito', 'INaL']
 
         # change file
         form = CellmlModelForm(data, {'cellml_file': file2}, instance=model, user=admin_user)
