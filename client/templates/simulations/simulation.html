@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create simulation - {% endblock title %}
+
+{% block content %}
+<div id='cellmlmodelform'>
+  <h1>Create simulation</h1>
+
+  <form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+    <p>
+    <button id="savebutton" type="submit">Run simulation</button>
+    <a class="button" href="{% url 'files:model_list'%}">Cancel</a>
+    </p>
+  </form>
+</div>
+{% endblock content %}
