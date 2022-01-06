@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('cellml_file', models.FileField(blank=True, help_text='Please upload the cellml file here.', upload_to='')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('ion_currents', models.ManyToManyField(help_text='Ion currents used. This selection is ignored when a cellml file is uploaded. To edit the selection for modules using a cellml file, see the admin interface.', to='files.IonCurrent')),
+                ('ion_currents', models.ManyToManyField(blank=True, help_text='Ion currents used. This selection is ignored when a cellml file is uploaded. To edit the selection for modules using a cellml file, see the admin interface.', to='files.IonCurrent')),
             ],
             options={
                 'unique_together': {('name', 'author')},

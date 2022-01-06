@@ -75,7 +75,7 @@ class CellmlModel(models.Model):
     ion_currents = models.ManyToManyField(IonCurrent, help_text="Ion currents used. This selection is ignored when a"
                                                                 " cellml file is uploaded. To edit the selection for"
                                                                 " modules using a cellml file, see the admin "
-                                                                "interface.")
+                                                                "interface.", blank=True)
 
     class Meta:
         unique_together = ('name', 'author')
