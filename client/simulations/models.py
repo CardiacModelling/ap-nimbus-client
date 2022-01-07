@@ -1,7 +1,6 @@
 import os
 
 import django.db.models.deletion
-from django.db.models import TextField
 from django.conf import settings
 from django.db import models
 from files.models import CellmlModel, IonCurrent
@@ -18,8 +17,8 @@ class Simulation(models.Model):
         µM = 'µM', 'µM'
         nM = 'nM', 'nM'
 
-    title = TextField(blank=True, default='', help_text="A shot title to identify this simulation by.")
-    notes = TextField(blank=True, default='', help_text="A description of the simulation.")
+    title = models.CharField(max_length=255, help_text="A shot title to identify this simulation by.")
+    notes = models.TextField(blank=True, default='', help_text="A description of the simulation.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
 
@@ -29,6 +28,9 @@ class Simulation(models.Model):
 
     ion_current_type = models.CharField(choices=IonCurrentType.choices, max_length=255)
     ion_units = models.CharField(choices=IonCurrentUnits.choices, max_length=255)
+
+    class Meta:
+        unique_together = ('title', 'author')
 
     def __str__(self):
         return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
@@ -50,6 +52,7 @@ class Simulation(models.Model):
 class SimulationIonCurrentParam(models.Model):
     simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
     ion_current = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=IonCurrent)
+    current = models.FloatField()
     hill_coefficient = models.FloatField(default=1)
     saturation_level = models.FloatField(default=0)
     spread_of_uncertainty = models.FloatField(default=1)

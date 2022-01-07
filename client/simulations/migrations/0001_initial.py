@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='Simulation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.TextField(blank=True, default='', help_text="A shot title to identify this simulation by.")),
+                ('title', models.CharField(max_length=255, help_text="A shot title to identify this simulation by.")),
                 ('notes', models.TextField(blank=True, default='', help_text="A description of the simulation.")),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('pacing_frequency', models.FloatField(default=0.05, help_text='(in Hz) Frequency of pacing (between 0.05 and 5)')),
@@ -29,11 +29,15 @@ class Migration(migrations.Migration):
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
                 ('model', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='files.cellmlmodel')),
             ],
+            options={
+                'unique_together': {('title', 'author')},
+            },
         ),
         migrations.CreateModel(
             name='SimulationIonCurrentParam',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('current', models.FloatField()),
                 ('hill_coefficient', models.FloatField(default=1)),
                 ('saturation_level', models.FloatField(default=0)),
                 ('spread_of_uncertainty', models.FloatField(default=1)),
