@@ -7,7 +7,7 @@
 <div id='cellmlmodelform'>
   <h1>{% if object.id %}Edit{% else %}Create{% endif %} CellML Model{% if object.id %}: {{ object }}{% endif %}</h1>
 
-  <form method="POST" action="" enctype="multipart/form-data">
+  <form method="POST" action="" enctype="multipart/form-data" name="cellmlform">
     {% csrf_token %}
 
     {{ form.as_p }}

@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
             name='Simulation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255, help_text="A shot title to identify this simulation by.")),
-                ('notes', models.TextField(blank=True, default='', help_text="A description of the simulation.")),
+                ('title', models.CharField(max_length=255, help_text="A shot title to identify this simulation.")),
+                ('notes', models.TextField(blank=True, default='', help_text="Any notes related to this simulation. <em> Please note: These will also be visible to admin users</em>.")),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('pacing_frequency', models.FloatField(default=0.05, help_text='(in Hz) Frequency of pacing (between 0.05 and 5)')),
                 ('maximum_pacing_time', models.FloatField(default=5, help_text='(in mins) Maximum pacing time (between 0 and 120)')),
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
             name='SimulationIonCurrentParam',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('current', models.FloatField()),
+                ('current', models.FloatField(blank=True, null=True)),
                 ('hill_coefficient', models.FloatField(default=1)),
                 ('saturation_level', models.FloatField(default=0)),
                 ('spread_of_uncertainty', models.FloatField(default=1)),

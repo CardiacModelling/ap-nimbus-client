@@ -215,3 +215,20 @@ table {
 tr:nth-child(1) {
   border-top: 1px dashed #ccc; }
 
+
+#ioncurrent-formset{
+    font-size: 12px;
+    text-align: left;
+}
+
+#ioncurrent-formset input[type='number']{
+    width: 45px;
+}
+
+#ioncurrent-formset .ion-units{
+    display: inline;
+}
+
+errorlist{
+    color: #DC143C;
+}

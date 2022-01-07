@@ -29,7 +29,6 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
                 self.formset = self.formset_class(
                     self.request.POST,
                     initial=initial,
-                    context=context,
                     form_kwargs=form_kwargs)
             else:
                 self.formset = self.formset_class(initial=initial, form_kwargs=form_kwargs)
