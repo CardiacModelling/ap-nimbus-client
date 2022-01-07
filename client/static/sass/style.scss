@@ -1,32 +1,27 @@
-@charset "UTF-8";
 body {
-  font-family: "Open Sans", sans-serif;
-  font-size: 16px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px; 
   clear: both;
   padding: 10px;
-}
+  }
 
 code, input {
-  font-family: "Cousine", monospace, sans-serif;
-}
+  font-family: 'Cousine', monospace, sans-serif; }
 
 #page {
   width: 850px;
-  margin: auto;
-}
+  margin: auto; }
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
-  display: block;
-}
+  display: block; }
 
 header {
   position: relative;
 }
 
 button {
-  box-sizing: content-box;
-}
+  box-sizing: content-box; }
 
 button,
 .button {
@@ -36,8 +31,7 @@ button,
   border-radius: 5px;
   height: 20px;
   vertical-align: bottom;
-  display: inline-block;
-}
+  display: inline-block; }
 
 button, button:visited, button:active, button:hover,
 .button,
@@ -45,8 +39,7 @@ button, button:visited, button:active, button:hover,
 .button:active,
 .button:hover {
   color: #fff;
-  border: 1px solid #39578e;
-}
+  border: 1px solid #39578e; }
 
 button, button:visited, button:active, button:hover,
 .button,
@@ -54,19 +47,16 @@ button, button:visited, button:active, button:hover,
 .button:active,
 .button:hover {
   color: #fff;
-  border: 1px solid #39578e;
-}
+  border: 1px solid #39578e; }
 
 button:active,
 .button:active {
-  background-color: #192844;
-}
+  background-color: #192844; }
 
 button:hover, button.selected,
 .button:hover,
 .button.selected {
-  background-color: #335490;
-}
+  background-color: #335490; }
 
 .navbar {
   height: 60px;
@@ -75,8 +65,7 @@ button:hover, button.selected,
   position: absolute;
   /* Ensures that the menu doesn’t affect other elements */
   bottom: 0;
-  right: 0;
-}
+  right: 0; }
 
 .navbar li {
   height: auto;
@@ -87,12 +76,10 @@ button:hover, button.selected,
   list-style: none;
   /* Removes the default styling (bullets) for the list */
   padding: 10px;
-  margin-right: 20px;
-}
+  margin-right: 20px; }
 
 .navbar li ul li a::before {
-  content: "» ";
-}
+  content: '\00BB\00A0'; }
 
 .navbar a, .navbar a:hover, .navbar a:active {
   padding: 7px 0;
@@ -100,16 +87,14 @@ button:hover, button.selected,
   text-decoration: none;
   /* Removes the default hyperlink styling. */
   display: block;
-  border: none;
-}
+  border: none; }
 
 .footer-navbar {
   height: 20px;
   padding: 0;
   margin: 0;
   bottom: 0;
-  right: 0;
-}
+  right: 0; }
 
 .footer-navbar li {
   height: auto;
@@ -121,12 +106,10 @@ button:hover, button.selected,
   /* Removes the default styling (bullets) for the list */
   padding: 2px;
   margin-right: 20px;
-  font-size: 80%;
-}
+  font-size: 80%; }
 
 .footer-navbar li a::before {
-  content: "» ";
-}
+  content: '\00BB\00A0'; }
 
 .footer-navbar li a, .footer-navbar li a:hover, .footer-navbar li a:active {
   padding: 2px 0;
@@ -135,15 +118,13 @@ button:hover, button.selected,
   /* Removes the default hyperlink styling. */
   display: block;
   border: none;
-  color: white;
-}
+  color: white; }
 
 .navbar-submenu {
   min-width: 100px;
   position: relative;
   z-index: 99;
-  background-color: #ffffff;
-}
+  background-color: #ffffff; }
 
 .navbar-submenu ul {
   display: none;
@@ -154,81 +135,69 @@ button:hover, button.selected,
   /* Aligns drop-down box underneath the menu item */
   padding: 0;
   /* Aligns drop-down box underneath the menu item */
-  background-color: #ffffff;
-}
+  background-color: #ffffff; }
 
 .navbar-submenu ul li, .navbar-submenu ul a, .navbar-submenu ul a:hover, .navbar-submenu ul a:active {
   text-align: left;
   padding: 0;
-  white-space: nowrap;
-}
+  white-space: nowrap; }
 
 .navbar-submenu:hover ul {
   display: block;
-  /* Displays the drop-down box when the menu item is hovered over */
-}
-
+  /* Displays the drop-down box when the menu item is hovered over */ }
+  
 #body {
   clear: both;
   /*background-color: #ccc;*/
-  padding: 10px;
-}
+  padding: 10px; }
 
 footer {
   background-color: #263e6a;
   color: white;
   padding: 15px;
-  clear: both;
-}
+  clear: both; }
 
 a, a:active, a:visited {
   text-decoration: none;
   cursor: pointer;
-  /*border-bottom: 1px solid #263e6a;*/
-}
+  /*border-bottom: 1px solid #263e6a;*/ }
 
 a, a:active, a:visited, #comparisonModeIndicator {
-  color: #263eca;
-}
+  color: #263eca; }
 
 h1, h2, h3, h4, h5 {
-  color: #263e6a;
-}
+  color: #263e6a; }
+
 
 #notifications {
   position: absolute;
-  width: 850px;
-}
+  width: 850px; }
 
 #error {
   background-color: #e5cece;
   border: 2px solid #7d3e3e;
-  padding: 0px 10px;
-}
+  padding: 0px 10px; }
 
 #info, .info {
   background-color: #ced5e5;
   border: 2px solid #263e6a;
-  padding: 0px 10px;
-}
+  padding: 0px 10px; }
 
 .invisible {
-  display: none;
-}
+  display: none; }
 
 form input[type=text], form input[type=email], form input[type=password] {
-  width: 20em;
+  width: 20em; }
+
+#cellmlmodelform{
+    color: #339933;
 }
 
-#cellmlmodelform {
-  color: #339933;
+label[for=cellml_file-clear_id]{
+    color: #e64d00;
 }
 
-label[for=cellml_file-clear_id] {
-  color: #e64d00;
-}
-
-form label {
+form label{
   display: inline;
   font-weight: bold;
   color: black;
@@ -237,46 +206,45 @@ form label {
 form small, form .helptext, form p + ul, form td > ul {
   color: #aaa;
   font-size: small;
-  display: block;
-}
+  display: block; }
 
 table {
   width: 100%;
-  border-collapse: collapse;
-}
+  border-collapse: collapse; }
 
 tr:nth-child(1) {
-  border-top: 1px dashed #ccc;
-}
+  border-top: 1px dashed #ccc; }
 
 /* ion current table in simulation form */
-#ioncurrent-formset {
-  font-size: 12px;
-  text-align: left;
+
+#ioncurrent-formset{
+    font-size: 12px;
+    text-align: left;
 }
 
-#ioncurrent-formset input[type=number] {
-  width: 45px;
+#ioncurrent-formset input[type='number']{
+    width: 45px;
 }
 
-#ioncurrent-formset .ion-units {
-  display: inline;
+#ioncurrent-formset .ion-units{
+    display: inline;
 }
 
-errorlist {
-  color: #DC143C;
+errorlist{
+    color: #DC143C;
 }
 
-#currentname {
-  width: 70px;
-  white-space: nowrap;
+#currentname{
+    width: 70px;
+    white-space:nowrap;
 }
 
-#currentval {
-  width: 10px;
-  white-space: nowrap;
+#currentval{
+    width: 10px;
+    white-space: nowrap;
 }
 
-#currentval input[type=number] {
-  width: 70px;
+#currentval input[type='number']{
+    width: 70px;
 }
+
