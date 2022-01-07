@@ -18,7 +18,8 @@ class Simulation(models.Model):
         µM = 'µM', 'µM'
         nM = 'nM', 'nM'
 
-    notes = TextField(blank=True, default='')
+    title = TextField(blank=True, default='', help_text="A shot title to identify this simulation by.")
+    notes = TextField(blank=True, default='', help_text="A description of the simulation.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
 

@@ -19,7 +19,8 @@ class Migration(migrations.Migration):
             name='Simulation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('notes', models.TextField(blank=True, default='')),
+                ('title', models.TextField(blank=True, default='', help_text="A shot title to identify this simulation by.")),
+                ('notes', models.TextField(blank=True, default='', help_text="A description of the simulation.")),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('pacing_frequency', models.FloatField(default=0.05, help_text='(in Hz) Frequency of pacing (between 0.05 and 5)')),
                 ('maximum_pacing_time', models.FloatField(default=5, help_text='(in mins) Maximum pacing time (between 0 and 120)')),
