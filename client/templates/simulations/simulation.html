@@ -12,10 +12,10 @@
     {{ form.as_p }}
     {{ formset.management_form }}
     <table class="ioncurrent-formset" id="ioncurrent-formset">
-        <thead><tr><th>Ion Current</th><th></th><th>Hill Coefficient</th><th>Saturation Level (%)</th><th>Spread of Uncertainty</th></tr></thead>
+        <thead><tr><th>Ion Current</th><th></th><th>Hill Coefficient</th><th>Saturation Level (%)</th><th>Spread of Uncertainty</th><th>Channel protein</th><th>Gene</th><th>Description</th></tr></thead>
         <tbody>
             {% for form in formset %}
-                <tr><td>{{form.initial.ion_current}} {{form.ion_current }}</td><td>{{form.current}}</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}</td></tr>
+                <tr><td>{{form.initial.ion_current}} {{form.ion_current }}</td><td>{{form.current}}</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}</td><td>{{form.initial.channel_protein|safe}}</td><td>{{form.initial.gene}}</td><td>{{form.initial.description}}</td></tr>
             {% endfor %}
         </tbody>
     </table>

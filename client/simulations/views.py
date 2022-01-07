@@ -22,7 +22,7 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     success_url = reverse_lazy('files:model_list')
 
     def get_formset(self):
-        initial=[{'ion_current': c, 'hill_coefficient': c.default_hill_coefficient, 'saturation_level': c.default_saturation_level, 'spread_of_uncertainty': c.default_spread_of_uncertainty} for c in IonCurrent.objects.all()]
+        initial=[{'ion_current': c, 'hill_coefficient': c.default_hill_coefficient, 'saturation_level': c.default_saturation_level, 'spread_of_uncertainty': c.default_spread_of_uncertainty, 'channel_protein': c.channel_protein, 'gene': c.gene, 'description': c.description} for c in IonCurrent.objects.all()]
         if not hasattr(self, 'formset') or self.formset is None:
             form_kwargs = {'user': self.request.user}
             if self.request.method == 'POST':

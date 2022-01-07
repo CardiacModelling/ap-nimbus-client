@@ -18,6 +18,10 @@ class IonCurrent(models.Model):
                                                "the presence of the current e.g. "
                                                "<em>membrane_fast_sodium_current_conductance, "
                                                "membane_fast_sodium_current_conductance_scaling_factor</em>.")
+    channel_protein = models.CharField(max_length=255, blank=True)
+    gene = models.CharField(max_length=255, blank=True)
+    description= models.CharField(max_length=255, blank=True)
+
     default_hill_coefficient = models.FloatField(default=1,
                                                  help_text="Default hill coefficient (between 0.1 and 5).")
     default_saturation_level = models.FloatField(default=0, help_text="The (default) level of peak current "
