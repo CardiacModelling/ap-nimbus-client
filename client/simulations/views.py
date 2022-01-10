@@ -41,3 +41,14 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
         #ns = self.request.resolver_match.namespace
         #return reverse_lazy(ns + ':model_list')
         return reverse_lazy('files:model_list')
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        formset = self.get_formset()
+        if form.is_valid() and formset.is_valid():
+            simulation = form.save()
+            formset.save(simulation=simulation)
+            return self.form_valid(form)
+        else:
+            self.object = getattr(self, 'object', None)
+            return self.form_invalid(form)

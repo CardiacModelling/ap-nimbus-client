@@ -22,22 +22,23 @@ class IonCurrentForm(forms.ModelForm, UserKwargModelFormMixin):# max/min val for
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields['ion_current'].widget = forms.HiddenInput()
+
+        self.fields['current'].widget.attrs['title'] = '> 0 for IC50.'
+        self.fields['current'].widget.attrs['class'] = 'current-concentration'
+
         self.fields['hill_coefficient'].widget.attrs['min'] = 0.1
         self.fields['hill_coefficient'].widget.attrs['max'] = 5.0
         self.fields['hill_coefficient'].widget.attrs['step'] = 0.1
+        self.fields['hill_coefficient'].widget.attrs['title'] = 'Between 0.1 and 5.'
 
         self.fields['saturation_level'].widget.attrs['min'] = 0.0
         self.fields['saturation_level'].widget.attrs['step'] = 1.0
+        self.fields['saturation_level'].widget.attrs['title'] = 'Level of peak current relative to control at a very large compound concentration (between 0 and 1).\n- For an inhibitor this is in the range 0% (default) to <100% (compound has no effect).\n- For an activator Minimum > 100% (no effect) to Maximum 500% (as a guideline).'
 
-        self.fields['spread_of_uncertainty'].widget.attrs['min'] = 0.0
+        self.fields['spread_of_uncertainty'].widget.attrs['min'] = 0.0000000000000001
         self.fields['spread_of_uncertainty'].widget.attrs['max'] = 2.0
         self.fields['spread_of_uncertainty'].widget.attrs['step'] = 0.01
-
-    def clean_spread_of_uncertainty(self):
-        spread_of_uncertainty = self.cleaned_data['spread_of_uncertainty']
-        if spread_of_uncertainty <= 0:
-            raise forms.ValidationError('Spread of uncertainty cannot be 0.')
-        return spread_of_uncertainty
+        self.fields['spread_of_uncertainty'].widget.attrs['title'] = 'Spread of uncertainty (between 0 and 2).\nDefaults are estimates based on a study by Elkins et all.\nIdeally all these numbers would be replaced based on the spread you observe in fitted pIC50s.'
 
     def save(self, simulation=None, **kwargs):
         pass
@@ -73,6 +74,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         self.fields['pacing_frequency'].widget.attrs['min'] = 0.05
         self.fields['pacing_frequency'].widget.attrs['max'] = 5.0
         self.fields['pacing_frequency'].widget.attrs['step'] = 0.01
+
 
         self.fields['maximum_pacing_time'].widget.attrs['min'] = 0.0
         self.fields['maximum_pacing_time'].widget.attrs['max'] = 120.0

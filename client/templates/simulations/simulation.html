@@ -16,11 +16,12 @@
         {% endif %}
     {% endfor %}
 
-    {{ formset.management_form }}
+    {{formset.management_form}}
     <table class="ioncurrent-formset" id="ioncurrent-formset">
         <thead><tr><th colspan="3">Ion Current {{form.ion_current_type}} {{form.ion_units}}</th><th>Hill <br/>Coefficient</th><th>Saturation <br/>Level (%)</th><th>Spread of <br/>Uncertainty</th><th>Channel <br/>protein</th><th>Gene</th><th>Description</th></tr></thead>
         <tbody>
             {% for form in formset %}
+                {{form.non_field_errors}}
                 <tr><td id="currentname">{{form.initial.ion_current}} {{form.ion_current}}</td><td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}</td><td>{{form.initial.channel_protein|safe}}</td><td><em>{{form.initial.gene}}</em></td><td>{{form.initial.description}}</td></tr>
             {% endfor %}
         </tbody>
