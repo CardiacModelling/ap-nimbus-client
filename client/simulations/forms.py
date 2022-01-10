@@ -78,8 +78,20 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         self.fields['maximum_pacing_time'].widget.attrs['max'] = 120.0
         self.fields['maximum_pacing_time'].widget.attrs['step'] = 1.0
 
+    def clean_title(self):
+        title = self.cleaned_data['title']
+        if self._meta.model.objects.filter(title=title, author=self.user).exists():
+            raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
+        return title
+
     def clean_maximum_pacing_time(self):
         maximum_pacing_time = self.cleaned_data['maximum_pacing_time']
         if maximum_pacing_time <= 0:
             raise forms.ValidationError('Maximum pacing time cannot be 0.')
         return maximum_pacing_time
+
+    def save(self, **kwargs):
+        simulation = super().save(commit=False)
+        if not hasattr(simulation, 'author') or simulation.author is None:
+            simulation.author = self.user
+        simulation.save()

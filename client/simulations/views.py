@@ -19,7 +19,6 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     form_class = SimulationForm
     formset_class = IonCurrentFormSet
     template_name = 'simulations/simulation.html'
-    success_url = reverse_lazy('files:model_list')
 
     def get_formset(self):
         initial=[{'ion_current': c, 'hill_coefficient': c.default_hill_coefficient, 'saturation_level': c.default_saturation_level, 'spread_of_uncertainty': c.default_spread_of_uncertainty, 'channel_protein': c.channel_protein, 'gene': c.gene, 'description': c.description} for c in IonCurrent.objects.all()]
@@ -37,3 +36,8 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     def get_context_data(self, **kwargs):
         kwargs['formset'] = self.get_formset()
         return super().get_context_data(**kwargs)
+
+    def get_success_url(self, *args, **kwargs):
+        #ns = self.request.resolver_match.namespace
+        #return reverse_lazy(ns + ':model_list')
+        return reverse_lazy('files:model_list')

@@ -20,14 +20,25 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
                    'year': forms.widgets.Select(choices=[(y, y) for y in range(datetime.now().year + 1, 1949, - 1)])}
 
     def __init__(self, *args, **kwargs):
+        self.current_title = None  # current title
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+
+        instance = kwargs.get('instance', None)
+        self.current_name = instance.name if instance else None
+
         self.fields['year'].initial = datetime.now().year
 
         if not self.user.is_superuser:
             self.fields.pop('predefined')
             self.fields.pop('ap_predict_model_call')
             self.fields.pop('ion_currents')
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if name != self.current_name and self._meta.model.objects.filter(name=name, author=self.user).exists():
+            raise forms.ValidationError('You already have a CellML model with this name, the name must be unique!')
+        return name
 
     def clean_ap_predict_model_call(self):
         model_call = self.cleaned_data.get('ap_predict_model_call', None)

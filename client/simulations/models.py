@@ -33,7 +33,7 @@ class Simulation(models.Model):
         unique_together = ('title', 'author')
 
     def __str__(self):
-        return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
+        return self.title
 
     def is_editable_by(self, user):
         """
