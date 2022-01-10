@@ -280,3 +280,7 @@ errorlist {
 #currentval input[type=number] {
   width: 70px;
 }
+
+#id_ion_units {
+  width: 65px;
+}

@@ -69,7 +69,6 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
 
         self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + [(None, '--- Uploaded models ---')] + uploaded_models
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
-        self.fields['ion_units'].choices = Simulation.IonCurrentUnits.choices
 
         self.fields['pacing_frequency'].widget.attrs['min'] = 0.05
         self.fields['pacing_frequency'].widget.attrs['max'] = 5.0

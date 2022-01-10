@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('pacing_frequency', models.FloatField(default=0.05, help_text='(in Hz) Frequency of pacing (between 0.05 and 5)')),
                 ('maximum_pacing_time', models.FloatField(default=5, help_text='(in mins) Maximum pacing time (between 0 and 120)')),
-                ('ion_current_type', models.CharField(choices=[('pIC50', 'PIC50'), ('IC50', 'IC50')], max_length=255)),
+                ('ion_current_type', models.CharField(choices=[('pIC50', 'pIC50'), ('IC50', 'IC50')], max_length=255)),
                 ('ion_units', models.CharField(choices=[('-log(M)', '-log(M)'), ('M', 'M'), ('µM', 'µM'), ('nM', 'nM')], max_length=255)),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
                 ('model', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='files.cellmlmodel')),

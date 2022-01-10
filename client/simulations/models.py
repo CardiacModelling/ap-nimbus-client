@@ -8,7 +8,7 @@ from files.models import CellmlModel, IonCurrent
 
 class Simulation(models.Model):
     class IonCurrentType(models.TextChoices):
-        PIC50 = 'pIC50', 'PIC50'
+        PIC50 = 'pIC50', 'pIC50'
         IC50 = 'IC50', 'IC50'
 
     class IonCurrentUnits(models.TextChoices):
