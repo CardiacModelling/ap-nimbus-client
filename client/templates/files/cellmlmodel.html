@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{% if object.id %}Edit{% else %}Create{% endif %} CellML model - {% if object.id %}: {{ object }}{% endif %}{% endblock title %}
+{% block title %}{% if object.id %}Edit{% else %}Create{% endif %} annotated CellML model - {% if object.id %}: {{ object }}{% endif %}{% endblock title %}
 
 {% block content %}
 <div id='cellmlmodelform'>
-  <h1>{% if object.id %}Edit{% else %}Create{% endif %} CellML Model{% if object.id %}: {{ object }}{% endif %}</h1>
-
+  <h1>{% if object.id %}Edit{% else %}Create{% endif %} annotated CellML Model{% if object.id %}: {{ object }}{% endif %}</h1>
+<div class="info">Please note: The CellML file is expected to be annotated with metadata, See <a href="https://chaste.cs.ox.ac.uk/trac/wiki/ChasteGuides/CodeGenerationFromCellML#ModelannotationwithRDF">The Chaste wiki</a> for more details</div>
   <form method="POST" action="" enctype="multipart/form-data" name="cellmlform">
     {% csrf_token %}
 

@@ -10,22 +10,42 @@
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
 
-    {% for field in form.visible_fields %}
-        {% if field.name != "ion_units" and field.name != "ion_current_type"%}
-            <p>{{ field.label_tag }} {{ field.errors }} {{ field }} <span class="helptext">{{ field.help_text|safe }}</span></p>
-        {% endif %}
-    {% endfor %}
-
     {{formset.management_form}}
-    <table class="ioncurrent-formset" id="ioncurrent-formset">
-        <thead><tr><th colspan="3">Ion Current {{form.ion_current_type}} {{form.ion_units}}</th><th>Hill <br/>Coefficient</th><th>Saturation <br/>Level (%)</th><th>Spread of <br/>Uncertainty</th><th>Channel <br/>protein</th><th>Gene</th><th>Description</th></tr></thead>
+    <fieldset>
+    <legend>Title</legend>
+      <p>{{ form.title.errors }} {{ form.title }}</p>
+      <p><label for="id_title">Additional notes:</label><br/> {{ form.notes.errors }} {{ form.notes }} <span class="helptext">{{ form.help_text|safe }}</span></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Cellml Model</legend>
+      <p>{{ form.model.errors }} {{ form.model }} or <a href="{% url 'files:create_model' %}">Upload a new annotated CellML model</a></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Pacing details</legend>
+      <p>{{ form.pacing_frequency.label_tag }} {{ form.pacing_frequency.errors }} {{ form.pacing_frequency }} <span class="helptext">{{ form.pacing_frequency.help_text }}</span></p> 
+      <p>{{ form.maximum_pacing_time.label_tag }} {{ form.maximum_pacing_time.errors }} {{ form.maximum_pacing_time }} <span class="helptext">{{ form.maximum_pacing_time.help_text|safe }}</span></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Ion Channel Current Inhibitory Concentrations</legend>
+      <table class="ioncurrent-formset" id="ioncurrent-formset">
+        {% with firstline=formset|first %}
+          <thead><tr><th colspan="3" title="{{firstline.current.help_text}}">Ion Current<img src="{% static 'img/info.png' %}" class="info"> {{form.ion_current_type}} {{form.ion_units}}</th>
+                     <th title="{{firstline.hill_coefficient.help_text}}">Hill <br/>Coefficient<img src="{% static 'img/info.png' %}" class="info"> </th>
+                     <th title="{{firstline.saturation_level.help_text}}">Saturation <br/>Level (%)<img src="{% static 'img/info.png' %}" class="info"> </th>
+                     <th title="{{firstline.spread_of_uncertainty.help_text}}"><input type="checkbox" id="enable_spread_of_uncertainty">Spread of <br/>Uncertainty<img src="{% static 'img/info.png' %}" class="info"> </th>
+                     <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
+        {% endwith %}
         <tbody>
-            {% for form in formset %}
-                {{form.non_field_errors}}
-                <tr><td id="currentname">{{form.initial.ion_current}} {{form.ion_current}}</td><td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}</td><td>{{form.initial.channel_protein|safe}}</td><td><em>{{form.initial.gene}}</em></td><td>{{form.initial.description}}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+          {% for form in formset %}
+            {{form.non_field_errors}}
+            <tr><td id="currentname">{{form.initial.ion_current}} {{form.ion_current.as_hidden}}</td><td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}{{form.default_spread_of_uncertainty}}</td><td>{{form.initial.channel_protein|safe}}</td><td><em>{{form.initial.gene}}</em></td><td>{{form.initial.description}}</td></tr>
+          {% endfor %}
+          </tbody>
+      </table>
+    </fieldset>
     <p>
     <button id="savebutton" type="submit">Run simulation</button>
     <a class="button" href="{% url 'files:model_list'%}">Cancel</a>

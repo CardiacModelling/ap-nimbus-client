@@ -21,16 +21,11 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     template_name = 'simulations/simulation.html'
 
     def get_formset(self):
-        initial=[{'ion_current': c, 'hill_coefficient': c.default_hill_coefficient, 'saturation_level': c.default_saturation_level, 'spread_of_uncertainty': c.default_spread_of_uncertainty, 'channel_protein': c.channel_protein, 'gene': c.gene, 'description': c.description} for c in IonCurrent.objects.all()]
         if not hasattr(self, 'formset') or self.formset is None:
+            initial=[{'ion_current': c, 'hill_coefficient': int(c.default_hill_coefficient) if c.default_hill_coefficient.is_integer() else c.default_hill_coefficient, 'saturation_level': int(c.default_saturation_level) if c.default_saturation_level.is_integer() else c.default_saturation_level, 'spread_of_uncertainty': None, 'default_spread_of_uncertainty': int(c.default_spread_of_uncertainty) if c.default_spread_of_uncertainty.is_integer() else c.default_spread_of_uncertainty, 'channel_protein': c.channel_protein, 'gene': c.gene, 'description': c.description} for c in IonCurrent.objects.all()]
+#            initial=[]
             form_kwargs = {'user': self.request.user}
-            if self.request.method == 'POST':
-                self.formset = self.formset_class(
-                    self.request.POST,
-                    initial=initial,
-                    form_kwargs=form_kwargs)
-            else:
-                self.formset = self.formset_class(initial=initial, form_kwargs=form_kwargs)
+            self.formset = self.formset_class(self.request.POST or None, initial=initial, form_kwargs=form_kwargs)
         return self.formset
 
     def get_context_data(self, **kwargs):
