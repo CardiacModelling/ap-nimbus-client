@@ -4,11 +4,10 @@ from django.urls import reverse_lazy
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
-
 from files.models import CellmlModel, IonCurrent
-from .models import Simulation, SimulationIonCurrentParam
-from .forms import IonCurrentForm, IonCurrentFormSet, SimulationForm
 
+from .forms import IonCurrentForm, IonCurrentFormSet, SimulationForm
+from .models import Simulation, SimulationIonCurrentParam
 
 
 class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):

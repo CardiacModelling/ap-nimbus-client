@@ -1,11 +1,10 @@
 from braces.forms import UserKwargModelFormMixin
 from cellmlmanip import load_model
 from django import forms
-
-from files.models import CellmlModel, IonCurrent
-from .models import Simulation, SimulationIonCurrentParam
 from django.forms import inlineformset_factory
+from files.models import CellmlModel, IonCurrent
 
+from .models import Simulation, SimulationIonCurrentParam
 
 
 class BaseSimulationFormSet(forms.BaseFormSet):
