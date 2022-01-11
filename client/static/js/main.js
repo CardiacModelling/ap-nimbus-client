@@ -31,8 +31,32 @@ $( document ).ready(function(){
         // store ion current type in formset fo individual currents
         $('.ion_current_type').val($('#id_ion_current_type').val())
     });
-
-
     // trigger initial processing of current type
     $('#id_ion_current_type').change();
+
+    // enable other options when a current is input
+    $('.current-concentration').change(function(){
+        id = $(this).attr("id").replace('id_form-', '').replace('-current', '');
+        $('#id_form-' + id + '-hill_coefficient').attr('disabled',  $(this).val()=='');
+        $('#id_form-' + id + '-saturation_level').attr('disabled',  $(this).val()=='');
+        $('#id_form-' + id + '-spread_of_uncertainty').attr('disabled',  $(this).val()=='' || !$('#enable_spread_of_uncertainty').is(':checked'));
+    });
+
+    // update enabledness of spead when checkbox is ticked
+    $('#enable_spread_of_uncertainty').change(function(){
+        if ($('#enable_spread_of_uncertainty').is(':checked')){
+            // initialise spread values
+            $('.spread_of_uncertainty').each(function(){
+                id = $(this).attr("id").replace('-spread_of_uncertainty', '-default_spread_of_uncertainty');
+                $(this).val($('#' + id).val());
+            });
+        }else{
+            // clear spread values
+            $('.spread_of_uncertainty').each(function(){
+                $(this).val('');
+            });
+        }
+        // trigger enabledness change
+        $('.current-concentration').change();
+    });
 });
