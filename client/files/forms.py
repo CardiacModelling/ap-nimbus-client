@@ -28,6 +28,8 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         self.current_name = instance.name if instance else None
 
         self.fields['year'].initial = datetime.now().year
+        for _, field in self.fields.items():
+            field.widget.attrs['title'] = field.help_text.replace('<em>', '').replace('</em>', '')
 
         if not self.user.is_superuser:
             self.fields.pop('predefined')

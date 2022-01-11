@@ -259,10 +259,6 @@ tr:nth-child(1) {
   width: 45px;
 }
 
-#ioncurrent-formset .ion-units {
-  display: inline;
-}
-
 .errorlist {
   color: #DC143C;
 }
@@ -283,4 +279,14 @@ tr:nth-child(1) {
 
 #id_ion_units {
   width: 65px;
+}
+
+#ion-description-header {
+  width: 150px;
+}
+
+.info {
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0);
 }
