@@ -79,6 +79,13 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
 
         self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000000001, 'max': 120.0, 'step': 1.0,
                                                            'required': 'required'}
+
+        pk_choices = [('compound_concentration_range','Compound Concentration Range'),
+                      ('compound_concentration_points','Compound Concentration Points'),
+                      ('pharmacokinetics', 'Pharmacokinetics')]
+        self.fields['pk_or_concs'] = forms.ChoiceField(choices=pk_choices,initial='compound_concentration_range',
+                                                       widget=forms.RadioSelect(attrs={'class': 'pk_or_concs'}))
+
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
 

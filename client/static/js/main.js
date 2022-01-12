@@ -82,8 +82,22 @@ $( document ).ready(function(){
         $('.current-concentration').change();
 
     });
-
-    // update ion current enabledness
+    // initialise ion current enabledness
     $('#id_model').change();
 
+    // display relevant compound parems based on seletcted type
+    $('.pk_or_concs').change(function(){
+        $('.pk_or_concs').each(function(){
+            id = $(this).attr('id');
+            if($(this).is(':checked')){
+                $('#' + id.replace('id_', 'div_')).css('visibility', 'visible');
+                $('#' + id.replace('id_', 'div_')).css('display', 'block');
+            }else{
+                $('#' + id.replace('id_', 'div_')).css('visibility', 'hidden');
+                $('#' + id.replace('id_', 'div_')).css('display', 'none');
+            }
+        });
+    })
+    //initialise compound parems isplay
+    $('.pk_or_concs').change();
 });

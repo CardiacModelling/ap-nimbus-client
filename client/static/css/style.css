@@ -228,7 +228,7 @@ label[for=cellml_file-clear_id] {
   color: #e64d00;
 }
 
-form label {
+form label, fieldset legend {
   display: inline;
   font-weight: bold;
   color: black;

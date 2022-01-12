@@ -9,7 +9,6 @@
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
-
     {{formset.management_form}}
     <fieldset>
     <legend>Title</legend>
@@ -39,20 +38,33 @@
                      <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
         {% endwith %}
         <tbody>
-          {% for form in formset %}
-            {{form.non_field_errors}}
-            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{form.initial.ion_current}} {{form.ion_current.as_hidden}}</td>
-                <td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td>
-                <td>{{form.hill_coefficient}}</td>
-                <td>{{form.saturation_level}}</td>
-                <td>{{form.spread_of_uncertainty}}{{form.default_spread_of_uncertainty}}</td>
-                <td>{{form.initial.channel_protein|safe}}</td>
-                <td><em>{{form.initial.gene}}</em></td>
-                <td>{{form.initial.description}}</td></tr>
+          {% for ion_form in formset %}
+            {{ion_form.non_field_errors}}
+            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}</td>
+                <td id="currentval">{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
+                <td>{{ion_form.hill_coefficient}}</td>
+                <td>{{ion_form.saturation_level}}</td>
+                <td>{{ion_form.spread_of_uncertainty}}{{ion_form.default_spread_of_uncertainty}}</td>
+                <td>{{ion_form.initial.channel_protein|safe}}</td>
+                <td><em>{{ion_form.initial.gene}}</em></td>
+                <td>{{ion_form.initial.description}}</td></tr>
           {% endfor %}
           </tbody>
       </table>
     </fieldset>
+
+   <fieldset>
+    <legend>{% for choice in form.pk_or_concs%}{{choice}}{% endfor %}</legend>
+           <div id="div_pk_or_concs_0">
+compound_concentration_range
+           </div>
+           <div id="div_pk_or_concs_1">
+compound_concentration_points
+           </div>
+           <div id="div_pk_or_concs_2">
+pharmacokinetics
+           </div>
+   </fieldset>
     <p>
     <button id="savebutton" type="submit">Run simulation</button>
     <a class="button" href="{% url 'files:model_list'%}">Cancel</a>
