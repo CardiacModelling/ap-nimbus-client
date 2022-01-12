@@ -41,7 +41,14 @@
         <tbody>
           {% for form in formset %}
             {{form.non_field_errors}}
-            <tr><td id="currentname">{{form.initial.ion_current}} {{form.ion_current.as_hidden}}</td><td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td><td>{{form.hill_coefficient}}</td><td>{{form.saturation_level}}</td><td>{{form.spread_of_uncertainty}}{{form.default_spread_of_uncertainty}}</td><td>{{form.initial.channel_protein|safe}}</td><td><em>{{form.initial.gene}}</em></td><td>{{form.initial.description}}</td></tr>
+            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{form.initial.ion_current}} {{form.ion_current.as_hidden}}</td>
+                <td id="currentval">{{form.current}}</td><td class="ion-units">-log(m)</td>
+                <td>{{form.hill_coefficient}}</td>
+                <td>{{form.saturation_level}}</td>
+                <td>{{form.spread_of_uncertainty}}{{form.default_spread_of_uncertainty}}</td>
+                <td>{{form.initial.channel_protein|safe}}</td>
+                <td><em>{{form.initial.gene}}</em></td>
+                <td>{{form.initial.description}}</td></tr>
           {% endfor %}
           </tbody>
       </table>

@@ -6,8 +6,12 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 
-from .forms import IonCurrentForm, IonCurrentFormSet, SimulationForm
-from .models import Simulation, SimulationIonCurrentParam
+from .forms import IonCurrentFormSet, SimulationForm
+from .models import Simulation
+
+
+def to_int(f):
+    return int(f) if f.is_integer() else f
 
 
 class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
@@ -21,10 +25,18 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
 
     def get_formset(self):
         if not hasattr(self, 'formset') or self.formset is None:
-            initial=[{'ion_current': c, 'hill_coefficient': int(c.default_hill_coefficient) if c.default_hill_coefficient.is_integer() else c.default_hill_coefficient, 'saturation_level': int(c.default_saturation_level) if c.default_saturation_level.is_integer() else c.default_saturation_level, 'spread_of_uncertainty': None, 'default_spread_of_uncertainty': int(c.default_spread_of_uncertainty) if c.default_spread_of_uncertainty.is_integer() else c.default_spread_of_uncertainty, 'channel_protein': c.channel_protein, 'gene': c.gene, 'description': c.description} for c in IonCurrent.objects.all()]
-#            initial=[]
+            initial = [{'ion_current': c, 'hill_coefficient': to_int(c.default_hill_coefficient),
+                        'saturation_level': to_int(c.default_saturation_level),
+                        'spread_of_uncertainty': None,
+                        'default_spread_of_uncertainty': to_int(c.default_spread_of_uncertainty),
+                        'channel_protein': c.channel_protein,
+                        'gene': c.gene, 'description': c.description,
+                        'models': [m.id for m in CellmlModel.objects.all()
+                                   if c in m.ion_currents.all() and m.is_visible_to(self.request.user)]}
+                       for c in IonCurrent.objects.all()]
             form_kwargs = {'user': self.request.user}
-            self.formset = self.formset_class(self.request.POST or None, initial=initial, form_kwargs=form_kwargs)
+            self.formset = self.formset_class(self.request.POST or None, initial=initial,
+                                              form_kwargs=form_kwargs)
         return self.formset
 
     def get_context_data(self, **kwargs):

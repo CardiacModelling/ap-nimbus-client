@@ -2,6 +2,21 @@ var $ = require('./jquery-3.6.0.min.js');
 
 //Create simulation page
 $( document ).ready(function(){
+    // update ion current enabledness when model changes
+    $('#id_model').change(function(){
+        $('.current-concentration').each(function(){
+            id = $(this).attr("id").replace('id_form-', '').replace('-current', '');
+            models_str = $('#id_form-' + id + '-models').val();
+            models = [];
+            if(models_str.length > 2){
+                models = models_str.slice(1,-1).split(", ");
+            }
+            $(this).attr('disabled', $('#id_model').val()=='' || !models.includes($('#id_model').val()));
+        });
+        // trigger enabledness change
+        $('.current-concentration').change();
+    });
+
     // Update ion current units when selected unit changes
     $('#id_ion_units').change(function(){
         $('.ion-units').each(function(){
@@ -37,9 +52,16 @@ $( document ).ready(function(){
     // enable other options when a current is input
     $('.current-concentration').change(function(){
         id = $(this).attr("id").replace('id_form-', '').replace('-current', '');
-        $('#id_form-' + id + '-hill_coefficient').attr('disabled',  $(this).val()=='');
-        $('#id_form-' + id + '-saturation_level').attr('disabled',  $(this).val()=='');
-        $('#id_form-' + id + '-spread_of_uncertainty').attr('disabled',  $(this).val()=='' || !$('#enable_spread_of_uncertainty').is(':checked'));
+        disabled =  $(this).val()=='' || $(this).is(':disabled');
+        $('#id_form-' + id + '-hill_coefficient').attr('disabled',  disabled);
+        $('#id_form-' + id + '-hill_coefficient').attr('required',  !disabled);
+
+        $('#id_form-' + id + '-saturation_level').attr('disabled',  disabled);
+        $('#id_form-' + id + '-saturation_level').attr('required',  !disabled);
+
+        $('#id_form-' + id + '-spread_of_uncertainty').attr('disabled',  disabled || !$('#enable_spread_of_uncertainty').is(':checked'));
+        $('#id_form-' + id + '-spread_of_uncertainty').attr('required',  !disabled && $('#enable_spread_of_uncertainty').is(':checked'));
+
     });
 
     // update enabledness of spead when checkbox is ticked
@@ -58,5 +80,10 @@ $( document ).ready(function(){
         }
         // trigger enabledness change
         $('.current-concentration').change();
+
     });
+
+    // update ion current enabledness
+    $('#id_model').change();
+
 });

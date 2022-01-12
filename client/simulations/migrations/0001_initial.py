@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('current', models.FloatField(blank=True, null=True, help_text="> 0 for IC50.")),
                 ('hill_coefficient', models.FloatField(default=1, help_text="Between 0.1 and 5.")),
                 ('saturation_level', models.FloatField(default=0, help_text="Level of peak current relative to control at a very large compound concentration (between 0 and 1).\n- For an inhibitor this is in the range 0% (default) to <100% (compound has no effect).\n- For an activator Minimum > 100% (no effect) to Maximum 500% (as a guideline).")),
-                ('spread_of_uncertainty', models.FloatField(default=1, help_text="Spread of uncertainty (between 0 and 2).\nDefaults are estimates based on a study by Elkins et all.\nIdeally all these numbers would be replaced based on the spread you observe in fitted pIC50s.")),
+                ('spread_of_uncertainty', models.FloatField(blank=True, null=True, default=1, help_text="Spread of uncertainty (between 0 and 2).\nDefaults are estimates based on a study by Elkins et all.\nIdeally all these numbers would be replaced based on the spread you observe in fitted pIC50s.")),
                 ('ion_current', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='files.ioncurrent')),
                 ('simulation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='simulations.simulation')),
             ],
