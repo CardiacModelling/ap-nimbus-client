@@ -109,6 +109,10 @@ $( document ).ready(function(){
             $('#id_minimum_concentration').removeAttr('min');
             $('#id_maximum_concentration').removeAttr('min');
         }
+        // update required for Pharmacokinetics
+        div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
+        $('#id_PK_data').attr('required', div_2_vis);
+
     })
     //initialise compound parems isplay
     $('.pk_or_concs').change();

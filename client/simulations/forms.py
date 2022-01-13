@@ -1,9 +1,18 @@
+import csv
+
 from braces.forms import UserKwargModelFormMixin
 from django import forms
 from django.forms import inlineformset_factory
 from files.models import CellmlModel
 
 from .models import Simulation, SimulationIonCurrentParam
+from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
+import magic
+from django.template.defaultfilters import filesizeformat
+
+
+MAX_UPLOAD_SIZE = 41943040
+
 
 
 class BaseSimulationFormSet(forms.BaseFormSet):
@@ -58,6 +67,8 @@ IonCurrentFormSet = inlineformset_factory(
 
 
 class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
+    PK_data = forms.FileField(help_text="File format: tab-seperated values (TSV); Encoding: UTF-8; Max. size: " + filesizeformat(MAX_UPLOAD_SIZE) + "\n"
+                                        "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     class Meta:
         model = Simulation
         exclude = ('author', )
@@ -82,6 +93,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'}, choices=self.fields['pk_or_concs'].choices)
         self.fields['minimum_concentration'].widget.attrs = {'min': 0}
         self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
+        self.fields['PK_data'].widget.attrs = {'accept': '.tsv'};
 
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
@@ -91,6 +103,34 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         if self._meta.model.objects.filter(title=title, author=self.user).exists():
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
+
+    def clean_PK_data(self):
+        concentrations = []
+        PK_data = self.cleaned_data['PK_data']
+        if PK_data.size > MAX_UPLOAD_SIZE:
+            raise forms.ValidationError('Please keep filesize under %s. Current filesize %s' % (filesizeformat(MAX_UPLOAD_SIZE), filesizeformat(PK_data.size)))
+
+        # check mime type of any uploaded file
+        if isinstance(PK_data, UploadedFile):
+            mime_type = str(magic.from_buffer(PK_data.file.read(), mime=True))
+            if mime_type not in ['text/plain', 'text/tsv']:
+                raise forms.ValidationError('Invalid TSV file. Unsupported file type, expecting a (UTF-8 text-based) TSV file.')
+
+        if isinstance(PK_data, TemporaryUploadedFile):
+            with open(PK_data.temporary_file_path()) as file:
+                tsv_file = tuple(csv.reader(file, delimiter="\t"))
+                # validate TSV format
+                for line in tsv_file:
+                    if len(line) < 2 or len(line) > 31:
+                        raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with between 2 and 31 columns.')
+                    for i, column in enumerate(line):
+                        try:
+                            if float(column) < 0:
+                                raise forms.ValidationError('Invalid TSV file. Got a negetive value in column %s.' %i)
+                        except ValueError:
+                            raise forms.ValidationError('Invalid TSV file. Expecting number values only. Got `%s.`' %column)
+
+        return concentrations
 
     def save(self, **kwargs):
         simulation = super().save(commit=False)

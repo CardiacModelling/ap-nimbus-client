@@ -220,10 +220,6 @@ form input[type=text], form input[type=email], form input[type=password] {
   width: 20em;
 }
 
-#cellmlmodelform {
-  color: #339933;
-}
-
 label[for=cellml_file-clear_id] {
   color: #e64d00;
 }
@@ -241,6 +237,7 @@ legend, legend label {
 }
 
 form small, form .helptext, form p + ul, form td > ul {
+  white-space: pre;
   color: #aaa;
   font-size: small;
   display: block;
@@ -253,6 +250,11 @@ table {
 
 tr:nth-child(1) {
   border-top: 1px dashed #ccc;
+}
+
+/* green highlight uploaded form */
+#id_cellml_file, #id_PK_data {
+  color: #339933;
 }
 
 /* ion current table in simulation form */
@@ -291,6 +293,7 @@ tr:nth-child(1) {
   width: 150px;
 }
 
+/* infor button */
 .info {
   border: 0;
   padding: 0;
