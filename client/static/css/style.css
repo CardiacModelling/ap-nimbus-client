@@ -228,10 +228,16 @@ label[for=cellml_file-clear_id] {
   color: #e64d00;
 }
 
-form label, fieldset legend {
+form label {
   display: inline;
   font-weight: bold;
   color: black;
+}
+
+legend, legend label {
+  display: inline;
+  font-weight: bold;
+  color: #7E7E7E;
 }
 
 form small, form .helptext, form p + ul, form td > ul {

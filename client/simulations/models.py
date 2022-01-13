@@ -15,6 +15,11 @@ class Simulation(models.Model):
         µM = 'µM', 'µM'
         nM = 'nM', 'nM'
 
+    class PkOptions(models.TextChoices):
+        compound_concentration_range = 'compound_concentration_range','Compound Concentration Range'
+        compound_concentration_points = 'compound_concentration_points','Compound Concentration Points'
+        pharmacokinetics = 'pharmacokinetics', 'Pharmacokinetics'
+
     title = models.CharField(max_length=255, help_text="A short title to identify this simulation.")
     notes = models.TextField(blank=True, default='',
                              help_text="Any notes related to this simulation. Please note: These will also be visible "
@@ -28,6 +33,12 @@ class Simulation(models.Model):
 
     ion_current_type = models.CharField(choices=IonCurrentType.choices, max_length=255, help_text="Ion current type.")
     ion_units = models.CharField(choices=IonCurrentUnits.choices, max_length=255, help_text="Ion current units.")
+
+    pk_or_concs = models.CharField(max_length=255, choices=PkOptions.choices, default='compound_concentration_range')
+    minimum_concentration = models.FloatField(blank=True, null=True, default=0, help_text="in µM (at least 0).")
+    maximum_concentration = models.FloatField(blank=True, null=True, default=100, help_text="in µM (> minimum_concentration).")
+    intermediate_point_count = models.CharField(max_length=255, choices=[(str(i), str(i)) for i in range(11)], default='4', help_text='Count of plasma concentrations between the minimum and maximum (between 0 and 10).')
+    intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
 
     class Meta:
         unique_together = ('title', 'author')

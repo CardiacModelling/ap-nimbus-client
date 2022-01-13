@@ -10,6 +10,7 @@
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
     {{formset.management_form}}
+    {{form.non_field_errors}}
     <fieldset>
     <legend>Title</legend>
       <p>{{ form.title.errors }} {{ form.title }}</p>
@@ -40,12 +41,12 @@
         <tbody>
           {% for ion_form in formset %}
             {{ion_form.non_field_errors}}
-            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}</td>
-                <td id="currentval">{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
-                <td>{{ion_form.hill_coefficient}}</td>
-                <td>{{ion_form.saturation_level}}</td>
-                <td>{{ion_form.spread_of_uncertainty}}{{ion_form.default_spread_of_uncertainty}}</td>
-                <td>{{ion_form.initial.channel_protein|safe}}</td>
+            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{ion_form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
+                <td id="currentval">{{ion_form.current.errors}}{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
+                <td>{{ion_form.hill_coefficient.errors}}{{ion_form.hill_coefficient}}</td>
+                <td>{{ion_form.saturation_level.errors}}{{ion_form.saturation_level}}</td>
+                <td>{{ion_form.spread_of_uncertainty.errors}}{{ion_form.default_spread_of_uncertainty.errors}}{{ion_form.spread_of_uncertainty}}{{ion_form.default_spread_of_uncertainty.as_hidden}}</td>
+                <td>{{ion_form.initial.channel_protein.errors}}{{ion_form.initial.channel_protein|safe}}</td>
                 <td><em>{{ion_form.initial.gene}}</em></td>
                 <td>{{ion_form.initial.description}}</td></tr>
           {% endfor %}
@@ -54,9 +55,12 @@
     </fieldset>
 
    <fieldset>
-    <legend>{% for choice in form.pk_or_concs%}{{choice}} {% endfor %}</legend>
+    <legend>{% for radio in form.pk_or_concs%}{{radio}} {% endfor %}</legend>
            <div id="div_pk_or_concs_0">
-compound_concentration_range
+               <p>{{ form.minimum_concentration.label_tag }} {{ form.minimum_concentration.errors }} {{ form.minimum_concentration }} <span class="helptext">{{ form.minimum_concentration.help_text }}</span></p>
+               <p>{{ form.maximum_concentration.label_tag }} {{ form.maximum_concentration.errors }} {{ form.maximum_concentration }} <span class="helptext">{{ form.maximum_concentration.help_text }}</span></p>
+               <p>{{ form.intermediate_point_count.label_tag }} {{ form.intermediate_point_count.errors }} {{ form.intermediate_point_count }} <span class="helptext">{{ form.intermediate_point_count.help_text }}</span></p>
+               <p>{{ form.intermediate_point_log_scale.label_tag }} {{ form.intermediate_point_log_scale.errors }} {{ form.intermediate_point_log_scale }} <span class="helptext">{{ form.intermediate_point_log_scale.help_text }}</span></p>
            </div>
            <div id="div_pk_or_concs_1">
 compound_concentration_points

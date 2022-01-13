@@ -11,7 +11,7 @@ class BaseSimulationFormSet(forms.BaseFormSet):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
 
-class IonCurrentForm(forms.ModelForm, UserKwargModelFormMixin):
+class IonCurrentForm(forms.ModelForm, UserKwargModelFormMixin):#to implement validation(clean)
     class Meta:
         model = SimulationIonCurrentParam
         exclude = ('author', 'simulation')
@@ -21,15 +21,14 @@ class IonCurrentForm(forms.ModelForm, UserKwargModelFormMixin):
         super().__init__(*args, **kwargs)
         self.fields['default_spread_of_uncertainty'] = forms.CharField(widget=forms.HiddenInput())
 
-        self.fields['current'].widget.attrs = {'title': '> 0 for IC50.', 'disabled': 'disabled',
-                                               'class': 'current-concentration'}
+        self.fields['current'].widget.attrs = {'class': 'current-concentration'}
         self.fields['hill_coefficient'].widget.attrs = {'min': 0.1, 'max': 5.0, 'step': 0.1}
         self.fields['hill_coefficient'].required = False
 
         self.fields['saturation_level'].widget.attrs = {'min': 0.0, 'step': 1.0}
         self.fields['saturation_level'].required = False
 
-        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000000001, 'max': 2.0, 'step': 0.01,
+        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000001, 'max': 2.0, 'step': 0.01,
                                                              'class': 'spread_of_uncertainty'}
 
         for _, field in self.fields.items():
@@ -77,14 +76,12 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
 
         self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 0.01, 'required': 'required'}
 
-        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000000001, 'max': 120.0, 'step': 1.0,
+        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 1.0,
                                                            'required': 'required'}
 
-        pk_choices = [('compound_concentration_range','Compound Concentration Range'),
-                      ('compound_concentration_points','Compound Concentration Points'),
-                      ('pharmacokinetics', 'Pharmacokinetics')]
-        self.fields['pk_or_concs'] = forms.ChoiceField(choices=pk_choices,initial='compound_concentration_range',
-                                                       widget=forms.RadioSelect(attrs={'class': 'pk_or_concs'}))
+        self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'}, choices=self.fields['pk_or_concs'].choices)
+        self.fields['minimum_concentration'].widget.attrs = {'min': 0}
+        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
 
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text

@@ -97,7 +97,25 @@ $( document ).ready(function(){
                 $('#' + id.replace('id_', 'div_')).css('display', 'none');
             }
         });
+
+        // update required and min for Compound Concentration Range
+        div_0_vis = $('#div_pk_or_concs_0').css('visibility') == 'visible'
+        $('#id_minimum_concentration').attr('required', div_0_vis);
+        $('#id_maximum_concentration').attr('required', div_0_vis);
+        if(div_0_vis){
+            $('#id_minimum_concentration').attr('min', 0);
+            $('#id_minimum_concentration').change();
+        }else{
+            $('#id_minimum_concentration').removeAttr('min');
+            $('#id_maximum_concentration').removeAttr('min');
+        }
     })
     //initialise compound parems isplay
     $('.pk_or_concs').change();
+
+    //update min value for maximum_concentration
+    $('#id_minimum_concentration').change(function(){
+        min_min = parseFloat($(this).val());
+        $('#id_maximum_concentration').attr('min', min_min >= 0 ? min_min + parseFloat(0.0000000000001): 0);
+    });
 });
