@@ -123,9 +123,9 @@ $( document ).ready(function(){
         min_min = parseFloat($(this).val());
         $('#id_maximum_concentration').attr('min', min_min >= 0 ? min_min + parseFloat(0.0000000000001): 0);
     });
-    
+
     //Render markdown editor
-    element = document.getElementById('id_form-notes'); //grab new text area
+    element = document.getElementById('id_notes'); //grab new text area
     var simplemde = new SimpleMDE({hideIcons:['guide', 'quote', 'heading'], showIcons: ['strikethrough', 'heading-1', 'heading-2', 'heading-3', 'code', 'table', 'horizontal-rule', 'undo', 'redo'], element: element});
     simplemde.render();
 });

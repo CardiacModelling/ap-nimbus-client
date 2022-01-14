@@ -14,7 +14,6 @@ code, input {
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
-header, section, footer, aside, nav, article, figure {
   display: block; }
 
 header {
@@ -218,6 +217,7 @@ table {
 
 tr:nth-child(1) {
   border-top: 1px dashed #ccc; }
+
 
 
 
@@ -870,6 +870,8 @@ span.CodeMirror-selectedtext {
 }
 .CodeMirror .cm-spell-error:not(.cm-url):not(.cm-comment):not(.cm-tag):not(.cm-word) {
     background: rgba(255, 0, 0, 0.15);
+}
+
 
 
 
@@ -917,7 +919,7 @@ span.CodeMirror-selectedtext {
     width: 150px;
 }
 
-/* info button */
+/* infor button */
 .info{
     border:0;
     padding:0;
