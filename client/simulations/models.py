@@ -2,7 +2,6 @@ import os
 
 import django.db.models.deletion
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.dispatch import receiver
@@ -18,6 +17,7 @@ class StrictlyGreaterValidator(MinValueValidator):
     def compare(self, a, b):
         return a <= b
 
+
 class Simulation(models.Model):
     class IonCurrentType(models.TextChoices):
         PIC50 = 'pIC50', 'pIC50'
@@ -30,8 +30,8 @@ class Simulation(models.Model):
         nM = 'nM', 'nM'
 
     class PkOptions(models.TextChoices):
-        compound_concentration_range = 'compound_concentration_range','Compound Concentration Range'
-        compound_concentration_points = 'compound_concentration_points','Compound Concentration Points'
+        compound_concentration_range = 'compound_concentration_range', 'Compound Concentration Range'
+        compound_concentration_points = 'compound_concentration_points', 'Compound Concentration Points'
         pharmacokinetics = 'pharmacokinetics', 'Pharmacokinetics'
 
     title = models.CharField(max_length=255, help_text="A short title to identify this simulation.")
@@ -53,12 +53,17 @@ class Simulation(models.Model):
     pk_or_concs = models.CharField(max_length=255, choices=PkOptions.choices, default='compound_concentration_range')
     minimum_concentration = models.FloatField(blank=True, null=True, default=0, help_text="(in µM) at least 0.",
                                               validators=[MinValueValidator(0)])
-    maximum_concentration = models.FloatField(blank=True, null=True, default=100, help_text="(in µM) > minimum_concentration.",
+    maximum_concentration = models.FloatField(blank=True, null=True, default=100,
+                                              help_text="(in µM) > minimum_concentration.",
                                               validators=[MinValueValidator(0)])
-    intermediate_point_count = models.CharField(max_length=255, choices=[(str(i), str(i)) for i in range(11)], default='4', help_text='Count of plasma concentrations between the minimum and maximum (between 0 and 10).')
+    intermediate_point_count = models.CharField(
+        max_length=255, choices=[(str(i), str(i)) for i in range(11)], default='4',
+        help_text='Count of plasma concentrations between the minimum and maximum (between 0 and 10).'
+    )
     intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
+
     class Meta:
         unique_together = ('title', 'author')
 
@@ -86,7 +91,7 @@ class SimulationIonCurrentParam(models.Model):
     # can't validate as restriction only if IC50 selected. Form javascript should validate
     current = models.FloatField(blank=True, null=True, help_text="> 0 for IC50.")
     hill_coefficient = models.FloatField(default=1, help_text="Between 0.1 and 5.",
-                                          validators=[MinValueValidator(0), MaxValueValidator(5)])
+                                         validators=[MinValueValidator(0), MaxValueValidator(5)])
     saturation_level = models.FloatField(default=0, validators=[MinValueValidator(0)],
                                          help_text="Level of peak current relative to control at a very large compound "
                                                    "concentration (between 0 and 1).\n- For an inhibitor this is in the"

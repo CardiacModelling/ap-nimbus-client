@@ -14,6 +14,7 @@ class BaseSimulationFormSet(forms.BaseFormSet):
     def save(self, simulation=None, **kwargs):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
+
 class IonCurrentForm(forms.ModelForm):
     class Meta:
         model = SimulationIonCurrentParam
@@ -68,7 +69,7 @@ class BaseConcentrationPointsFormSet(forms.BaseFormSet):
 class CompoundConcentrationPointForm(forms.ModelForm):
     class Meta:
         model = CompoundConcentrationPoint
-        exclude=('simulation', ),
+        exclude = ('simulation', ),
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -125,10 +126,11 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 1.0,
                                                            'required': 'required'}
 
-        self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'}, choices=self.fields['pk_or_concs'].choices)
+        self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},
+                                                              choices=self.fields['pk_or_concs'].choices)
         self.fields['minimum_concentration'].widget.attrs = {'min': 0}
         self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
-        self.fields['PK_data'].widget.attrs = {'accept': '.tsv'};
+        self.fields['PK_data'].widget.attrs = {'accept': '.tsv'}
 
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
@@ -140,14 +142,15 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         return title
 
     def clean_PK_data(self):
-        concentrations = []
         PK_data = self.cleaned_data['PK_data']
 
         # check mime type of any uploaded file
         if isinstance(PK_data, UploadedFile):
             mime_type = str(magic.from_buffer(PK_data.file.read(), mime=True))
             if mime_type not in ['text/plain', 'text/tsv']:
-                raise forms.ValidationError('Invalid TSV file. Unsupported file type, expecting a (UTF-8 text-based) TSV file.')
+                raise forms.ValidationError(
+                    'Invalid TSV file. Unsupported file type, expecting a (UTF-8 text-based) TSV file.'
+                )
 
         if isinstance(PK_data, TemporaryUploadedFile):
             with open(PK_data.temporary_file_path()) as file:
@@ -159,9 +162,11 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                     for i, column in enumerate(line):
                         try:
                             if float(column) < 0:
-                                raise forms.ValidationError('Invalid TSV file. Got a negetive value in column %s.' %i)
+                                raise forms.ValidationError('Invalid TSV file. Got a negetive value in column %s.' % i)
                         except ValueError:
-                            raise forms.ValidationError('Invalid TSV file. Expecting number values only. Got `%s.`' %column)
+                            raise forms.ValidationError(
+                                'Invalid TSV file. Expecting number values only. Got `%s.`' % column
+                            )
 
         return PK_data
 

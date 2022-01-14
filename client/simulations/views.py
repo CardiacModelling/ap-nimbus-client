@@ -43,9 +43,10 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     def get_concentration_formset(self):
         if not hasattr(self, 'concentration_formset') or self.concentration_formset is None:
             form_kwargs = {'user': self.request.user}
-            self.concentration_formset = self.concentration_formset_class(self.request.POST or None, prefix='concentration', form_kwargs=form_kwargs)
+            self.concentration_formset = self.concentration_formset_class(self.request.POST or None,
+                                                                          prefix='concentration',
+                                                                          form_kwargs=form_kwargs)
         return self.concentration_formset
-
 
     def get_context_data(self, **kwargs):
         kwargs['ion_formset'] = self.get_ion_formset()
