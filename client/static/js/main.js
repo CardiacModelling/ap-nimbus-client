@@ -5,8 +5,8 @@ $( document ).ready(function(){
     // update ion current enabledness when model changes
     $('#id_model').change(function(){
         $('.current-concentration').each(function(){
-            id = $(this).attr("id").replace('id_form-', '').replace('-current', '');
-            models_str = $('#id_form-' + id + '-models').val();
+            id = $(this).attr("id").replace('id_ion-', '').replace('-current', '');
+            models_str = $('#id_ion-' + id + '-models').val();
             models = [];
             if(models_str.length > 2){
                 models = models_str.slice(1,-1).split(", ");
@@ -20,7 +20,7 @@ $( document ).ready(function(){
     // Update ion current units when selected unit changes
     $('#id_ion_units').change(function(){
         $('.ion-units').each(function(){
-            $(this).html($('#id_ion_units').val());
+            $(this).html('&nbsp;' + $('#id_ion_units').val());
         });
     });
 
@@ -51,16 +51,16 @@ $( document ).ready(function(){
 
     // enable other options when a current is input
     $('.current-concentration').change(function(){
-        id = $(this).attr("id").replace('id_form-', '').replace('-current', '');
+        id = $(this).attr("id").replace('id_ion-', '').replace('-current', '');
         disabled =  $(this).val()=='' || $(this).is(':disabled');
-        $('#id_form-' + id + '-hill_coefficient').attr('disabled',  disabled);
-        $('#id_form-' + id + '-hill_coefficient').attr('required',  !disabled);
+        $('#id_ion-' + id + '-hill_coefficient').attr('disabled',  disabled);
+        $('#id_ion-' + id + '-hill_coefficient').attr('required',  !disabled);
 
-        $('#id_form-' + id + '-saturation_level').attr('disabled',  disabled);
-        $('#id_form-' + id + '-saturation_level').attr('required',  !disabled);
+        $('#id_ion-' + id + '-saturation_level').attr('disabled',  disabled);
+        $('#id_ion--' + id + '-saturation_level').attr('required',  !disabled);
 
-        $('#id_form-' + id + '-spread_of_uncertainty').attr('disabled',  disabled || !$('#enable_spread_of_uncertainty').is(':checked'));
-        $('#id_form-' + id + '-spread_of_uncertainty').attr('required',  !disabled && $('#enable_spread_of_uncertainty').is(':checked'));
+        $('#id_ion-' + id + '-spread_of_uncertainty').attr('disabled',  disabled || !$('#enable_spread_of_uncertainty').is(':checked'));
+        $('#id_ion-' + id + '-spread_of_uncertainty').attr('required',  !disabled && $('#enable_spread_of_uncertainty').is(':checked'));
 
     });
 

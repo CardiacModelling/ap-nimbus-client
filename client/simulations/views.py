@@ -6,8 +6,9 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 
-from .forms import IonCurrentFormSet, SimulationForm
+from .forms import CompoundConcentrationPointsFormSet, IonCurrentFormSet, SimulationForm
 from .models import Simulation
+
 
 
 def to_int(f):
@@ -20,11 +21,12 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     """
     model = Simulation
     form_class = SimulationForm
-    formset_class = IonCurrentFormSet
+    ion_formset_class = IonCurrentFormSet
+    concentration_formset_class = CompoundConcentrationPointsFormSet
     template_name = 'simulations/simulation.html'
 
-    def get_formset(self):
-        if not hasattr(self, 'formset') or self.formset is None:
+    def get_ion_formset(self):
+        if not hasattr(self, 'ion_formset') or self.ion_formset is None:
             initial = [{'ion_current': c, 'hill_coefficient': to_int(c.default_hill_coefficient),
                         'saturation_level': to_int(c.default_saturation_level),
                         'spread_of_uncertainty': None,
@@ -35,12 +37,20 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
                                    if c in m.ion_currents.all() and m.is_visible_to(self.request.user)]}
                        for c in IonCurrent.objects.all()]
             form_kwargs = {'user': self.request.user}
-            self.formset = self.formset_class(self.request.POST or None, initial=initial,
-                                              form_kwargs=form_kwargs)
-        return self.formset
+            self.ion_formset = self.ion_formset_class(self.request.POST or None, initial=initial, prefix='ion',
+                                                      form_kwargs=form_kwargs)
+        return self.ion_formset
+
+    def get_concentration_formset(self):
+        if not hasattr(self, 'concentration_formset') or self.concentration_formset is None:
+            form_kwargs = {'user': self.request.user}
+            self.concentration_formset = self.concentration_formset_class(self.request.POST or None, prefix='concentration', form_kwargs=form_kwargs)
+        return self.concentration_formset
+
 
     def get_context_data(self, **kwargs):
-        kwargs['formset'] = self.get_formset()
+        kwargs['ion_formset'] = self.get_ion_formset()
+        kwargs['concentration_formset'] = self.get_concentration_formset()
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):
@@ -50,10 +60,12 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        formset = self.get_formset()
-        if form.is_valid() and formset.is_valid():
+        ion_formset = self.get_ion_formset()
+        concentration_formset = self.get_concentration_formset()
+        if form.is_valid() and ion_formset.is_valid() and concentration_formset.is_valid():
             simulation = form.save()
-            formset.save(simulation=simulation)
+            ion_formset.save(simulation=simulation)
+            concentration_formset.save(simulation=simulation)
             return self.form_valid(form)
         else:
             self.object = getattr(self, 'object', None)

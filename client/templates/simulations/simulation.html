@@ -9,7 +9,8 @@
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
-    {{formset.management_form}}
+    {{ion_formset.management_form}}
+    {{concentration_formset.management_form}}
     {{form.non_field_errors}}
     <fieldset>
     <legend>Title</legend>
@@ -31,7 +32,7 @@
     <fieldset>
     <legend>Ion Channel Current Inhibitory Concentrations</legend>
       <table class="ioncurrent-formset" id="ioncurrent-formset">
-        {% with firstline=formset|first %}
+        {% with firstline=ion_formset|first %}
           <thead><tr><th colspan="3" title="{{firstline.current.help_text}}">Ion Current<img src="{% static 'img/info.png' %}" class="info"> {{form.ion_current_type}} {{form.ion_units}}</th>
                      <th title="{{firstline.hill_coefficient.help_text}}">Hill <br/>Coefficient<img src="{% static 'img/info.png' %}" class="info"> </th>
                      <th title="{{firstline.saturation_level.help_text}}">Saturation <br/>Level (%)<img src="{% static 'img/info.png' %}" class="info"> </th>
@@ -39,9 +40,9 @@
                      <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
         {% endwith %}
         <tbody>
-          {% for ion_form in formset %}
+          {% for ion_form in ion_formset %}
             {{ion_form.non_field_errors}}
-            <tr><td id="currentname"><input type="hidden" name="form-{{ forloop.counter0 }}-models" value="{{ion_form.initial.models}}" class="used-in-models" title="" id="id_form-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
+            <tr><td id="currentname"><input type="hidden" name="ion-{{ forloop.counter0 }}-models" value="{{ion_form.initial.models}}" class="used-in-models" title="" id="id_ion-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
                 <td id="currentval">{{ion_form.current.errors}}{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
                 <td>{{ion_form.hill_coefficient.errors}}{{ion_form.hill_coefficient}}</td>
                 <td>{{ion_form.saturation_level.errors}}{{ion_form.saturation_level}}</td>
@@ -53,7 +54,6 @@
           </tbody>
       </table>
     </fieldset>
-
    <fieldset>
     <legend>{% for radio in form.pk_or_concs%}{{radio}} {% endfor %}</legend>
            <div id="div_pk_or_concs_0">
@@ -63,7 +63,13 @@
                <p>{{ form.intermediate_point_log_scale.label_tag }} {{ form.intermediate_point_log_scale.errors }} {{ form.intermediate_point_log_scale }} <span class="helptext">{{ form.intermediate_point_log_scale.help_text }}</span></p>
            </div>
            <div id="div_pk_or_concs_1">
-compound_concentration_points
+                   <div class="pk_concentration_input_group">
+                   {% for concentration_form in concentration_formset %}
+                       {{concentration_form.non_field_errors}}
+                       {{forloop.counter|stringformat:"02d" }}{{concentration_form.concentration.errors}}{{concentration_form.concentration}} µM<br/>
+                       {%if forloop.counter|divisibleby:6 %}</div><div class="pk_concentration_input_group">{%endif %}
+                   {% endfor %}
+                   </div>
            </div>
            <div id="div_pk_or_concs_2">
                <p>{{ form.PK_data.label_tag }} {{ form.PK_data.errors }} {{ form.PK_data }} <span class="helptext">{{ form.PK_data.help_text }}</span></p>

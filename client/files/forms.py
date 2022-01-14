@@ -24,9 +24,6 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        instance = kwargs.get('instance', None)
-        self.current_name = instance.name if instance else None
-
         self.fields['year'].initial = datetime.now().year
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text.replace('<em>', '').replace('</em>', '')
@@ -38,7 +35,10 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean_name(self):
         name = self.cleaned_data['name']
-        if name != self.current_name and self._meta.model.objects.filter(name=name, author=self.user).exists():
+        exists = CellmlModel.objects.filter(name=name, author=self.user)
+        if self.instance:
+            exists = exists.exclude(pk=self.instance.pk)
+        if exists:
             raise forms.ValidationError('You already have a CellML model with this name, the name must be unique!')
         return name
 

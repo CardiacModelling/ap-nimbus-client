@@ -1,29 +1,23 @@
 import csv
 
+import magic
 from braces.forms import UserKwargModelFormMixin
 from django import forms
+from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 from django.forms import inlineformset_factory
 from files.models import CellmlModel
 
-from .models import Simulation, SimulationIonCurrentParam
-from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
-import magic
-from django.template.defaultfilters import filesizeformat
-
-
-MAX_UPLOAD_SIZE = 41943040
-
+from .models import CompoundConcentrationPoints, Simulation, SimulationIonCurrentParam
 
 
 class BaseSimulationFormSet(forms.BaseFormSet):
     def save(self, simulation=None, **kwargs):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
-
-class IonCurrentForm(forms.ModelForm, UserKwargModelFormMixin):#to implement validation(clean)
+class IonCurrentForm(forms.ModelForm):
     class Meta:
         model = SimulationIonCurrentParam
-        exclude = ('author', 'simulation')
+        exclude = ('simulation', )
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -58,7 +52,7 @@ IonCurrentFormSet = inlineformset_factory(
     model=SimulationIonCurrentParam,
     form=IonCurrentForm,
     formset=BaseSimulationFormSet,
-    exclude=('author', 'simulation'),
+    exclude=('simulation', ),
     can_delete=False,
     can_order=False,
     extra=0,
@@ -66,9 +60,50 @@ IonCurrentFormSet = inlineformset_factory(
 )
 
 
+class BaseConcentrationPointsFormSet(forms.BaseFormSet):
+    def save(self, simulation=None, **kwargs):
+        return [form.save(simulation=simulation, **kwargs) for form in self.forms]
+
+
+class CompoundConcentrationPointsForm(forms.ModelForm):
+    class Meta:
+        model = CompoundConcentrationPoints
+        exclude=('simulation', ),
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        self.fields['concentration'].required = False
+        self.fields['concentration'].widget.attrs = {'class': 'compound-concentration', 'required': False,
+                                                     'min': 0}
+        for _, field in self.fields.items():
+            field.widget.attrs['title'] = field.help_text
+
+    def save(self, simulation=None, **kwargs):
+        # concentration not set, don't try to save
+        if not self.cleaned_data.get('concentration', None):
+            return None
+        concentration = super().save(commit=False)
+        concentration.simulation = simulation
+        assert concentration.concentration
+        concentration.save()
+        return concentration
+
+
+CompoundConcentrationPointsFormSet = inlineformset_factory(
+    parent_model=Simulation,
+    model=CompoundConcentrationPoints,
+    form=CompoundConcentrationPointsForm,
+    formset=BaseSimulationFormSet,
+    exclude=('simulation', ),
+    can_delete=False,
+    can_order=False,
+    extra=0,
+    min_num=30,
+)
+
+
 class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
-    PK_data = forms.FileField(help_text="File format: tab-seperated values (TSV); Encoding: UTF-8; Max. size: " + filesizeformat(MAX_UPLOAD_SIZE) + "\n"
-                                        "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     class Meta:
         model = Simulation
         exclude = ('author', )
@@ -107,8 +142,6 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
     def clean_PK_data(self):
         concentrations = []
         PK_data = self.cleaned_data['PK_data']
-        if PK_data.size > MAX_UPLOAD_SIZE:
-            raise forms.ValidationError('Please keep filesize under %s. Current filesize %s' % (filesizeformat(MAX_UPLOAD_SIZE), filesizeformat(PK_data.size)))
 
         # check mime type of any uploaded file
         if isinstance(PK_data, UploadedFile):
@@ -121,8 +154,8 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                 tsv_file = tuple(csv.reader(file, delimiter="\t"))
                 # validate TSV format
                 for line in tsv_file:
-                    if len(line) < 2 or len(line) > 31:
-                        raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with between 2 and 31 columns.')
+                    if len(line) < 2:
+                        raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with at least 2 columns.')
                     for i, column in enumerate(line):
                         try:
                             if float(column) < 0:
@@ -130,7 +163,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                         except ValueError:
                             raise forms.ValidationError('Invalid TSV file. Expecting number values only. Got `%s.`' %column)
 
-        return concentrations
+        return PK_data
 
     def save(self, **kwargs):
         simulation = super().save(commit=False)

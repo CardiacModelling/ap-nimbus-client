@@ -299,3 +299,13 @@ tr:nth-child(1) {
   padding: 0;
   background: rgba(0, 0, 0, 0);
 }
+
+#div_pk_or_concs_1 input {
+  width: 70px;
+}
+
+/* show 5 groups of Compound Concentration Points side by side*/
+.pk_concentration_input_group {
+  width: 20%;
+  float: left;
+}
