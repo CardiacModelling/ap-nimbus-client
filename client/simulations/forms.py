@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 from django.forms import inlineformset_factory
 from files.models import CellmlModel
 
-from .models import CompoundConcentrationPoints, Simulation, SimulationIonCurrentParam
+from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 class BaseSimulationFormSet(forms.BaseFormSet):
@@ -65,9 +65,9 @@ class BaseConcentrationPointsFormSet(forms.BaseFormSet):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
 
-class CompoundConcentrationPointsForm(forms.ModelForm):
+class CompoundConcentrationPointForm(forms.ModelForm):
     class Meta:
-        model = CompoundConcentrationPoints
+        model = CompoundConcentrationPoint
         exclude=('simulation', ),
 
     def __init__(self, *args, **kwargs):
@@ -90,10 +90,10 @@ class CompoundConcentrationPointsForm(forms.ModelForm):
         return concentration
 
 
-CompoundConcentrationPointsFormSet = inlineformset_factory(
+CompoundConcentrationPointFormSet = inlineformset_factory(
     parent_model=Simulation,
-    model=CompoundConcentrationPoints,
-    form=CompoundConcentrationPointsForm,
+    model=CompoundConcentrationPoint,
+    form=CompoundConcentrationPointForm,
     formset=BaseSimulationFormSet,
     exclude=('simulation', ),
     can_delete=False,

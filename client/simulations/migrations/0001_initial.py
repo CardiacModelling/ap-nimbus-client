@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='CompoundConcentrationPoints',
+            name='CompoundConcentrationPoint',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('concentration', models.FloatField(help_text='(in µM) at least 0.', validators=[django.core.validators.MinValueValidator(0)])),

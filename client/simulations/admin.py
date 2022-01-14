@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from .models import Simulation, SimulationIonCurrentParam, CompoundConcentrationPoints
+from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 admin.site.register(Simulation)
 admin.site.register(SimulationIonCurrentParam)
-admin.site.register(CompoundConcentrationPoints)
+admin.site.register(CompoundConcentrationPoint)

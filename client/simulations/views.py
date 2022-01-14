@@ -6,9 +6,8 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 
-from .forms import CompoundConcentrationPointsFormSet, IonCurrentFormSet, SimulationForm
+from .forms import CompoundConcentrationPointFormSet, IonCurrentFormSet, SimulationForm
 from .models import Simulation
-
 
 
 def to_int(f):
@@ -22,7 +21,7 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     model = Simulation
     form_class = SimulationForm
     ion_formset_class = IonCurrentFormSet
-    concentration_formset_class = CompoundConcentrationPointsFormSet
+    concentration_formset_class = CompoundConcentrationPointFormSet
     template_name = 'simulations/simulation.html'
 
     def get_ion_formset(self):

@@ -104,7 +104,7 @@ class SimulationIonCurrentParam(models.Model):
         return str(self.ion_current) + " - " + str(self.simulation)
 
 
-class CompoundConcentrationPoints(models.Model):
+class CompoundConcentrationPoint(models.Model):
     simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
     concentration = models.FloatField(validators=[MinValueValidator(0), ], help_text="(in µM) at least 0.")
 
