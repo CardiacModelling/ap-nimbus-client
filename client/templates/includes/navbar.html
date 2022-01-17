@@ -4,10 +4,10 @@
     <li><a href="{% url 'home' %}">Home</a></li>
     {% if user.is_authenticated %}
         <li class="navbar-submenu">
-          <a href="{% url 'simulations:simulation_list' %}">Create Simulation</a>
+          <a href="{% url 'simulations:simulation_list' %}">Simulations</a>
         </li>
         <li class="navbar-submenu">
-          <a href="{% url 'simulations:simulation_list' %}">Cellml Models</a>
+          <a href="{% url 'files:model_list' %}">Cellml Models</a>
         </li>
         <li class="navbar-submenu">
           <a>{{ user.full_name }}</a>
