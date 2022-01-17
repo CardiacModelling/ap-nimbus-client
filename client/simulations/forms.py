@@ -170,7 +170,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                     if len(line) < 2:
                         raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with at least 2 columns.')
 
-                    current_time = float(line[0)
+                    current_time = float(line[0])
                     if current_time <= previous_time:
                         raise forms.ValidationError('Invalid TSV file. Time in column 1 should be strictly increasing.')
                     previous_time = current_time
