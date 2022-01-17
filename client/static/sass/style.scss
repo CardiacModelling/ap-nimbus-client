@@ -25,7 +25,7 @@ button {
 
 button,
 .button {
-  background-color: #263e6a;
+  background-color: #1a296b;
   padding: 8px 12px;
   font-size: 14px;
   border-radius: 5px;
@@ -152,7 +152,7 @@ button:hover, button.selected,
   padding: 10px; }
 
 footer {
-  background-color: #263e6a;
+  background-image: linear-gradient(to right, #009bbd, #007ca7, #005597, #1a296b);
   color: white;
   padding: 15px;
   clear: both; }
@@ -160,13 +160,13 @@ footer {
 a, a:active, a:visited {
   text-decoration: none;
   cursor: pointer;
-  /*border-bottom: 1px solid #263e6a;*/ }
+  /*border-bottom: 1px solid #1a296b;*/ }
 
 a, a:active, a:visited, #comparisonModeIndicator {
-  color: #263eca; }
+  color: #009bbd; }
 
 h1, h2, h3, h4, h5 {
-  color: #263e6a; }
+  color: #1a296b; }
 
 
 #notifications {
@@ -180,7 +180,7 @@ h1, h2, h3, h4, h5 {
 
 #info, .info {
   background-color: #ced5e5;
-  border: 2px solid #263e6a;
+  border: 2px solid #1a296b;
   padding: 0px 10px; }
 
 .invisible {

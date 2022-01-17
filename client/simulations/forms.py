@@ -139,7 +139,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                                                               choices=self.fields['pk_or_concs'].choices)
         self.fields['minimum_concentration'].widget.attrs = {'min': 0}
         self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
-        self.fields['PK_data'].widget.attrs = {'accept': '.tsv'}
+        self.fields['PK_data'].widget.attrs = {'accept': ('.txt', '.tsv')}
 
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
