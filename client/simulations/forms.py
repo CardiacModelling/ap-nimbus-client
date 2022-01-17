@@ -196,3 +196,7 @@ class SimulationEditForm(forms.ModelForm, UserKwargModelFormMixin):
     class Meta:
         model = Simulation
         fields = ('title', 'notes')
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)

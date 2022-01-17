@@ -4,7 +4,7 @@
     <li><a href="{% url 'home' %}">Home</a></li>
     {% if user.is_authenticated %}
         <li class="navbar-submenu">
-          <a href="{% url 'simulations:create_simulation' %}">Create Simulation</a>
+          <a href="{% url 'simulations:simulation_list' %}">Create Simulation</a>
         </li>
         <li class="navbar-submenu">
           <a href="{% url 'simulations:simulation_list' %}">Cellml Models</a>

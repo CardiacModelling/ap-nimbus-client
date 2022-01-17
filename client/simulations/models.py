@@ -88,7 +88,7 @@ class Simulation(models.Model):
         """
         Can the user view this model?
         """
-        return self.predefined or user.is_superuser or user == self.author
+        return self.is_editable_by(user)
 
 
 class SimulationIonCurrentParam(models.Model):

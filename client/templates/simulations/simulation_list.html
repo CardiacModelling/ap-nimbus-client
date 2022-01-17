@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load entities %}
 
 {% block title %}Simulations - {% endblock title %}
 
@@ -12,9 +11,10 @@
     <ul>
       {% for simulation in object_list %}
           <li title="{{ simulation.title }}">
-              <strong>{{ story.title }}</strong>
-              <small>(<a href="{% url 'simulations:simulation_edit' story.id %}">edit</a>, <a href="{% url 'simulations:simulation_delete' story.id %}">delete</a>) 
+              <strong>{{ simulation.title }}</strong>
+              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>) 
           </li>
+      {% endfor %}
     </ul>
   </section>
 

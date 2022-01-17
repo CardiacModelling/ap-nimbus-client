@@ -6,7 +6,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 
-from .forms import CompoundConcentrationPointFormSet, IonCurrentFormSet, SimulationForm
+from .forms import CompoundConcentrationPointFormSet, IonCurrentFormSet, SimulationForm, SimulationEditForm
 from .models import Simulation
 
 
@@ -107,7 +107,7 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     raise_exception = True
 
     def test_func(self):
-        return self.get_object().is_deletable_by(self.request.user)
+        return self.get_object().is_editable_by(self.request.user)
 
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')
