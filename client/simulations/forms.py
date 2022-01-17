@@ -139,7 +139,7 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
                                                               choices=self.fields['pk_or_concs'].choices)
         self.fields['minimum_concentration'].widget.attrs = {'min': 0}
         self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
-        self.fields['PK_data'].widget.attrs = {'accept': ('.txt', '.tsv')}
+        self.fields['PK_data'].widget.attrs = {'accept': ('.txt,.tsv')}
 
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
@@ -165,9 +165,16 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
             with open(PK_data.temporary_file_path()) as file:
                 tsv_file = tuple(csv.reader(file, delimiter="\t"))
                 # validate TSV format
+                previous_time = -1
                 for line in tsv_file:
                     if len(line) < 2:
                         raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with at least 2 columns.')
+
+                    current_time = float(line[0)
+                    if current_time <= previous_time:
+                        raise forms.ValidationError('Invalid TSV file. Time in column 1 should be strictly increasing.')
+                    previous_time = current_time
+
                     for i, column in enumerate(line):
                         try:
                             if float(column) < 0:
