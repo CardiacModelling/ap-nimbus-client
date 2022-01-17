@@ -70,3 +70,21 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
         else:
             self.object = getattr(self, 'object', None)
             return self.form_invalid(form)
+
+
+class SimulationDeleteView(UserPassesTestMixin, DeleteView):
+    """
+    Delete a simulation
+    """
+    model = Simulation
+    # Raise a 403 error rather than redirecting to login,
+    # if the user doesn't have delete permissions.
+    raise_exception = True
+
+    def test_func(self):
+        return self.get_object().is_deletable_by(self.request.user)
+
+    def get_success_url(self, *args, **kwargs):
+        #ns = self.request.resolver_match.namespace
+        #return reverse_lazy(ns + ':model_list')
+        return reverse_lazy('files:model_list')

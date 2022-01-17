@@ -12,6 +12,9 @@ from files.models import CellmlModel, IonCurrent
 
 @deconstructible
 class StrictlyGreaterValidator(MinValueValidator):
+    """
+    Validator expectign value to be strictly greater (not equal).
+    """
     message = _('Ensure this value is greater than %(limit_value)s.')
 
     def compare(self, a, b):
@@ -19,6 +22,9 @@ class StrictlyGreaterValidator(MinValueValidator):
 
 
 class Simulation(models.Model):
+    """
+    Main simulation model
+    """
     class IonCurrentType(models.TextChoices):
         PIC50 = 'pIC50', 'pIC50'
         IC50 = 'IC50', 'IC50'
@@ -86,6 +92,9 @@ class Simulation(models.Model):
 
 
 class SimulationIonCurrentParam(models.Model):
+    """
+    Ion current parameter for a given simulation
+    """
     simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
     ion_current = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=IonCurrent)
     # can't validate as restriction only if IC50 selected. Form javascript should validate
@@ -110,6 +119,9 @@ class SimulationIonCurrentParam(models.Model):
 
 
 class CompoundConcentrationPoint(models.Model):
+    """
+    Concentration point for a given simulation
+    """
     simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
     concentration = models.FloatField(validators=[MinValueValidator(0), ], help_text="(in µM) at least 0.")
 
@@ -121,7 +133,7 @@ class CompoundConcentrationPoint(models.Model):
 def auto_delete_file_on_delete(sender, instance, **kwargs):
     """
     Deletes file from filesystem
-    when corresponding `CellmlModel` object is deleted.
+    when corresponding `Simulation` object is deleted.
     """
     if instance.PK_data:
         if os.path.isfile(instance.PK_data.path):

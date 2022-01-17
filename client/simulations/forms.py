@@ -10,12 +10,18 @@ from files.models import CellmlModel
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
-class BaseSimulationFormSet(forms.BaseFormSet):
+class BaseSaveFormSet(forms.BaseFormSet):
+    """
+    Set of forms with a save method to save all sub forms.
+    """
     def save(self, simulation=None, **kwargs):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
 
 class IonCurrentForm(forms.ModelForm):
+    """
+    Form for an Ion current parameter.
+    """
     class Meta:
         model = SimulationIonCurrentParam
         exclude = ('simulation', )
@@ -48,11 +54,12 @@ class IonCurrentForm(forms.ModelForm):
         return param
 
 
+#  Set of forms for Ion current parameters.
 IonCurrentFormSet = inlineformset_factory(
     parent_model=Simulation,
     model=SimulationIonCurrentParam,
     form=IonCurrentForm,
-    formset=BaseSimulationFormSet,
+    formset=BaseSaveFormSet,
     exclude=('simulation', ),
     can_delete=False,
     can_order=False,
@@ -61,12 +68,11 @@ IonCurrentFormSet = inlineformset_factory(
 )
 
 
-class BaseConcentrationPointsFormSet(forms.BaseFormSet):
-    def save(self, simulation=None, **kwargs):
-        return [form.save(simulation=simulation, **kwargs) for form in self.forms]
-
-
+# Set of forms for concentration points.
 class CompoundConcentrationPointForm(forms.ModelForm):
+    """
+    Form for a concentration point.
+    """
     class Meta:
         model = CompoundConcentrationPoint
         exclude = ('simulation', ),
@@ -95,7 +101,7 @@ CompoundConcentrationPointFormSet = inlineformset_factory(
     parent_model=Simulation,
     model=CompoundConcentrationPoint,
     form=CompoundConcentrationPointForm,
-    formset=BaseSimulationFormSet,
+    formset=BaseSaveFormSet,
     exclude=('simulation', ),
     can_delete=False,
     can_order=False,
@@ -105,6 +111,9 @@ CompoundConcentrationPointFormSet = inlineformset_factory(
 
 
 class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
+    """
+    Form for creating new simulations.
+    """
     class Meta:
         model = Simulation
         exclude = ('author', )
