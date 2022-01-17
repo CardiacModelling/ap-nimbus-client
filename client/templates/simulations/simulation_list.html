@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load entities %}
+
+{% block title %}Simulations - {% endblock title %}
+
+{% block content %}
+
+  <section id="simulationgrouplist">
+    <h2>Your simulations</h2>
+
+    <small><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></small>
+    <ul>
+      {% for simulation in object_list %}
+          <li title="{{ simulation.title }}">
+              <strong>{{ story.title }}</strong>
+              <small>(<a href="{% url 'simulations:simulation_edit' story.id %}">edit</a>, <a href="{% url 'simulations:simulation_delete' story.id %}">delete</a>) 
+          </li>
+    </ul>
+  </section>
+
+{% endblock content %}
+

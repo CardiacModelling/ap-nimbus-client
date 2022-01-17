@@ -14,6 +14,16 @@ def to_int(f):
     return int(f) if f.is_integer() else f
 
 
+class SimulationListView(ListView):
+    """
+    List all user's Simulations
+    """
+    template_name = 'simulations/simulation_list.html'
+
+    def get_queryset(self):
+        return (sim for sim in Simulation.objects.all() if sim.is_visible_to(self.request.user))
+
+
 class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     """
     Create a new Simulation

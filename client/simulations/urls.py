@@ -12,7 +12,7 @@ urlpatterns = [
 
 
     re_path(
-        r'^simulation/new/$',
+        r'^new/$',
         views.CellmlModelCreateView.as_view(),
         name='create_simulation',
     ),
