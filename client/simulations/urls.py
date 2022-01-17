@@ -5,12 +5,25 @@ from . import views
 
 urlpatterns = [
     re_path(
+        r'^$',
+        views.SimulationListView.as_view(),
+        name='simulation_list',
+    ),
+
+
+    re_path(
         r'^simulation/new/$',
         views.CellmlModelCreateView.as_view(),
         name='create_simulation',
     ),
+
+    re_path(
+        r'^(?P<pk>\d+)/edit$',
+        views.SimulationEditView.as_view(),
+        name='simulation_edit',
+    ),
     
-    url(
+    re_path(
         r'^(?P<pk>\d+)/delete$',
         views.SimulationDeleteView.as_view(),
         name='simulation_delete',

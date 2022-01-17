@@ -54,9 +54,7 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):
-        #ns = self.request.resolver_match.namespace
-        #return reverse_lazy(ns + ':model_list')
-        return reverse_lazy('files:model_list')
+        return reverse_lazy('simulations:simulation_list')
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -72,6 +70,23 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
             return self.form_invalid(form)
 
 
+class SimulationEditView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, UpdateView):
+    """
+    View for editing simulations.
+    We can only edit title / description not other parameters.
+    For other parameters, a new simulation would be needed.
+    """
+    model = Simulation
+    form_class = SimulationEditForm
+    template_name = 'simulations/simulation_edit.html'
+
+    def get_success_url(self, *args, **kwargs):
+        return reverse_lazy('simulations:simulation_list')
+    
+    def test_func(self):
+        self.object = self.get_object()
+        return self.get_object().is_editable_by(self.request.user)
+
 class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     """
     Delete a simulation
@@ -85,6 +100,4 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
         return self.get_object().is_deletable_by(self.request.user)
 
     def get_success_url(self, *args, **kwargs):
-        #ns = self.request.resolver_match.namespace
-        #return reverse_lazy(ns + ':model_list')
-        return reverse_lazy('files:model_list')
+        return reverse_lazy('simulations:simulation_list')

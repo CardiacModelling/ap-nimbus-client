@@ -15,7 +15,7 @@ class BaseSaveFormSet(forms.BaseFormSet):
     Set of forms with a save method to save all sub forms.
     """
     def save(self, simulation=None, **kwargs):
-        return [form.save(simulation=simulation, **kwargs) for form in self.forms]
+        return [form.save(simulation=simulation, **kwargs) for form in self.forms]#needed?
 
 
 class IonCurrentForm(forms.ModelForm):
@@ -185,3 +185,14 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
             simulation.author = self.user
         simulation.save()
         return simulation
+
+
+class SimulationEditForm(forms.ModelForm, UserKwargModelFormMixin):
+    """
+    Form for editing simulations.
+    We can only edit title / description not other parameters.
+    For other parameters, a new simulation would be needed.
+    """
+    class Meta:
+        model = Simulation
+        fields = ('title', 'notes')
