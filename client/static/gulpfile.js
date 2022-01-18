@@ -7,6 +7,9 @@ var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var sourcemaps = require('gulp-sourcemaps');
 var es = require('event-stream');
+var minify = require('gulp-minify');
+var cleanCSS = require('gulp-clean-css');
+var concat = require('gulp-concat');
 
 var config = {
   js: {
@@ -28,6 +31,8 @@ gulp.task('sass', () =>
   gulp.src(config.sass.src)
     .pipe(sass({includePaths: config.sass.include}))
     .pipe(sass().on('error', sass.logError))
+    .pipe(cleanCSS())
+    .pipe(concat('style-min.css'))
     .pipe(gulp.dest(config.sass.dest))
 );
 
@@ -52,6 +57,7 @@ var buildJs = (watch, done) => {
           .pipe(buffer())
           .pipe(sourcemaps.init({ loadMaps : true }))
           .pipe(sourcemaps.write(config.js.mapDir))
+          .pipe(minify({noSource: true}))
           .pipe(gulp.dest(config.js.outputDir));
 
       if (watch) {
