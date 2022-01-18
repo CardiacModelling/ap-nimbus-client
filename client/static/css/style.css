@@ -252,6 +252,18 @@ tr:nth-child(1) {
   border-top: 1px dashed #ccc;
 }
 
+.suppl {
+  color: #888;
+  font-size: 0.8em;
+  margin-bottom: 2em;
+}
+
+h1#entityname {
+  margin-top: 0.5em;
+  margin-bottom: 0px;
+  margin-block-end: 0px;
+}
+
 /* SimpleMde markdown editor css */
 /**
  * simplemde v1.11.2
