@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load simulations %}
+
 
 {% block title %}Simulations - {% endblock title %}
 
@@ -7,18 +9,47 @@
   <section id="simulationgrouplist">
     <h2>Your simulations</h2>
 
-    <small><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></small>
-    <ul>
-      {% for simulation in object_list %}
-          <li title="{{ simulation.title }}">
-              <strong>{{ simulation.title }}</strong>
-              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit information</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>)</small>
-          </li>
+    <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
+    <table id="simulations_table" class="simulations_table" border="1">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Date</th>
+          <th>Model</th>
+          <th colspan="2">Pacing</th>
+          <th colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
+          <th colspan="2">Compound Concentrations</th>
+          <th>Status</th>
+        </tr>
+        <tr>
+        <th colspan="3"></th>
+        <th>Freq. (Hz)</td><th>Max <br/>Time (min)</th>
+        {% ion_currents as all_currents %}
+        {% for cur in all_currents %}
+          <th>{{ cur }}</th>
+        {% endfor %}
+        <th>Units</th>
+        <th></th><th></th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for sim in object_list %}
+      <tr>
+        <td><a href="{% url 'simulations:simulation_edit' sim.pk %}">{{ sim.title}}</a></td>
+        <td>{{ sim.created_at }}</td>
+        <td><a href="{% url 'files:model_detail' sim.model.pk %}">{{ sim.model }}</a></td>
+        <td>{{ sim.pacing_frequency }}</td><td>{{ sim.maximum_pacing_time }}</td>
+        {% simulation_ion_currents sim  as sim_currents %}
+        {% for cur in sim_currents %}
+          <td>{{ cur }}</td>
+        {% endfor %}
+        <td>{{ sim.ion_units }}</td>
+        <td>{% short_field_name sim.pk_or_concs %}</td><td></td>
+        <td></td>
+      </tr>
       {% endfor %}
-    </ul>
-    <table id="simulations_table">
-    <tr><th>Actions</th><th>Title</th><th>Date</th><th colspan="2">Pacing</th><th colspan="8">Ion Channel Current Inhibitory Concentrations</th><th colspan="2">Compound Concentrations</th><th>Status</th></tr>
-    <tr><th colspan="3"></th><th>Pacing</th><th>Freq. (Hz)</td><th>Max Time (mins)</th><th>IKr (herg)</th><th>INa</th><th>ICaL</th><th>IKs</th><th>IK1</th><th>Ito</th><th>INaL</th><th>Units</th><td></td><th></th><th></th></tr>
+      </tbody>
     </table>
   </section>
 

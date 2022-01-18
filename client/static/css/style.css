@@ -1046,7 +1046,7 @@ span.CodeMirror-selectedtext {
 }
 
 /* ion current table in simulation form */
-#ioncurrent-formset {
+#ioncurrent-formset, #simulations_table {
   font-size: 12px;
   text-align: left;
 }

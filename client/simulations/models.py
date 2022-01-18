@@ -72,6 +72,7 @@ class Simulation(models.Model):
 
     class Meta:
         unique_together = ('title', 'author')
+        ordering = ('-created_at', 'model')
 
     def __str__(self):
         return self.title
