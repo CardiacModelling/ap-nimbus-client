@@ -1,4 +1,4 @@
-var $ = require('./jquery-3.6.0.min.js'); // Jquery UI
+var $ = require('./jquery-3.6.0.js'); // Jquery UI
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 
 //Create simulation page
