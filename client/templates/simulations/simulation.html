@@ -5,7 +5,7 @@
 
 {% block content %}
 <div id='simulationform'>
-  <h1>Create simulation</h1>
+{% include "./simulation_header.html" %}
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}

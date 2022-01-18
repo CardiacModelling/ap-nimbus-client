@@ -1,0 +1,21 @@
+{% load static %}
+{% load simulations %}
+
+{% if object.id %}
+<a href="{% url 'simulations:simulation_edit' object.id %}"><h1 id="entityname">Simulation: {{ object.title }}.</h1></a>
+<div class="suppl">
+    <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.
+        {% can_edit object as can_edit %}
+        {% if can_edit %}
+          <a title="Delete this simulation and all results" href="{% url 'simulations:simulation_delete' object.id %}">
+            <img src="{% static 'img/delete.png' %}" alt="Delete this simulation and all results"/>
+            Delete {{object.title}}
+          </a> |
+          {%if not in_edit %}
+            <a title="Edit this simulation info" href="{% url 'simulations:simulation_edit' object.id %}">
+              Edit simulation info{{object.title}}
+            </a> |
+          {% endif %}
+        {% endif %}</small>
+</div>
+{% else %}<h1>Create simulation.</h1>{% endif %}
