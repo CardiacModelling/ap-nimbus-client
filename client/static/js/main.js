@@ -124,8 +124,17 @@ $( document ).ready(function(){
         $('#id_maximum_concentration').attr('min', min_min >= 0 ? min_min + parseFloat(0.0000000000001): 0);
     });
 
+    // attach action to backbuttons
+    if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
+        $('#backbutton').attr("href", $('#home_link').attr("href"));
+    }else{
+       $('#backbutton').attr("href", "javascript:history.back();");
+    }
+
     //Render markdown editor
-    element = document.getElementById('id_notes'); //grab new text area
-    var simplemde = new SimpleMDE({hideIcons:['guide', 'quote', 'heading'], showIcons: ['strikethrough', 'heading-1', 'heading-2', 'heading-3', 'code', 'table', 'horizontal-rule', 'undo', 'redo'], element: element});
-    simplemde.render();
+    id_notes = $('#id_notes');
+    if(id_notes.length){
+        var simplemde = new SimpleMDE({hideIcons:['guide', 'quote', 'heading'], showIcons: ['strikethrough', 'heading-1', 'heading-2', 'heading-3', 'code', 'table', 'horizontal-rule', 'undo', 'redo'], element: id_notes[0]});
+        simplemde.render();
+    }
 });

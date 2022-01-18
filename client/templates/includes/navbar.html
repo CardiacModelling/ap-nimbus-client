@@ -1,7 +1,7 @@
 
 <nav>
   <ul class="navbar">
-    <li><a href="{% url 'home' %}">Home</a></li>
+    <li><a href="{% url 'home' %}" id="home_link">Home</a></li>
     {% if user.is_authenticated %}
         <li class="navbar-submenu">
           <a href="{% url 'simulations:simulation_list' %}">Simulations</a>
