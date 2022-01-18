@@ -1,0 +1,14 @@
+{% load static %}
+{% load files %}
+
+{% if object.id %}
+<a href="{% url 'file:model_detail' object.id %}"><h1>Annotated CellML model: {{ object.title }}.</h1></a>
+<small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.
+    {% can_edit object as can_edit %}
+    {% if can_edit %}
+      <a title="Delete this CellML model" href="{% url 'files:delete_model' object.id %}">
+        <img src="{% static 'img/delete.png' %}" alt="Delete this CellML model"/>
+        Delete {{object.title}}
+      </a> |
+    {% endif %}
+{% else %}<h1>Create annotated CellML model.</h1>{% endif %}

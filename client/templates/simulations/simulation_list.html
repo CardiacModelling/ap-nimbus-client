@@ -12,7 +12,7 @@
       {% for simulation in object_list %}
           <li title="{{ simulation.title }}">
               <strong>{{ simulation.title }}</strong>
-              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>) 
+              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit information</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>) 
           </li>
       {% endfor %}
     </ul>

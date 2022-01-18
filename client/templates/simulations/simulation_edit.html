@@ -5,13 +5,14 @@
 
 {% block content %}
 <div id='simulationform'>
-  <h1>Edit simulation {{ object.title }}</h1>
+  <h1>Edit simulation {{ object.title }} information</h1>
+  Please note<a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
     {{form.as_p}}
     <p>
-    <button id="savebutton" type="submit">Run simulation</button>
+    <button id="savebutton" type="submit">Save</button>
     <a class="button" href="{% url 'files:model_list'%}">Cancel</a>
     </p>
   </form>
