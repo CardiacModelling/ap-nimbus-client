@@ -22,7 +22,7 @@ urlpatterns = [
         views.SimulationEditView.as_view(),
         name='simulation_edit',
     ),
-    
+
     re_path(
         r'^(?P<pk>\d+)/delete$',
         views.SimulationDeleteView.as_view(),

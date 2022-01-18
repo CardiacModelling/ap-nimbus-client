@@ -6,7 +6,12 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 
-from .forms import CompoundConcentrationPointFormSet, IonCurrentFormSet, SimulationForm, SimulationEditForm
+from .forms import (
+    CompoundConcentrationPointFormSet,
+    IonCurrentFormSet,
+    SimulationEditForm,
+    SimulationForm,
+)
 from .models import Simulation
 
 
@@ -92,10 +97,11 @@ class SimulationEditView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
 
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')
-    
+
     def test_func(self):
         self.object = self.get_object()
         return self.get_object().is_editable_by(self.request.user)
+
 
 class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     """

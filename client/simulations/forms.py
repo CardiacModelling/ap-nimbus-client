@@ -15,7 +15,7 @@ class BaseSaveFormSet(forms.BaseFormSet):
     Set of forms with a save method to save all sub forms.
     """
     def save(self, simulation=None, **kwargs):
-        return [form.save(simulation=simulation, **kwargs) for form in self.forms]#needed?
+        return (form.save(simulation=simulation, **kwargs) for form in self.forms, )
 
 
 class IonCurrentForm(forms.ModelForm):

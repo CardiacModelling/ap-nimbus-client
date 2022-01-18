@@ -35,10 +35,8 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean_name(self):
         name = self.cleaned_data['name']
-        exists = CellmlModel.objects.filter(name=name, author=self.user)
-        if self.instance:
-            exists = exists.exclude(pk=self.instance.pk)
-        if exists:
+        if CellmlModel.objects.filter(name=name, author=self.user).exclude(pk__in=[self.instance.pk
+                                                                                   if self.instance else None]):
             raise forms.ValidationError('You already have a CellML model with this name, the name must be unique!')
         return name
 

@@ -141,3 +141,4 @@ class TestCellmlModelForm:
         form = CellmlModelForm(data, {'cellml_file': file4}, user=admin_user)
         assert not form.is_valid()  # This is an image not really an xml file
         assert "Could not process cellml model: \n    'Unknown unit <coulomb_per_mole>.'" in form.errors['cellml_file']
+
