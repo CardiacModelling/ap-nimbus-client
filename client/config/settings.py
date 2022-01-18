@@ -55,6 +55,7 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
+    'core',
     'accounts',
     'files',
     'simulations',
