@@ -12,10 +12,14 @@
       {% for simulation in object_list %}
           <li title="{{ simulation.title }}">
               <strong>{{ simulation.title }}</strong>
-              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit information</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>) 
+              <small>(<a href="{% url 'simulations:simulation_edit' simulation.id %}">edit information</a>, <a href="{% url 'simulations:simulation_delete' simulation.id %}">delete</a>)</small>
           </li>
       {% endfor %}
     </ul>
+    <table id="simulations_table">
+    <tr><th>Actions</th><th>Title</th><th>Date</th><th colspan="2">Pacing</th><th colspan="8">Ion Channel Current Inhibitory Concentrations</th><th colspan="2">Compound Concentrations</th><th>Status</th></tr>
+    <tr><th colspan="3"></th><th>Pacing</th><th>Freq. (Hz)</td><th>Max Time (mins)</th><th>IKr (herg)</th><th>INa</th><th>ICaL</th><th>IKs</th><th>IK1</th><th>Ito</th><th>INaL</th><th>Units</th><td></td><th></th><th></th></tr>
+    </table>
   </section>
 
 {% endblock content %}
