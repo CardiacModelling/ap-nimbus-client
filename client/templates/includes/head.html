@@ -3,4 +3,110 @@
 <meta charset="utf-8" />
 <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
 <link rel="stylesheet" href="{% static 'css/style-min.css' %}" />
-<script src="{% static 'build/js/main-min.js' %}"></script>
+<script type="text/javascript" src="{% static 'build/js/main-min.js' %}"></script>
+
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.11.3/b-2.2.1/b-colvis-2.2.1/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.3/b-2.2.1/b-colvis-2.2.1/datatables.min.js"></script>
+<style>
+#simulations_table, .buttons-colvisGroup{
+    font-size: 10px;
+}
+.sim-title{
+    width:10px;
+}
+.sim-date{
+    width: 75px;
+}
+.sim-model{
+    width: 150px;
+}
+.sim-pacing-freq{
+    width: 40px;
+}
+.sim-pacing-time{
+    width: 20px;
+}
+.sim-ion-current{
+    width: 20px;
+}
+.sim-ion-current-units{
+    width: 40px;
+}
+.sim-concentration-type{
+    width: 100px;
+}
+.sim-compound-concentrations{
+}
+.sim-status{
+}
+
+div.dt-buttons button {
+    padding: 0px;
+}
+ 
+</style>
+
+<script type="text/javascript">
+    // init data table for simulation results
+$(document).ready(function() {
+
+    var table = $('#simulations_table').DataTable( {
+        stateSave: false,
+        order: [],
+        dom: 'lBfrtip',
+        autoWidth: true,
+//        columnDefs: [{visible: false, targets: 5 },
+//                     {visible: false, targets: 6 },
+//                     {visible: false, targets: 7 },
+//                     {visible: false, targets: 8 },
+//                     {visible: false, targets: 9 },
+//                     {visible: false, targets: 10 },
+//                     {visible: false, targets: 11 },
+//                     {visible: false, targets: 12 },
+//                     {visible: false, targets: 13 },
+//                     {visible: false, targets: 14 }],
+        buttons: [
+            {
+                extend: 'colvisGroup',
+                text: 'Office info',
+                show: [ 5, 6, 7, 8, 9, 10, 11, 12],
+                hide: [ 13, 14 ]
+            },
+            {
+                extend: 'colvisGroup',
+                text: 'Compound Concentrations',
+                show: [ 13, 14 ],
+                hide: [ 5, 6, 7, 8, 9, 10, 11, 12]
+            },
+//            {
+//                extend: 'colvisGroup',
+//                text: 'Show all',
+//                show: ':hidden'
+//            }
+        ],
+        columnDefs: [
+            { width: '75px', targets: 1 },
+            { width: '150px', targets: 2 },
+            { width: '40px', targets: 3 },
+            { width: '20px', targets: 4 },
+            { width: '20px', targets: 5, visible: false},
+            { width: '20px', targets: 6, visible: false },
+            { width: '20px', targets: 7, visible: false },
+            { width: '20px', targets: 8, visible: false },
+            { width: '20px', targets: 9, visible: false },
+            { width: '20px', targets: 10, visible: false },
+            { width: '20px', targets: 11, visible: false },
+            { width: '40px', targets: 12, visible: false },
+            { width: '100px', targets: 13, visible: false },
+            {visible: false, targets: 14 }
+        ],
+        fixedColumns: true
+    });
+//    table.rowGroup().enable().draw();
+} );
+</script>

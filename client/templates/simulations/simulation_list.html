@@ -1,52 +1,53 @@
 {% extends "base.html" %}
+{% load static %}
 {% load simulations %}
 
 
 {% block title %}Simulations - {% endblock title %}
 
 {% block content %}
-
   <section id="simulationgrouplist">
     <h2>Your simulations</h2>
 
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
-    <table id="simulations_table" class="simulations_table" border="1">
+
+    <table id="simulations_table" class="stripe row-border order-column">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Date</th>
-          <th>Model</th>
+          <th class="sim-title">Title</th>
+          <th class="sim-date">Date</th>
+          <th class="sim-model">Model</th>
           <th colspan="2">Pacing</th>
           <th colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
           <th colspan="2">Compound Concentrations</th>
-          <th>Status</th>
+          <th class="sim-status">Status</th>
         </tr>
         <tr>
         <th colspan="3"></th>
-        <th>Freq. (Hz)</td><th>Max <br/>Time (min)</th>
+        <th class="sim-pacing-freq">Freq. (Hz)</td><th class="sim-pacing-time">Max Time (min)</th>
         {% ion_currents as all_currents %}
         {% for cur in all_currents %}
-          <th>{{ cur }}</th>
+          <th class="sim-ion-current">{{ cur }}</th>
         {% endfor %}
-        <th>Units</th>
-        <th></th><th></th>
-        <th></th>
+        <th class="sim-ion-current-units">Units</th>
+        <th class="sim-concentration-type"></th><th class="sim-compound-concentrations"></th>
+        <th class="sim-status"></th>
       </tr>
       </thead>
       <tbody>
       {% for sim in object_list %}
       <tr>
-        <td><a href="{% url 'simulations:simulation_edit' sim.pk %}">{{ sim.title}}</a></td>
-        <td>{{ sim.created_at }}</td>
-        <td><a href="{% url 'files:model_detail' sim.model.pk %}">{{ sim.model }}</a></td>
-        <td>{{ sim.pacing_frequency }}</td><td>{{ sim.maximum_pacing_time }}</td>
+        <td class="sim-title"><a href="{% url 'simulations:simulation_edit' sim.pk %}">{{ sim.title}}</a></td>
+        <td class="sim-date">{{sim.created_at}}</td>
+        <td class="sim-model"><a href="{% url 'files:model_detail' sim.model.pk %}">{{ sim.model }}</a></td>
+        <td class="sim-pacing-freq">{{ sim.pacing_frequency }}</td><td class="sim-pacing-time">{{ sim.maximum_pacing_time }}</td>
         {% simulation_ion_currents sim  as sim_currents %}
         {% for cur in sim_currents %}
-          <td>{{ cur }}</td>
+          <td class="sim-ion-current">{{ cur }}</td>
         {% endfor %}
-        <td>{{ sim.ion_units }}</td>
-        <td>{% short_field_name sim.pk_or_concs %}</td><td></td>
-        <td></td>
+        <td class="sim-ion-current-units">{{ sim.ion_units }}<br/>({{sim.ion_current_type}})</td>
+        <td class="sim-concentration-type">{% short_field_name sim.pk_or_concs %}</td><td class="sim-compound-concentrations"></td>
+        <td class="sim-status">Not submitted</td>
       </tr>
       {% endfor %}
       </tbody>

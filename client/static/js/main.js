@@ -131,6 +131,15 @@ $( document ).ready(function(){
        $('#backbutton').attr("href", "javascript:history.back();");
     }
 
+//    // init data table for simulation results
+//    $('#simulations_table').DataTable( {
+//        dom: 'Bfrtip',
+//        stateSave: true,
+//        buttons: [
+//            'colvis'
+//        ]
+//    } );
+
     //Render markdown editor
     id_notes = $('#id_notes');
     if(id_notes.length){
