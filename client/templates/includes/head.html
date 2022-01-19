@@ -16,9 +16,9 @@
 #simulations_table, .buttons-colvisGroup{
     font-size: 10px;
 }
-.sim-title{
-    width:10px;
-}
+/*.sim-title{
+    width:10px  !important;
+}*/
 .sim-date{
     width: 75px;
 }
@@ -41,11 +41,15 @@
     width: 100px;
 }
 .sim-compound-concentrations{
+    width: 100px;
 }
 .sim-status{
+    width: 50px;
 }
+
+
 .dt-buttons{
-    margin-left: 10px; !important;
+    margin-left: 10px;
 }
 
 .dt-buttons button {
@@ -77,33 +81,30 @@ $(document).ready(function() {
                 className: 'toggleCompoundConcentrations'
             },
         ],
-        columnDefs: [
-            { width: '75px', targets: 1 },
-            { width: '150px', targets: 2 },
-            { width: '40px', targets: 3,},
-            { width: '20px', targets: 4,},
-            { width: '20px', targets: 5, visible: false},
-            { width: '20px', targets: 6, visible: false },
-            { width: '20px', targets: 7, visible: false },
-            { width: '20px', targets: 8, visible: false },
-            { width: '20px', targets: 9, visible: false },
-            { width: '20px', targets: 10, visible: false },
-            { width: '20px', targets: 11, visible: false },
-            { width: '40px', targets: 12, visible: false },
-            { width: '100px', targets: 13, visible: false },
-            {visible: false, targets: 14 }
-        ],
         fixedColumns: true
     });
 
+   //setup visibility toggle buttona ctions
     $('.togglePacing').click(function(){
         $('.sim-pacing-freq').toggle();
         $('.sim-pacing-time').toggle();
         $('.pacing-header').toggle();
     });
+    $('.toggleIonCurrents').click(function(){
+        $('.sim-ion-current').toggle();
+        $('.sim-ion-current-units').toggle();
+        $('.inhibitory-concentrations-header').toggle();
+    });
+    $('.toggleCompoundConcentrations').click(function(){
+        $('.sim-concentration-type').toggle();
+        $('.sim-compound-concentrations').toggle();
+        $('.compound-concentrations-header').toggle();
+    });
 
     // hide pacing details by default
     $('.togglePacing').click();
+    $('.toggleIonCurrents').click();
+    $('.toggleCompoundConcentrations').click();
 
 } );
 

@@ -11,15 +11,15 @@
 
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
 
-    <table id="simulations_table" class="stripe row-border order-column">
+    <table id="simulations_table" class="stripe row-border order-column" style="width:100%">
       <thead>
         <tr>
           <th class="sim-title">Title</th>
           <th class="sim-date">Date</th>
           <th class="sim-model">Model</th>
           <th colspan="2" class="pacing-header">Pacing</th>
-          <th colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
-          <th colspan="2">Compound Concentrations</th>
+          <th class="inhibitory-concentrations-header" colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
+          <th class="compound-concentrations-header" colspan="2">Compound Concentrations</th>
           <th class="sim-status">Status</th>
         </tr>
         <tr>
