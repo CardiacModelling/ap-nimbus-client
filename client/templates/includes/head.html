@@ -44,8 +44,11 @@
 }
 .sim-status{
 }
+.dt-buttons{
+    margin-left: 10px; !important;
+}
 
-div.dt-buttons button {
+.dt-buttons button {
     padding: 0px;
 }
  
@@ -60,40 +63,25 @@ $(document).ready(function() {
         order: [],
         dom: 'lBfrtip',
         autoWidth: true,
-//        columnDefs: [{visible: false, targets: 5 },
-//                     {visible: false, targets: 6 },
-//                     {visible: false, targets: 7 },
-//                     {visible: false, targets: 8 },
-//                     {visible: false, targets: 9 },
-//                     {visible: false, targets: 10 },
-//                     {visible: false, targets: 11 },
-//                     {visible: false, targets: 12 },
-//                     {visible: false, targets: 13 },
-//                     {visible: false, targets: 14 }],
         buttons: [
             {
-                extend: 'colvisGroup',
-                text: 'Office info',
-                show: [ 5, 6, 7, 8, 9, 10, 11, 12],
-                hide: [ 13, 14 ]
+                text: 'Toggle Pacing',
+                className: 'togglePacing'
             },
             {
-                extend: 'colvisGroup',
-                text: 'Compound Concentrations',
-                show: [ 13, 14 ],
-                hide: [ 5, 6, 7, 8, 9, 10, 11, 12]
+                text: 'Toggle Ion Currents',
+                className: 'toggleIonCurrents'
             },
-//            {
-//                extend: 'colvisGroup',
-//                text: 'Show all',
-//                show: ':hidden'
-//            }
+            {
+                text: 'Toggle Compound Concentrations',
+                className: 'toggleCompoundConcentrations'
+            },
         ],
         columnDefs: [
             { width: '75px', targets: 1 },
             { width: '150px', targets: 2 },
-            { width: '40px', targets: 3 },
-            { width: '20px', targets: 4 },
+            { width: '40px', targets: 3,},
+            { width: '20px', targets: 4,},
             { width: '20px', targets: 5, visible: false},
             { width: '20px', targets: 6, visible: false },
             { width: '20px', targets: 7, visible: false },
@@ -107,6 +95,16 @@ $(document).ready(function() {
         ],
         fixedColumns: true
     });
-//    table.rowGroup().enable().draw();
+
+    $('.togglePacing').click(function(){
+        $('.sim-pacing-freq').toggle();
+        $('.sim-pacing-time').toggle();
+        $('.pacing-header').toggle();
+    });
+
+    // hide pacing details by default
+    $('.togglePacing').click();
+
 } );
+
 </script>
