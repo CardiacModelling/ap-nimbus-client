@@ -134,8 +134,11 @@ $( document ).ready(function(){
     //add action for button allowing extra compound concentration pounts
     $('#add-row-concentration-points').click(function(){
         // only if we can still add forms
-        if (parseInt($('#id_concentration-TOTAL_FORMS').val()) < parseInt($('#id_concentration-MAX_NUM_FORMS').val())){
-            for (let i = 0; i < parseInt($('#id_concentration-MIN_NUM_FORMS').val()); i++) {// add as many extra points as there are initially
+        total_forms = parseInt($('#id_concentration-TOTAL_FORMS').val());
+        max_forms = parseInt($('#id_concentration-MAX_NUM_FORMS').val());
+        if (total_forms < max_forms){
+            forms_to_add = parseInt($('#id_concentration-MIN_NUM_FORMS').val());
+            for (let i = 0; i < forms_to_add && total_forms < max_forms; i++) {// add as many extra points as there are initially
                 // find last row
                 last_row = $('.compound-concentration-point:last');
                 last_index = parseInt(last_row.find('.compound-concentration-point-index').val());
@@ -152,22 +155,16 @@ $( document ).ready(function(){
 
                 // update control form
                 $('#id_concentration-TOTAL_FORMS').val(last_index + 1);
+                total_forms++;
             }
         }
-
-//alert($('.compound-concentration-point:last').find('.compound-concentration-point-index').val());
-//id_concentration-TOTAL_FORMS
-//        alert($('.compound-concentration-point').last().find('compound-concentration-point-index').val());
-    });
-
-//    // init data table for simulation results
-//    $('#simulations_table').DataTable( {
-//        dom: 'Bfrtip',
-//        stateSave: true,
-//        buttons: [
-//            'colvis'
-//        ]
-//    } );
+        // if no more forms can be added, disable adding of forms and style as greyed out
+        if(total_forms >= max_forms){
+            $("#add-row-concentration-points").removeClass("active");
+            $("#add-row-concentration-points").addClass("greyed-out");
+            $("#add-row-concentration-points").text($("#add-row-concentration-points a").text());
+        }
+    } );
 
     //Render markdown editor
     id_notes = $('#id_notes');
