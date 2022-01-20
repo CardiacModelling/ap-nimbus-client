@@ -3,6 +3,13 @@ const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 
 //Create simulation page
 $( document ).ready(function(){
+    // attach action to backbuttons
+    if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
+        $('#backbutton').attr("href", $('#home_link').attr("href"));
+    }else{
+       $('#backbutton').attr("href", "javascript:history.back();");
+    }
+
     // update ion current enabledness when model changes
     $('#id_model').change(function(){
         $('.current-concentration').each(function(){
@@ -124,12 +131,34 @@ $( document ).ready(function(){
         $('#id_maximum_concentration').attr('min', min_min >= 0 ? min_min + parseFloat(0.0000000000001): 0);
     });
 
-    // attach action to backbuttons
-    if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
-        $('#backbutton').attr("href", $('#home_link').attr("href"));
-    }else{
-       $('#backbutton').attr("href", "javascript:history.back();");
-    }
+    //add action for button allowing extra compound concentration pounts
+    $('#add-row-concentration-points').click(function(){
+        // only if we can still add forms
+        if (parseInt($('#id_concentration-TOTAL_FORMS').val()) < parseInt($('#id_concentration-MAX_NUM_FORMS').val())){
+            for (let i = 0; i < 5; i++) {// add 5 extra points
+                // find last row
+                last_row = $('.compound-concentration-point:last');
+                last_index = parseInt(last_row.find('.compound-concentration-point-index').val());
+
+                //clone
+                last_row.clone().appendTo('#compound-concentration-points');
+
+                //update index
+                new_row = $('.compound-concentration-point:last');
+                new_row.find('.compound-concentration-point-index').val(last_index + 1);
+                new_row.find('.compound-concentration-point-index-text').text((last_index + 1).toString().padStart(2, '0') + '. ');
+                new_row.find('.compound-concentration').attr('name', 'concentration-' + last_index.toString() + '-concentration');
+                new_row.find('.compound-concentration').attr('id', 'id_concentration-' + last_index.toString() + '-concentration');
+
+                // update control form
+                $('#id_concentration-TOTAL_FORMS').val(last_index + 1);
+            }
+        }
+
+//alert($('.compound-concentration-point:last').find('.compound-concentration-point-index').val());
+//id_concentration-TOTAL_FORMS
+//        alert($('.compound-concentration-point').last().find('compound-concentration-point-index').val());
+    });
 
 //    // init data table for simulation results
 //    $('#simulations_table').DataTable( {

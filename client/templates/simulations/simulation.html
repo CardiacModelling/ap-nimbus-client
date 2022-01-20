@@ -55,7 +55,7 @@
       </table>
     </fieldset>
    <fieldset>
-    <legend>{% for radio in form.pk_or_concs%}{{radio}} {% endfor %}</legend>
+    <legend>{% for radio in form.pk_or_concs%}{{radio}}{% endfor %}</legend>
            <div id="div_pk_or_concs_0">
                <p>{{ form.minimum_concentration.label_tag }} {{ form.minimum_concentration.errors }} {{ form.minimum_concentration }} <span class="helptext">{{ form.minimum_concentration.help_text }}</span></p>
                <p>{{ form.maximum_concentration.label_tag }} {{ form.maximum_concentration.errors }} {{ form.maximum_concentration }} <span class="helptext">{{ form.maximum_concentration.help_text }}</span></p>
@@ -63,13 +63,15 @@
                <p>{{ form.intermediate_point_log_scale.label_tag }} {{ form.intermediate_point_log_scale.errors }} {{ form.intermediate_point_log_scale }} <span class="helptext">{{ form.intermediate_point_log_scale.help_text }}</span></p>
            </div>
            <div id="div_pk_or_concs_1">
-                   <div class="pk_concentration_input_group">
+                   <div id="compound-concentration-points">
                    {% for concentration_form in concentration_formset %}
-                       {{concentration_form.non_field_errors}}
-                       {{forloop.counter|stringformat:"02d" }}{{concentration_form.concentration.errors}}{{concentration_form.concentration}} µM<br/>
-                       {%if forloop.counter|divisibleby:6 %}</div><div class="pk_concentration_input_group">{%endif %}
+                       <div class="compound-concentration-point">
+                           <input type="hidden"  class="compound-concentration-point-index" value="{{forloop.counter}}">
+                           <span class="compound-concentration-point-index-text">{{concentration_form.non_field_errors}}{{forloop.counter|stringformat:"02d" }}. </span>{{concentration_form.concentration.errors}}{{concentration_form.concentration}} µM<br/>
+                       </div>
                    {% endfor %}
                    </div>
+                   <p><a id="add-row-concentration-points" href="javascript:void(0)">add more points</a></p>
            </div>
            <div id="div_pk_or_concs_2">
                <p>{{ form.PK_data.label_tag }} {{ form.PK_data.errors }} {{ form.PK_data }} <span class="helptext">{{ form.PK_data.help_text }}</span></p>

@@ -106,7 +106,8 @@ CompoundConcentrationPointFormSet = inlineformset_factory(
     can_delete=False,
     can_order=False,
     extra=0,
-    min_num=30,
+    min_num=5,
+    max_num=30,
 )
 
 
