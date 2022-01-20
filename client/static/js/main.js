@@ -135,7 +135,7 @@ $( document ).ready(function(){
     $('#add-row-concentration-points').click(function(){
         // only if we can still add forms
         if (parseInt($('#id_concentration-TOTAL_FORMS').val()) < parseInt($('#id_concentration-MAX_NUM_FORMS').val())){
-            for (let i = 0; i < 5; i++) {// add 5 extra points
+            for (let i = 0; i < parseInt($('#id_concentration-MIN_NUM_FORMS').val()); i++) {// add as many extra points as there are initially
                 // find last row
                 last_row = $('.compound-concentration-point:last');
                 last_index = parseInt(last_row.find('.compound-concentration-point-index').val());
