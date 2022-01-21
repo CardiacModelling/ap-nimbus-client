@@ -16,6 +16,9 @@ from .models import Simulation
 
 
 def to_int(f):
+    """
+    Convert to into only if it is an in else don't convert.
+    """
     return int(f) if f.is_integer() else f
 
 

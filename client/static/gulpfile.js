@@ -17,7 +17,6 @@ var config = {
       './js/main.js',
     ],
     outputDir: './build/',
-//    mapDir: './maps/',
   },
   sass: {
     src: './sass/**/*.scss',

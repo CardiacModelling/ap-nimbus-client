@@ -1,6 +1,6 @@
 from django import template
 from files.models import IonCurrent
-from simulations.models import SimulationIonCurrentParam
+from simulations.models import Simulation, SimulationIonCurrentParam, CompoundConcentrationPoint
 
 
 register = template.Library()
@@ -8,24 +8,56 @@ register = template.Library()
 
 @register.simple_tag
 def num_ion_currents_p1():
+    """
+    The number of different ion currents + 1.
+    """
     return IonCurrent.objects.count() + 1
 
 
 @register.simple_tag
 def ion_currents():
+    """
+    All ion currents.
+    """
     return IonCurrent.objects.all()
 
 
 @register.simple_tag
-def simulation_ion_currents(simulation):
-    current_params = []
-    for current in IonCurrent.objects.all():
-        current_param = SimulationIonCurrentParam.objects.filter(simulation=simulation, ion_current=current)
-        if current_param.exists():
-            current_params.append(str(current_param.first().current))
-        else:
-            current_params.append('')
-    return current_params
+def simulation_ion_current(simulation, current):
+    """
+    The value this simulation has for the given current or '' if it doesn't have a value.
+    """
+    if not isinstance(simulation, Simulation):
+        raise TypeError('Expecting a Simulation')
+    if not isinstance(current, IonCurrent):
+        raise TypeError('Expecting a IonCurrent')
+
+    try:
+        return SimulationIonCurrentParam.objects.get(simulation=simulation, ion_current=current).current
+    except SimulationIonCurrentParam.DoesNotExist:
+        return ''
+
+
+@register.simple_tag
+def print_compound_concentrations(simulation):
+    if not isinstance(simulation, Simulation):
+        raise TypeError('Expecting a Simulation')
+
+    if simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+        min_max_range = str(simulation.minimum_concentration) + ' - ' + str(simulation.maximum_concentration) + ' (µM)'
+        return (min_max_range, min_max_range)
+
+    elif simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+        points = [p.concentration for p in CompoundConcentrationPoint.objects.filter(simulation=simulation)]
+        points_range = str(points) if len(points) <=2 else '[' + str(points[0]) + ' ... ' + str(points[-1]) + ']'
+        return (str(points) + ' (µM)', points_range + ' (µM)')
+
+    elif simulation.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
+        file_name = str(simulation.PK_data)
+        truncated = file_name[:20] + '...' if len(file_name) > 23 else file_name
+        return ('Compound concentrations from TSV file: %s.' % file_name, truncated)
+    else:
+        raise ValueError('simulation.pk_or_concs is %s, it should be one of %s.' % (simulation.pk_or_concs, tuple(o[0] for o in Simulation.PkOptions.choices)))
 
 
 @register.simple_tag

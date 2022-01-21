@@ -1,9 +1,10 @@
-var $ = require('./jquery-3.6.0.js'); // Jquery UI
+const $  = require( 'jquery' ); // Jquery UI
+require( 'datatables.net' )( window, $ ); // Jquery datatables (npm install datatables.net-dtand)
+
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 
-//Create simulation page
-$( document ).ready(function(){
-    // attach action to backbuttons
+$(document).ready(function(){
+    //Set cancel / close button action
     if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
         $('#backbutton').attr("href", $('#home_link').attr("href"));
     }else{
@@ -150,8 +151,10 @@ $( document ).ready(function(){
                 new_row = $('.compound-concentration-point:last');
                 new_row.find('.compound-concentration-point-index').val(last_index + 1);
                 new_row.find('.compound-concentration-point-index-text').text((last_index + 1).toString().padStart(2, '0') + '. ');
-                new_row.find('.compound-concentration').attr('name', 'concentration-' + last_index.toString() + '-concentration');
-                new_row.find('.compound-concentration').attr('id', 'id_concentration-' + last_index.toString() + '-concentration');
+                inputBox = new_row.find('.compound-concentration');
+                inputBox.val('');
+                inputBox.attr('name', 'concentration-' + last_index.toString() + '-concentration');
+                inputBox.attr('id', 'id_concentration-' + last_index.toString() + '-concentration');
 
                 // update control form
                 $('#id_concentration-TOTAL_FORMS').val(last_index + 1);
@@ -165,6 +168,14 @@ $( document ).ready(function(){
             $("#add-row-concentration-points").text($("#add-row-concentration-points a").text());
         }
     } );
+
+    // init data table for simulation results
+    $('#simulations_table').DataTable( {
+        stateSave: false,
+        scrollX: true,
+        order: [],
+        dom: 'lBfrtip',
+    });
 
     //Render markdown editor
     id_notes = $('#id_notes');

@@ -8,7 +8,7 @@ body {
 code, input {
   font-family: Georgia; }
 
-#page, #page-footer, #page-middle {
+#page {
   width: 850px;
   margin: auto; }
 
@@ -295,4 +295,37 @@ h1#entityname{
 
 #div_pk_or_concs_1 input{
     width: 70px;
+}
+
+
+/* results datatables adjustment */
+table.dataTable{
+    font-size:12px;
+    text-align: left;
+}
+
+table.dataTable thead tr:nth-child(2) th{
+    font-weight: normal !important;
+    font-style: italic !important;
+}
+
+
+.sim-title{
+    table-layout:fixed !important;
+    width: 400px !important;
+    min-width:400px !important;
+    max-width:400px !important;
+}
+.inhibitory-concentrations-header, .compound-concentrations-header, .sim-compound-concentrations, .sim-pacing-freq, .sim-pacing-time, .sim-ion-current, .sim-ion-current-units, .sim-concentration-type, .sim-status, .sim-model, .sim-date{
+    width: 0% !important;
+    white-space: nowrap !important;
+}
+
+button.dt-button{
+    line-height: 0px !important;
+}
+
+div.dt-buttons{
+    margin-left: 0.334em;
+    margin-top: 0.167em;
 }

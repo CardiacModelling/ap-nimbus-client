@@ -11,8 +11,6 @@
 
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
 
-{% endblock content %}
-{% block middle-content %}
     <table id="simulations_table" class="stripe row-border order-column" style="width:100%">
       <thead>
         <tr>
@@ -21,8 +19,8 @@
           <th class="sim-model">Model</th>
           <th class="sim-status">Status</th>
           <th colspan="2" class="pacing">Pacing</th>
-          <th class="inhibitory-concentrations" colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
-          <th class="compound-concentrations compound-concentrations" colspan="2">Compound Concentrations</th>
+          <th class="inhibitory-concentrations inhibitory-concentrations-header" colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
+          <th class="compound-concentrations compound-concentrations-header" colspan="2">Compound Concentrations</th>
         </tr>
         <tr>
         <th colspan="4"></th>
@@ -43,17 +41,18 @@
         <td class="sim-model"><a href="{% url 'files:model_detail' sim.model.pk %}">{{ sim.model }}</a></td>
         <td class="sim-status">Submitted</td>
         <td class="sim-pacing-freq pacing">{{ sim.pacing_frequency }} <em>Hz</em></td><td class="sim-pacing-time pacing">{{ sim.maximum_pacing_time }} <em>min</em></td>
-        {% simulation_ion_currents sim  as sim_currents %}
-        {% for cur in sim_currents %}
-          <td class="sim-ion-current inhibitory-concentrations">{{ cur }}</td>
+        {% for cur in all_currents %}
+            <td class="sim-ion-current inhibitory-concentrations">{% simulation_ion_current sim cur %}</td>
         {% endfor %}
         <td class="sim-ion-current-units inhibitory-concentrations">{{ sim.ion_units }}<br/>({{sim.ion_current_type}})</td>
-        <td class="sim-concentration-type compound-concentrations">{% short_field_name sim.pk_or_concs %}</td><td class="sim-compound-concentrations compound-concentrations"></td>
+        <td class="sim-concentration-type compound-concentrations">{% short_field_name sim.pk_or_concs %}</td>
+        {%print_compound_concentrations sim as inhconc %}
+        <td class="sim-compound-concentrations compound-concentrations" title="{{ inhconc.0 }}">{{ inhconc.1 }}</td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
   </section>
 
-{% endblock middle-content %}
+{% endblock content %}
 
