@@ -8,13 +8,16 @@
         {% if can_edit %}
           <a title="Delete this simulation and all results" href="{% url 'simulations:simulation_delete' object.id %}">
             <img src="{% static 'images/delete.png' %}" alt="Delete this simulation and all results"/>
-            Delete {{object.title}}
+            Delete
           </a> |
           {%if not in_edit %}
             <a title="Edit this simulation info" href="{% url 'simulations:simulation_edit' object.id %}">
-              Edit simulation info{{object.title}}
+              Edit simulation info
             </a> |
           {% endif %}
+            <a title="Use simulation as template for a new simulation" href="{% url 'simulations:simulation_template' object.id %}">
+              Use as template
+            </a> |
         {% endif %}</small>
 </div>
 <h1>Create simulation.</h1>

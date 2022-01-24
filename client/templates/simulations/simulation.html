@@ -6,6 +6,9 @@
 {% block content %}
 <div id='simulationform'>
 <h1>Create simulation.</h1>
+{% if template_title %}
+<div class="info">Using existing simulation <em>{{template_title}}</em> as a template.</div>
+{% endif %}
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}

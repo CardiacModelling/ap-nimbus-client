@@ -24,6 +24,12 @@ urlpatterns = [
     ),
 
     re_path(
+        r'^(?P<pk>\d+)/template$',
+        views.CellmlModelCreateView.as_view(),
+        name='simulation_template',
+    ),
+
+    re_path(
         r'^(?P<pk>\d+)/delete$',
         views.SimulationDeleteView.as_view(),
         name='simulation_delete',

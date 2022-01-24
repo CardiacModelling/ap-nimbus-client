@@ -32,13 +32,13 @@ class IonCurrentForm(forms.ModelForm):
         self.fields['default_spread_of_uncertainty'] = forms.CharField(widget=forms.HiddenInput())
 
         self.fields['current'].widget.attrs = {'class': 'current-concentration'}
-        self.fields['hill_coefficient'].widget.attrs = {'min': 0.1, 'max': 5.0, 'step': 0.1}
+        self.fields['hill_coefficient'].widget.attrs = {'min': 0.1, 'max': 5.0, 'step': 'any'}
         self.fields['hill_coefficient'].required = False
 
-        self.fields['saturation_level'].widget.attrs = {'min': 0.0, 'step': 1.0}
+        self.fields['saturation_level'].widget.attrs = {'min': 0.0, 'step': 'any'}
         self.fields['saturation_level'].required = False
 
-        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000001, 'max': 2.0, 'step': 0.01,
+        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000001, 'max': 2.0, 'step': 'any',
                                                              'class': 'spread_of_uncertainty'}
 
         for _, field in self.fields.items():
@@ -131,9 +131,9 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
             [(None, '--- Uploaded models ---')] + uploaded_models
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
 
-        self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 0.01, 'required': 'required'}
+        self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}
 
-        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 1.0,
+        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 'any',
                                                            'required': 'required'}
 
         self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},

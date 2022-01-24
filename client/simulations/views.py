@@ -12,7 +12,7 @@ from .forms import (
     SimulationEditForm,
     SimulationForm,
 )
-from .models import Simulation
+from .models import Simulation, CompoundConcentrationPoint, SimulationIonCurrentParam
 
 
 def to_int(f):
@@ -42,17 +42,45 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
     concentration_formset_class = CompoundConcentrationPointFormSet
     template_name = 'simulations/simulation.html'
 
+    def get_initial(self):
+        #pk = self.kwargs.get('pk', None)
+        if not self.pk:
+            return None
+        sim = Simulation.objects.get(pk=self.pk)
+        return {'notes': sim.notes,
+                'model': sim.model,
+                'pacing_frequency': sim.pacing_frequency,
+                'maximum_pacing_time': sim.maximum_pacing_time,
+                'ion_current_type': sim.ion_current_type,
+                'ion_units': sim.ion_units,
+                'pk_or_concs': sim.pk_or_concs,
+                'minimum_concentration': sim.minimum_concentration,
+                'maximum_concentration': sim.maximum_concentration,
+                'intermediate_point_count': sim.intermediate_point_count,
+                'intermediate_point_log_scale': sim.intermediate_point_log_scale,
+                'PK_data': sim.PK_data}
+
     def get_ion_formset(self):
         if not hasattr(self, 'ion_formset') or self.ion_formset is None:
-            initial = [{'ion_current': c, 'hill_coefficient': to_int(c.default_hill_coefficient),
-                        'saturation_level': to_int(c.default_saturation_level),
-                        'spread_of_uncertainty': None,
-                        'default_spread_of_uncertainty': to_int(c.default_spread_of_uncertainty),
-                        'channel_protein': c.channel_protein,
-                        'gene': c.gene, 'description': c.description,
-                        'models': [m.id for m in CellmlModel.objects.all()
-                                   if c in m.ion_currents.all() and m.is_visible_to(self.request.user)]}
-                       for c in IonCurrent.objects.all()]
+            #pk = self.kwargs.get('pk', None)
+            initial = []
+            for curr in IonCurrent.objects.all():
+                param = None
+                if self.pk:
+                  param = SimulationIonCurrentParam.objects.filter(simulation=Simulation.objects.get(pk=self.pk),
+                                                                   current=curr.pk) if self.pk else None
+                  if param.exists():
+                      param = param.first()
+                initial.append({'current': param.current if param else None,
+                                'ion_current': curr,
+                                'hill_coefficient': to_int(param.hill_coefficient if param else curr.default_hill_coefficient),
+                                'saturation_level': to_int(param.saturation_level if param else curr.default_saturation_level),
+                                'spread_of_uncertainty': param.spread_of_uncertainty if param else None,
+                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param else curr.default_spread_of_uncertainty),
+                                'channel_protein': curr.channel_protein,
+                                'gene': curr.gene, 'description': curr.description,
+                                'models': [m.id for m in CellmlModel.objects.all()
+                                           if curr in m.ion_currents.all() and m.is_visible_to(self.request.user)]})
             form_kwargs = {'user': self.request.user}
             self.ion_formset = self.ion_formset_class(self.request.POST or None, initial=initial, prefix='ion',
                                                       form_kwargs=form_kwargs)
@@ -60,15 +88,21 @@ class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView)
 
     def get_concentration_formset(self):
         if not hasattr(self, 'concentration_formset') or self.concentration_formset is None:
+            initial = []
+            if self.pk:
+                initial = CompoundConcentrationPoint.objects.filter(simulation=Simulation.objects.get(pk=self.pk)).values()
             form_kwargs = {'user': self.request.user}
             self.concentration_formset = self.concentration_formset_class(self.request.POST or None,
                                                                           prefix='concentration',
+                                                                          initial=initial,
                                                                           form_kwargs=form_kwargs)
         return self.concentration_formset
 
     def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk', None)
         kwargs['ion_formset'] = self.get_ion_formset()
         kwargs['concentration_formset'] = self.get_concentration_formset()
+        kwargs['template_title'] = Simulation.objects.get(pk=self.pk).title if self.pk else None
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):
