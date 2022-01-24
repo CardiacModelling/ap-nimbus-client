@@ -6,13 +6,6 @@ from simulations.models import Simulation, SimulationIonCurrentParam, CompoundCo
 register = template.Library()
 
 
-@register.simple_tag
-def num_ion_currents_p1():
-    """
-    The number of different ion currents + 1.
-    """
-    return IonCurrent.objects.count() + 1
-
 
 @register.simple_tag
 def ion_currents():
@@ -33,7 +26,7 @@ def simulation_ion_current(simulation, current):
         raise TypeError('Expecting a IonCurrent')
 
     try:
-        return SimulationIonCurrentParam.objects.get(simulation=simulation, ion_current=current).current
+        return SimulationIonCurrentParam.objects.get(simulation=simulation, ion_current=current)
     except SimulationIonCurrentParam.DoesNotExist:
         return ''
 
@@ -63,3 +56,8 @@ def print_compound_concentrations(simulation):
 @register.simple_tag
 def short_field_name(field_name):
     return field_name.split('_')[-1]
+
+
+@register.simple_tag
+def print_field_name(field_name):
+    return field_name[0:1].upper() + field_name[1:].replace('_', ' ')

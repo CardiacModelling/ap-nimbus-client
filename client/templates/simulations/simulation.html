@@ -5,7 +5,7 @@
 
 {% block content %}
 <div id='simulationform'>
-{% include "./simulation_header.html" %}
+<h1>Create simulation.</h1>
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
@@ -33,10 +33,10 @@
     <legend>Ion Channel Current Inhibitory Concentrations</legend>
       <table class="ioncurrent-formset" id="ioncurrent-formset">
         {% with firstline=ion_formset|first %}
-          <thead><tr><th colspan="3" title="{{firstline.current.help_text}}">Ion Current<img src="{% static 'img/info.png' %}" class="info"> {{form.ion_current_type}} {{form.ion_units}}</th>
-                     <th title="{{firstline.hill_coefficient.help_text}}">Hill <br/>Coefficient<img src="{% static 'img/info.png' %}" class="info"> </th>
-                     <th title="{{firstline.saturation_level.help_text}}">Saturation <br/>Level (%)<img src="{% static 'img/info.png' %}" class="info"> </th>
-                     <th title="{{firstline.spread_of_uncertainty.help_text}}"><input type="checkbox" id="enable_spread_of_uncertainty">Spread of <br/>Uncertainty<img src="{% static 'img/info.png' %}" class="info"> </th>
+          <thead><tr><th colspan="3" title="{{firstline.current.help_text}}">Ion Current<img src="{% static 'img/info.png' %}" class="infobutton"> {{form.ion_current_type}} {{form.ion_units}}</th>
+                     <th title="{{firstline.hill_coefficient.help_text}}">Hill <br/>Coefficient<img src="{% static 'img/info.png' %}" class="infobutton"> </th>
+                     <th title="{{firstline.saturation_level.help_text}}">Saturation <br/>Level (%)<img src="{% static 'img/info.png' %}" class="infobutton"> </th>
+                     <th title="{{firstline.spread_of_uncertainty.help_text}}"><input type="checkbox" id="enable_spread_of_uncertainty">Spread of <br/>Uncertainty<img src="{% static 'img/info.png' %}" class="infobutton"> </th>
                      <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
         {% endwith %}
         <tbody>

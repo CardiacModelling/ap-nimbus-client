@@ -1,7 +1,6 @@
 {% load static %}
 {% load ap_nimubs %}
 
-{% if object.id %}
 <a href="{% url 'simulations:simulation_edit' object.id %}"><h1 id="entityname">Simulation: {{ object.title }}.</h1></a>
 <div class="suppl">
     <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.
@@ -18,4 +17,4 @@
           {% endif %}
         {% endif %}</small>
 </div>
-{% else %}<h1>Create simulation.</h1>{% endif %}
+<h1>Create simulation.</h1>

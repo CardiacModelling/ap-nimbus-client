@@ -9,9 +9,12 @@
   <section id="simulationgrouplist">
     <h2>Your simulations</h2>
 
+{% endblock content %}
+
+{% block data %}
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
 
-    <table id="simulations_table" class="stripe row-border order-column" style="width:100%">
+    <table id="simulations_table" class="stripe row-border order-column">
       <thead>
         <tr>
           <th class="sim-title">Title</th>
@@ -19,13 +22,13 @@
           <th class="sim-model">Model</th>
           <th class="sim-status">Status</th>
           <th colspan="2" class="pacing">Pacing</th>
-          <th class="inhibitory-concentrations inhibitory-concentrations-header" colspan="{% num_ion_currents_p1 %}">Ion Channel Current Inhibitory Concentrations</th>
+        {% ion_currents as all_currents %}
+          <th class="inhibitory-concentrations inhibitory-concentrations-header" colspan="{{ all_currents|length|add:1 }}">Ion Channel Current Inhibitory Concentrations</th>
           <th class="compound-concentrations compound-concentrations-header" colspan="2">Compound Concentrations</th>
         </tr>
         <tr>
         <th colspan="4"></th>
         <th class="sim-pacing-freq pacing">Freq.</td><th class="sim-pacing-time pacing">Max Time</th>
-        {% ion_currents as all_currents %}
         {% for cur in all_currents %}
           <th class="sim-ion-current inhibitory-concentrations">{{ cur }}</th>
         {% endfor %}
@@ -42,7 +45,8 @@
         <td class="sim-status">Submitted</td>
         <td class="sim-pacing-freq pacing">{{ sim.pacing_frequency }} <em>Hz</em></td><td class="sim-pacing-time pacing">{{ sim.maximum_pacing_time }} <em>min</em></td>
         {% for cur in all_currents %}
-            <td class="sim-ion-current inhibitory-concentrations">{% simulation_ion_current sim cur %}</td>
+        {% simulation_ion_current sim cur as currentparam%}
+            <td class="sim-ion-current inhibitory-concentrations">{{ currentparam.current }}</td>
         {% endfor %}
         <td class="sim-ion-current-units inhibitory-concentrations">{{ sim.ion_units }}<br/>({{sim.ion_current_type}})</td>
         <td class="sim-concentration-type compound-concentrations">{% short_field_name sim.pk_or_concs %}</td>
@@ -54,5 +58,5 @@
     </table>
   </section>
 
-{% endblock content %}
+{% endblock data %}
 

@@ -8,9 +8,14 @@ body {
 code, input {
   font-family: Georgia; }
 
-#page {
+#page, #footer{
   width: 850px;
-  margin: auto; }
+  margin: auto; 
+}
+#wide-data{
+  max-width: 1650px;
+  margin: auto;
+}
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
@@ -286,8 +291,7 @@ h1#entityname{
     width: 150px;
 }
 
-/* infor button */
-.info{
+.infobutton{
     border:0;
     padding:0;
     background: rgba(0, 0, 0, 0);

@@ -172,7 +172,6 @@ $(document).ready(function(){
     // init data table for simulation results
     $('#simulations_table').DataTable( {
         stateSave: false,
-        scrollX: true,
         order: [],
         dom: 'lBfrtip',
     });
