@@ -32,7 +32,7 @@ class SimulationListView(ListView):
         return (sim for sim in Simulation.objects.all() if sim.is_visible_to(self.request.user))
 
 
-class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
+class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     """
     Create a new Simulation
     """
@@ -136,7 +136,16 @@ class SimulationEditView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         return reverse_lazy('simulations:simulation_list')
 
     def test_func(self):
-        self.object = self.get_object()
+        return self.get_object().is_editable_by(self.request.user)
+
+class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+    """
+    View viewing simulations details (and results).
+    """
+    model = Simulation
+    template_name = 'simulations/simulation_result.html'
+
+    def test_func(self):
         return self.get_object().is_editable_by(self.request.user)
 
 

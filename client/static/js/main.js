@@ -1,5 +1,6 @@
 const $  = require( 'jquery' ); // Jquery UI
 require( 'datatables.net' )( window, $ ); // Jquery datatables (npm install datatables.net-dtand)
+const marked = require("./lib/marked.min.js"); // Markdown render
 
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 
@@ -182,4 +183,10 @@ $(document).ready(function(){
         var simplemde = new SimpleMDE({hideIcons:['guide', 'quote', 'heading'], showIcons: ['strikethrough', 'heading-1', 'heading-2', 'heading-3', 'code', 'table', 'horizontal-rule', 'undo', 'redo'], element: id_notes[0]});
         simplemde.render();
     }
+
+    //render markdown view
+    $(".markdowrenderview").each(function(){
+          source = $(this).find(".markdownsource").val();
+          $(this).html(marked(source));
+      });
 });

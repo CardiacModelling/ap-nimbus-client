@@ -5,9 +5,11 @@
 
 {% block content %}
 <div id='simulationform'>
-<h1>Create simulation.</h1>
 {% if template_title %}
-<div class="info">Using existing simulation <em>{{template_title}}</em> as a template.</div>
+  <div class="info">Using existing simulation <em>{{template_title}}</em> as a template.</div>
+  <h1>Create new simulation based on <em>{{template_title}}</em>.</h1>
+{%else %}
+  <h1>Create simulation.</h1>
 {% endif %}
 
   <form method="POST" action="" enctype="multipart/form-data">

@@ -6,13 +6,40 @@
 {% block title %}Edit simulations info - {% endblock title %}
 
 {% block content %}
-<div class="info">The simulation parameters cannot be edited, to run a different simulation please <a href="{% url 'simulations:create_simulation' %}"> create a new simulation</a>.</div>
+{% endblock content %}
 
-<section id="simulationeditinfo">
+{% block data %}
+<section id="simulationresults">
 {% include "./simulation_header.html" %}
-  <form method="POST" action="" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{form.as_p}}
+<style>
+
+.row {
+  display: flex;
+  border: 5px solid green;
+}
+
+/* Create two equal columns that sits next to each other */
+.column {
+  flex: 50%;
+  padding: 10px;
+  border: 5px solid red;
+}
+</style>
+
+
+<div class="row">
+  <div class="column">
+  <fieldset>
+    <fieldset>
+      <legend>Title</legend>{{object.title}}
+    </fieldset>
+    <fieldset>
+    <legend>Notes</legend>
+       <div class="markdowrenderview">
+         <textarea class="markdownsource">{{object.notes | safe}}</textarea>
+       </div>
+    </fieldset>
+  </fieldset>
   <fieldset>
     <legend>Simulation parameters</legend>
       <fieldset><legend>Model</legend>{{ object.model }}</fieldset>
@@ -53,12 +80,15 @@
       {{ inhconc.0 }}
     </fieldset>
   </fieldset>
-  <p>
-  <button id="savebutton" type="submit">Save</button>
-   <a class="button" id="backbutton" title="Cancel">Cancel</a>
-  </p>
-  </form>
+
+  </div>
+  <div class="column" style="background-color:#bbb;">
+    <h2>Column 2</h2>
+    <p>Some text..</p>
+  </div>
+</div>
+<div>
 </section>
 
-{% endblock content %}
+{% endblock data %}
 

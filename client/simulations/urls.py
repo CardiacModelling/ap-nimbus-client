@@ -13,7 +13,7 @@ urlpatterns = [
 
     re_path(
         r'^new/$',
-        views.CellmlModelCreateView.as_view(),
+        views.SimulationCreateView.as_view(),
         name='create_simulation',
     ),
 
@@ -25,8 +25,14 @@ urlpatterns = [
 
     re_path(
         r'^(?P<pk>\d+)/template$',
-        views.CellmlModelCreateView.as_view(),
+        views.SimulationCreateView.as_view(),
         name='simulation_template',
+    ),
+
+    re_path(
+        r'^(?P<pk>\d+)/result$',
+        views.SimulationResultView.as_view(),
+        name='simulation_result',
     ),
 
     re_path(

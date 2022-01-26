@@ -39,7 +39,7 @@
       <tbody>
       {% for sim in object_list %}
       <tr>
-        <td class="sim-title"><a href="{% url 'simulations:simulation_edit' sim.pk %}">{{ sim.title}}</a></td>
+        <td class="sim-title"><a href="{% url 'simulations:simulation_result' sim.pk %}">{{ sim.title}}</a></td>
         <td class="sim-date">{{sim.created_at}}</td>
         <td class="sim-model"><a href="{% url 'files:model_detail' sim.model.pk %}">{{ sim.model }}</a></td>
         <td class="sim-status">Submitted</td>
