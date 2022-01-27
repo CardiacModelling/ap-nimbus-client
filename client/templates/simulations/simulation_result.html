@@ -10,7 +10,8 @@
 
 {% block data %}
 <section id="simulationresults">
-{% include "./simulation_header.html" %}
+<h1 id="entityname">{% include "./simulation_header.html" %}Simulation: {{ object.title }}.</h1>
+<small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
 <style>
 
 .row {
@@ -30,6 +31,7 @@
 <div class="row">
   <div class="column">
   <fieldset>
+    <legend>Info</legend>{{object.title}}
     <fieldset>
       <legend>Title</legend>{{object.title}}
     </fieldset>
@@ -78,6 +80,10 @@
       <legend>{% print_field_name object.pk_or_concs %}</legend>
       {% print_compound_concentrations object as inhconc %}
       {{ inhconc.0 }}
+    </fieldset>
+    <fieldset>
+      <legend>Status</legend>
+      <label>{{object.status}}</label>
     </fieldset>
   </fieldset>
 

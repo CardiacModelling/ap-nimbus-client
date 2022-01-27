@@ -42,8 +42,12 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     concentration_formset_class = CompoundConcentrationPointFormSet
     template_name = 'simulations/simulation.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        # Save pk, incase we run as a template
+        self.pk = kwargs.get('pk', None)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_initial(self):
-        #pk = self.kwargs.get('pk', None)
         if not self.pk:
             return None
         sim = Simulation.objects.get(pk=self.pk)
@@ -62,15 +66,9 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
 
     def get_ion_formset(self):
         if not hasattr(self, 'ion_formset') or self.ion_formset is None:
-            #pk = self.kwargs.get('pk', None)
             initial = []
             for curr in IonCurrent.objects.all():
-                param = None
-                if self.pk:
-                  param = SimulationIonCurrentParam.objects.filter(simulation=Simulation.objects.get(pk=self.pk),
-                                                                   current=curr.pk) if self.pk else None
-                  if param.exists():
-                      param = param.first()
+                param = SimulationIonCurrentParam.objects.filter(simulation=self.pk, ion_current=curr).first()
                 initial.append({'current': param.current if param else None,
                                 'ion_current': curr,
                                 'hill_coefficient': to_int(param.hill_coefficient if param else curr.default_hill_coefficient),
@@ -88,18 +86,15 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
 
     def get_concentration_formset(self):
         if not hasattr(self, 'concentration_formset') or self.concentration_formset is None:
-            initial = []
-            if self.pk:
-                initial = CompoundConcentrationPoint.objects.filter(simulation=Simulation.objects.get(pk=self.pk)).values()
+            initial = CompoundConcentrationPoint.objects.filter(simulation=self.pk)
             form_kwargs = {'user': self.request.user}
             self.concentration_formset = self.concentration_formset_class(self.request.POST or None,
                                                                           prefix='concentration',
-                                                                          initial=initial,
+                                                                          initial=initial.values() if initial else [],
                                                                           form_kwargs=form_kwargs)
         return self.concentration_formset
 
     def get_context_data(self, **kwargs):
-        self.pk = self.kwargs.get('pk', None)
         kwargs['ion_formset'] = self.get_ion_formset()
         kwargs['concentration_formset'] = self.get_concentration_formset()
         kwargs['template_title'] = Simulation.objects.get(pk=self.pk).title if self.pk else None

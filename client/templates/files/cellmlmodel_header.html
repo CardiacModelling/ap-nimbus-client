@@ -7,13 +7,14 @@
     <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.
         {% can_edit object as can_edit %}
         {% if can_edit %}
-          <a title="Delete this CellML model" href="{% url 'files:delete_model' object.id %}">
-            <img src="{% static 'img/delete.png' %}" alt="Delete this CellML model"/>
-            Delete {{object.title}}
+          <a title="Delete this CellML model" href="{% url 'files:delete_model' object.id %}" title="Delete this CellML model">
+            <img src="{% static 'images/delete.png' %}" alt="Delete"/>
+            Delete
           </a> |
           {%if not in_edit %}
-            <a title="Edit this CellML model" href="{% url 'files:edit_model' object.id %}">
-              Edit {{object.title}}
+            <a title="Edit this CellML model" href="{% url 'files:edit_model' object.id %}" title="Edit this CellML model">
+            <img src="{% static 'images/edit.png' %}" alt="Edit"/>
+              Edit
             </a> |
           {% endif %}
         {% endif %}</small>

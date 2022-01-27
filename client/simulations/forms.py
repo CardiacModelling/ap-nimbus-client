@@ -31,7 +31,7 @@ class IonCurrentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['default_spread_of_uncertainty'] = forms.CharField(widget=forms.HiddenInput())
 
-        self.fields['current'].widget.attrs = {'class': 'current-concentration'}
+        self.fields['current'].widget.attrs = {'class': 'current-concentration', 'step': 'any'}
         self.fields['hill_coefficient'].widget.attrs = {'min': 0.1, 'max': 5.0, 'step': 'any'}
         self.fields['hill_coefficient'].required = False
 
@@ -82,7 +82,7 @@ class CompoundConcentrationPointForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['concentration'].required = False
         self.fields['concentration'].widget.attrs = {'class': 'compound-concentration', 'required': False,
-                                                     'min': 0}
+                                                     'min': 0, 'step': 'any'}
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
 
@@ -138,8 +138,8 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
 
         self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},
                                                               choices=self.fields['pk_or_concs'].choices)
-        self.fields['minimum_concentration'].widget.attrs = {'min': 0}
-        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001}
+        self.fields['minimum_concentration'].widget.attrs = {'min': 0, 'step': 'any'}
+        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001, 'step': 'any'}
         self.fields['PK_data'].widget.attrs = {'accept': ('.txt,.tsv')}
 
         for _, field in self.fields.items():

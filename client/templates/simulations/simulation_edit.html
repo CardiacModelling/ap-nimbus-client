@@ -9,7 +9,7 @@
 <div class="info">The simulation parameters cannot be edited, to run a different simulation please <a href="{% url 'simulations:create_simulation' %}"> create a new simulation</a>.</div>
 
 <section id="simulationeditinfo">
-{% include "./simulation_header.html" %}
+<small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
     {{form.as_p}}
@@ -52,6 +52,11 @@
       {% print_compound_concentrations object as inhconc %}
       {{ inhconc.0 }}
     </fieldset>
+    <fieldset>
+      <legend>Status</legend>
+      <label>{{object.status}}</label>
+    </fieldset>
+
   </fieldset>
   <p>
   <button id="savebutton" type="submit">Save</button>

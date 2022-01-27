@@ -18,9 +18,9 @@
     {{concentration_formset.management_form}}
     {{form.non_field_errors}}
     <fieldset>
-    <legend>Title</legend>
-      <p>{{ form.title.errors }} {{ form.title }}</p>
-      <p><label for="id_title">Additional notes:</label><br/> {{ form.notes.errors }} {{ form.notes }} <span class="helptext">{{ form.help_text|safe }}</span></p>
+    <legend>Info</legend>
+      <p><label for="id_title">Title:</label>{{ form.title.errors }} {{ form.title }}</p>
+      <p><label for="id_notes">Additional notes:</label><br/> {{ form.notes.errors }} {{ form.notes }} <span class="helptext">{{ form.help_text|safe }}</span></p>
     </fieldset>
 
     <fieldset>

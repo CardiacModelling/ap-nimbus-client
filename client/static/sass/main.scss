@@ -256,7 +256,7 @@ h1#entityname{
 
 /* ion current table in simulation form */
 
-#ioncurrent-formset, #simulations_table{
+#ioncurrent-formset{
     font-size: 12px;
     text-align: left;
 }
@@ -304,7 +304,7 @@ h1#entityname{
 
 /* results datatables adjustment */
 table.dataTable{
-    font-size:12px;
+    font-size: 14px;
     text-align: left;
 }
 
@@ -313,14 +313,13 @@ table.dataTable thead tr:nth-child(2) th{
     font-style: italic !important;
 }
 
-
 .sim-title{
     table-layout:fixed !important;
     width: 400px !important;
     min-width:400px !important;
     max-width:400px !important;
 }
-.inhibitory-concentrations-header, .compound-concentrations-header, .sim-compound-concentrations, .sim-pacing-freq, .sim-pacing-time, .sim-ion-current, .sim-ion-current-units, .sim-concentration-type, .sim-status, .sim-model, .sim-date{
+.inhibitory-concentrations-header, .compound-concentrations-header, .sim-compound-concentrations, .sim-pacing-freq, .sim-pacing-time, .sim-ion-current, .sim-ion-current-units, .sim-concentration-type, .sim-status, .sim-model, .sim-date, .sim-action{
     width: 0% !important;
     white-space: nowrap !important;
 }

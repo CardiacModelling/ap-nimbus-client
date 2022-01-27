@@ -25,6 +25,12 @@ class Simulation(models.Model):
     """
     Main simulation model
     """
+    class Status(models.TextChoices):
+        QUEUED = "QUEUED"
+        RUNNING = "RUNNING"
+        SUCCESS = "SUCCESS"
+        STATUS_FAILED = "FAILED"
+
     class IonCurrentType(models.TextChoices):
         PIC50 = 'pIC50', 'pIC50'
         IC50 = 'IC50', 'IC50'
@@ -40,6 +46,7 @@ class Simulation(models.Model):
         compound_concentration_points = 'compound_concentration_points', 'Compound Concentration Points'
         pharmacokinetics = 'pharmacokinetics', 'Pharmacokinetics'
 
+    status =  models.CharField(choices=Status.choices, max_length=255, blank=True, default=Status.QUEUED)
     title = models.CharField(max_length=255, help_text="A short title to identify this simulation.")
     notes = models.TextField(blank=True, default='',
                              help_text="Any notes related to this simulation. Please note: These will also be visible "
