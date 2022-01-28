@@ -1,12 +1,29 @@
+import os
+import uuid
+from shutil import copyfile
+from django.conf import settings
 import pytest
 
 from simulations.forms import IonCurrentForm, CompoundConcentrationPointForm, SimulationForm, SimulationEditForm
 from simulations.models import Simulation
+from django.core.files.uploadedfile import TemporaryUploadedFile
 
 
 
 @pytest.mark.django_db
-class TestSimulationForm:
+class TestSimulationForm_and_SimulationEditForm:
+    def upload_file(self, tmp_path, file_name):
+        test_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', file_name)
+        tsv_file = str(uuid.uuid4()) + file_name + '.temp'
+        temp_file = os.path.join(tmp_path, tsv_file)
+        assert os.path.isfile(test_file), str(test_file)
+        copyfile(test_file, temp_file)
+        assert os.path.isfile(temp_file)
+
+        tempfile = TemporaryUploadedFile(tsv_file, 'text/plain', os.path.getsize(test_file), 'utf-8')
+        tempfile.file = open(temp_file, 'rb')
+        return tempfile
+
     @pytest.fixture
     def range_data(user, o_hara_model):
         return {'title': 'range model',
@@ -34,7 +51,51 @@ class TestSimulationForm:
         assert not form.is_valid()
 
     @pytest.mark.django_db
-    def test_SimulationForm_maximum_pacing_time(self, range_data, user):
+    def test_PK_data(self, range_data, user, tmp_path):
+        assert Simulation.objects.count() == 0
+        sample = self.upload_file(tmp_path, 'sample.tsv')
+
+        # test uploading works
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert form.is_valid()
+        sim = form.save()
+        assert Simulation.objects.count() == 1
+        assert os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(sample)))
+
+        # test deleting model deletes file
+        sim.delete()
+        assert Simulation.objects.count() == 0
+        assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(sample)))
+
+    @pytest.mark.django_db
+    def test_PK_data_validator(self, range_data, user, tmp_path):
+        assert Simulation.objects.count() == 0
+        sample = self.upload_file(tmp_path, 'error-mimetype.tsv')
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert not form.is_valid()
+
+        sample = self.upload_file(tmp_path, 'error-num-cols.tsv')
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert not form.is_valid()
+
+        sample = self.upload_file(tmp_path, 'error-not-number.tsv')
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert not form.is_valid()
+
+        sample = self.upload_file(tmp_path, 'error-negative.tsv')
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert not form.is_valid()
+
+        sample = self.upload_file(tmp_path, 'error-time.tsv')
+        form = SimulationForm(range_data, {'PK_data': sample}, user=user)
+        assert not form.is_valid()
+
+        assert Simulation.objects.count() == 0
+
+
+    @pytest.mark.django_db
+    def test_StrictlyGreaterValidator(self, range_data, user):
+        # test simulations.models.StrictlyGreaterValidator
         range_data['maximum_pacing_time'] = 0
         assert Simulation.objects.count() == 0
         form = SimulationForm(user=user, data=range_data)

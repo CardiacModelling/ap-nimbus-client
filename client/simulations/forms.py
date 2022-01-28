@@ -142,20 +142,17 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
                 for line in tsv_file:
                     if len(line) < 2:
                         raise forms.ValidationError('Invalid TSV file. Expecting a TSV file with at least 2 columns.')
-
+                    for i, column in enumerate(line):
+                        try:
+                            if float(column) < 0:
+                                raise forms.ValidationError('Invalid TSV file. Got a negative value in column %s.' % i)
+                        except ValueError:
+                            raise forms.ValidationError(
+                                'Invalid TSV file. Expecting number values only. Got `%s.`' % column)
                     current_time = float(line[0])
                     if current_time <= previous_time:
                         raise forms.ValidationError('Invalid TSV file. Time in column 1 should be strictly increasing.')
                     previous_time = current_time
-
-                    for i, column in enumerate(line):
-                        try:
-                            if float(column) < 0:
-                                raise forms.ValidationError('Invalid TSV file. Got a negetive value in column %s.' % i)
-                        except ValueError:
-                            raise forms.ValidationError(
-                                'Invalid TSV file. Expecting number values only. Got `%s.`' % column
-                            )
 
         return PK_data
 
