@@ -111,43 +111,15 @@ CompoundConcentrationPointFormSet = inlineformset_factory(
 )
 
 
-class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
-    """
-    Form for creating new simulations.
-    """
-    class Meta:
-        model = Simulation
-        exclude = ('author', )
-
+class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        # populate models seperating predefined and uploaded models
-        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                         if m.predefined and m.is_visible_to(self.user)]
-        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                           if not m.predefined and m.is_visible_to(self.user)]
-        self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + \
-            [(None, '--- Uploaded models ---')] + uploaded_models
-        self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
-
-        self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}
-
-        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 'any',
-                                                           'required': 'required'}
-
-        self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},
-                                                              choices=self.fields['pk_or_concs'].choices)
-        self.fields['minimum_concentration'].widget.attrs = {'min': 0, 'step': 'any'}
-        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001, 'step': 'any'}
-        self.fields['PK_data'].widget.attrs = {'accept': ('.txt,.tsv')}
-
-        for _, field in self.fields.items():
-            field.widget.attrs['title'] = field.help_text
 
     def clean_title(self):
         title = self.cleaned_data['title']
-        if self._meta.model.objects.filter(title=title, author=self.user).exists():
+        if self._meta.model.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
+                                                                                   if self.instance else None]):
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
 
@@ -195,7 +167,41 @@ class SimulationForm(forms.ModelForm, UserKwargModelFormMixin):
         return simulation
 
 
-class SimulationEditForm(forms.ModelForm, UserKwargModelFormMixin):
+class SimulationForm(SimulationBaseForm):
+    """
+    Form for creating new simulations.
+    """
+    class Meta:
+        model = Simulation
+        exclude = ('author', )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # populate models seperating predefined and uploaded models
+        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
+                         if m.predefined and m.is_visible_to(self.user)]
+        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
+                           if not m.predefined and m.is_visible_to(self.user)]
+        self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + \
+            [(None, '--- Uploaded models ---')] + uploaded_models
+        self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
+
+        self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}
+
+        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 'any',
+                                                           'required': 'required'}
+
+        self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},
+                                                              choices=self.fields['pk_or_concs'].choices)
+        self.fields['minimum_concentration'].widget.attrs = {'min': 0, 'step': 'any'}
+        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001, 'step': 'any'}
+        self.fields['PK_data'].widget.attrs = {'accept': ('.txt,.tsv')}
+
+        for _, field in self.fields.items():
+            field.widget.attrs['title'] = field.help_text
+
+
+class SimulationEditForm(SimulationBaseForm):
     """
     Form for editing simulations.
     We can only edit title / description not other parameters.
@@ -204,7 +210,3 @@ class SimulationEditForm(forms.ModelForm, UserKwargModelFormMixin):
     class Meta:
         model = Simulation
         fields = ('title', 'notes')
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)

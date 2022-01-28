@@ -138,6 +138,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
     return model
 
 
+
 @pytest.fixture
 def simulation_range(simulation_recipe, user, o_hara_model):
     sim = simulation_recipe.make(notes = 'some notes',
