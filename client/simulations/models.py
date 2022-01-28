@@ -103,13 +103,13 @@ class SimulationIonCurrentParam(models.Model):
     """
     Ion current parameter for a given simulation
     """
-    simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
+    simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation, blank=True)
     ion_current = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=IonCurrent)
     # can't validate as restriction only if IC50 selected. Form javascript should validate
     current = models.FloatField(blank=True, null=True, help_text="> 0 for IC50.")
-    hill_coefficient = models.FloatField(default=1, help_text="Between 0.1 and 5.",
+    hill_coefficient = models.FloatField(default=1, help_text="Between 0.1 and 5.", blank=True,
                                          validators=[MinValueValidator(0), MaxValueValidator(5)])
-    saturation_level = models.FloatField(default=0, validators=[MinValueValidator(0)],
+    saturation_level = models.FloatField(default=0, validators=[MinValueValidator(0)], blank=True,
                                          help_text="Level of peak current relative to control at a very large compound "
                                                    "concentration (between 0 and 1).\n- For an inhibitor this is in the"
                                                    " range 0% (default) to <100% (compound has no effect).\n- For an "

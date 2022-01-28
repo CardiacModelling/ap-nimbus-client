@@ -10,10 +10,56 @@ from simulations.forms import (
     CompoundConcentrationPointForm,
     CompoundConcentrationPointFormSet,
     IonCurrentForm,
+    IonCurrentFormSet,
     SimulationEditForm,
     SimulationForm,
 )
-from simulations.models import CompoundConcentrationPoint, Simulation
+from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
+
+
+@pytest.mark.django_db
+class TestIonCurrentFormSet:
+    @pytest.fixture
+    def params(self):
+         vals = [4.37, 44.716, 70, 45.3, None, 13.4, None]
+         spreads = [0.18, 0.2, 0.15, 0.17, 0.18, 0.15, 0.2]
+         return [{'current': v,
+                  'hill_coefficient': 1,
+                  'saturation_level': 0,
+                  'spread_of_uncertainty': sp}
+                 for v, sp in zip(vals, spreads)]
+
+    @pytest.mark.django_db
+    def test_IonCurrentFormSet(self, user, simulation_range, simulation_points, params):
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_range).count() == 7
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_points).count() == 0
+        data = {}
+        for i, (curr, p) in enumerate(zip(IonCurrent.objects.all(), params)):
+            data['ion-' + str(i) + '-current'] = p['current']
+            data['ion-%s-hill_coefficient' %i] = 1
+            data['ion-%s-saturation_level' %i] = 0
+            data['ion-' + str(i) + '-spread_of_uncertainty'] = p['spread_of_uncertainty']
+            data['ion-' + str(i) + '-ion_current'] = curr
+        data['ion-TOTAL_FORMS'] = 7
+        data['ion-INITIAL_FORMS'] = 7
+        ion_formset = IonCurrentFormSet(data, prefix='ion', form_kwargs={'user': user})
+        assert ion_formset.is_valid(), str(ion_formset.errors)
+        saved_points = ion_formset.save(simulation_points)
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_range).count() == 7
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_points).count() == 5
+
+    @pytest.mark.django_db
+    def test_IonCurrentForm(self, user, simulation_range, simulation_points, params):
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_range).count() == 7
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_points).count() == 0
+        for curr, param in zip(IonCurrent.objects.all(), params):
+            param['ion_current'] = curr
+            form = IonCurrentForm(user=user, data=param)
+            assert form.is_valid(), str(form.errors)
+            form.save(simulation_points)
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_range).count() == 7
+        assert SimulationIonCurrentParam.objects.filter(simulation=simulation_points).count() == 5
+
 
 
 @pytest.mark.django_db
@@ -34,12 +80,12 @@ class TestCompoundConcentrationPointFormSet:
     @pytest.mark.django_db
     def test_CompoundConcentrationPointFormSet(self, user, simulation, values, sorted_values):
         assert CompoundConcentrationPoint.objects.count() == 0
-        data = {'concentration-' + str(i) + '-concentration': c for i, c in enumerate(values)}
+        data = {'concentration-%s-concentration' %i: c for i, c in enumerate(values)}
         data['concentration-TOTAL_FORMS'] = len(values)
         data['concentration-INITIAL_FORMS'] = 5
         formset = CompoundConcentrationPointFormSet(data, prefix='concentration', form_kwargs={'user': user})
         assert formset.is_valid()
-        saved_points = formset.save(simulation)
+        formset.save(simulation)
         assert CompoundConcentrationPoint.objects.count() == len(sorted_values), str(saved_points) + '\n\n\n'
         assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == sorted_values
 

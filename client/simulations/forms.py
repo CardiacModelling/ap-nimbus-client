@@ -30,13 +30,12 @@ class IonCurrentForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields['default_spread_of_uncertainty'] = forms.CharField(widget=forms.HiddenInput())
+        self.fields['default_spread_of_uncertainty'].required = False
 
         self.fields['current'].widget.attrs = {'class': 'current-concentration', 'step': 'any'}
         self.fields['hill_coefficient'].widget.attrs = {'min': 0.1, 'max': 5.0, 'step': 'any'}
-        self.fields['hill_coefficient'].required = False
 
         self.fields['saturation_level'].widget.attrs = {'min': 0.0, 'step': 'any'}
-        self.fields['saturation_level'].required = False
 
         self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000001, 'max': 2.0, 'step': 'any',
                                                              'class': 'spread_of_uncertainty'}
