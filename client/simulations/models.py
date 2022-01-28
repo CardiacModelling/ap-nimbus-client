@@ -133,6 +133,9 @@ class CompoundConcentrationPoint(models.Model):
     simulation = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=Simulation)
     concentration = models.FloatField(validators=[MinValueValidator(0), ], help_text="(in µM) at least 0.")
 
+    class Meta:
+        ordering = ('concentration', )
+
     def __str__(self):
         return str(self.simulation) + " - " + str(self.concentration)
 

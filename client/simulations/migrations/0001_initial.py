@@ -62,5 +62,8 @@ class Migration(migrations.Migration):
                 ('concentration', models.FloatField(help_text='(in µM) at least 0.', validators=[django.core.validators.MinValueValidator(0)])),
                 ('simulation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='simulations.simulation')),
             ],
+            options={
+                'ordering': ('simulation', ),
+            },
         ),
     ]
