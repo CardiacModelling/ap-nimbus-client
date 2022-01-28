@@ -71,10 +71,13 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                 param = SimulationIonCurrentParam.objects.filter(simulation=self.pk, ion_current=curr).first()
                 initial.append({'current': param.current if param else None,
                                 'ion_current': curr,
-                                'hill_coefficient': to_int(param.hill_coefficient if param else curr.default_hill_coefficient),
-                                'saturation_level': to_int(param.saturation_level if param else curr.default_saturation_level),
+                                'hill_coefficient': to_int(param.hill_coefficient if param
+                                                           else curr.default_hill_coefficient),
+                                'saturation_level': to_int(param.saturation_level if param
+                                                           else curr.default_saturation_level),
                                 'spread_of_uncertainty': param.spread_of_uncertainty if param else None,
-                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param else curr.default_spread_of_uncertainty),
+                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param
+                                                                        else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
                                 'models': [m.id for m in CellmlModel.objects.all()
@@ -132,6 +135,7 @@ class SimulationEditView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
 
     def test_func(self):
         return self.get_object().is_editable_by(self.request.user)
+
 
 class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
     """
