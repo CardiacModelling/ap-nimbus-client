@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
             name='CompoundConcentrationPoint',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('concentration', models.FloatField(help_text='(in µM) at least 0.', validators=[django.core.validators.MinValueValidator(0)])),
+                ('concentration', models.FloatField(blank=True, help_text='(in µM) at least 0.', validators=[django.core.validators.MinValueValidator(0)])),
                 ('simulation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='simulations.simulation')),
             ],
             options={

@@ -10,7 +10,7 @@ from simulations.models import Simulation
 @pytest.mark.django_db
 def test_auto_delete_file_on_delete(simulation_pkdata):
     assert Simulation.objects.count() == 1
-    sample = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'Sample2.tsv')
+    sample = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'sample.tsv')
     assert os.path.isfile(sample)
 
     uploaded = 'Sample' + str(uuid.uuid4()) + '.tsv'

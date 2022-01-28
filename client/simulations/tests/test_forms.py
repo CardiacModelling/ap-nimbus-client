@@ -5,9 +5,24 @@ from django.conf import settings
 import pytest
 
 from simulations.forms import IonCurrentForm, CompoundConcentrationPointForm, SimulationForm, SimulationEditForm
-from simulations.models import Simulation
+from files.models import IonCurrent
+from simulations.models import Simulation, CompoundConcentrationPoint
 from django.core.files.uploadedfile import TemporaryUploadedFile
 
+
+
+@pytest.mark.django_db
+def test_CompoundConcentrationPointForm(user, simulation_recipe, o_hara_model):
+    simulation = simulation_recipe.make(model=o_hara_model, pk_or_concs = Simulation.PkOptions.compound_concentration_points)
+    CompoundConcentrationPoint.objects.count() == 0
+    values = [2.23, 20.25, 42.43, 66.71, 90.23, 85.24, 55.53, None]
+    for val in values:
+        form = CompoundConcentrationPointForm(user=user, data={'concentration': val})
+        assert form.is_valid()
+        form.save(simulation)
+    num_values = sorted(filter(None, values))
+    assert CompoundConcentrationPoint.objects.count() == len(num_values)
+    assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == num_values
 
 
 @pytest.mark.django_db

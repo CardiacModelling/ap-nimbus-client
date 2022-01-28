@@ -44,7 +44,7 @@ class IonCurrentForm(forms.ModelForm):
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
 
-    def save(self, simulation=None, **kwargs):
+    def save(self, simulation, **kwargs):
         # current not set, don't try to save
         if not self.cleaned_data.get('current', None):
             return None
