@@ -1,6 +1,6 @@
 from django import template
 from files.models import IonCurrent
-from simulations.models import Simulation, SimulationIonCurrentParam, CompoundConcentrationPoint
+from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 register = template.Library()

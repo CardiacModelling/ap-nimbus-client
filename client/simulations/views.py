@@ -12,7 +12,7 @@ from .forms import (
     SimulationEditForm,
     SimulationForm,
 )
-from .models import Simulation, CompoundConcentrationPoint, SimulationIonCurrentParam
+from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 def to_int(f):
