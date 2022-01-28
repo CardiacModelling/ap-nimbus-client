@@ -12,7 +12,7 @@ from simulations.templatetags.simulations import (
 
 @pytest.mark.django_db
 def test_ion_currents():
-    assert len(ion_currents()) == 0
+    assert len(ion_currents()) == ion_currents().count() == 0
 
 
 @pytest.mark.django_db
