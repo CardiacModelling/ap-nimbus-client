@@ -1,7 +1,13 @@
 import pytest
-from simulations.templatetags.simulations import ion_currents, simulation_ion_current, print_compound_concentrations, short_field_name, print_field_name
 from files.models import IonCurrent
 from simulations.models import Simulation, SimulationIonCurrentParam
+from simulations.templatetags.simulations import (
+    ion_currents,
+    print_compound_concentrations,
+    print_field_name,
+    short_field_name,
+    simulation_ion_current,
+)
 
 
 @pytest.mark.django_db
@@ -35,7 +41,8 @@ def test_print_compound_concentrations_range(simulation_range, simulation_points
     assert print_compound_concentrations(simulation_range) == ('0 - 100 (µM)', '0 - 100 (µM)')
     assert print_compound_concentrations(simulation_points) == \
         ('[24.9197, 25.85, 27.73, 35.8, 41.032, 42.949, 56.2, 62.0, 67.31, 72.27] (µM)', '[24.9197 ... 72.27] (µM)')
-    assert print_compound_concentrations(simulation_pkdata) == ('Compound concentrations from TSV file: pk_data.tsv.', 'pk_data.tsv')
+    assert print_compound_concentrations(simulation_pkdata) == ('Compound concentrations from TSV file: pk_data.tsv.',
+                                                                'pk_data.tsv')
 
 
 @pytest.mark.django_db

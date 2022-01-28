@@ -6,7 +6,6 @@ from simulations.models import CompoundConcentrationPoint, Simulation, Simulatio
 register = template.Library()
 
 
-
 @register.simple_tag
 def ion_currents():
     """
@@ -34,10 +33,10 @@ def print_compound_concentrations(simulation):
 
     elif simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
         points = [p.concentration for p in CompoundConcentrationPoint.objects.filter(simulation=simulation)]
-        points_range = str(points) if len(points) <=2 else '[' + str(points[0]) + ' ... ' + str(points[-1]) + ']'
+        points_range = str(points) if len(points) <= 2 else '[' + str(points[0]) + ' ... ' + str(points[-1]) + ']'
         return (str(points) + ' (µM)', points_range + ' (µM)')
 
-    else #simulation.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
+    else:
         file_name = str(simulation.PK_data)
         truncated = file_name[:20] + '...' if len(file_name) > 23 else file_name
         return ('Compound concentrations from TSV file: %s.' % file_name, truncated)
