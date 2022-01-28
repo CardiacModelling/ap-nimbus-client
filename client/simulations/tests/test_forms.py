@@ -1,28 +1,57 @@
 import os
 import uuid
 from shutil import copyfile
-from django.conf import settings
+
 import pytest
-
-from simulations.forms import IonCurrentForm, CompoundConcentrationPointForm, SimulationForm, SimulationEditForm
-from files.models import IonCurrent
-from simulations.models import Simulation, CompoundConcentrationPoint
+from django.conf import settings
 from django.core.files.uploadedfile import TemporaryUploadedFile
-
+from files.models import IonCurrent
+from simulations.forms import (
+    CompoundConcentrationPointForm,
+    CompoundConcentrationPointFormSet,
+    IonCurrentForm,
+    SimulationEditForm,
+    SimulationForm,
+)
+from simulations.models import CompoundConcentrationPoint, Simulation
 
 
 @pytest.mark.django_db
-def test_CompoundConcentrationPointForm(user, simulation_recipe, o_hara_model):
-    simulation = simulation_recipe.make(model=o_hara_model, pk_or_concs = Simulation.PkOptions.compound_concentration_points)
-    CompoundConcentrationPoint.objects.count() == 0
-    values = [2.23, 20.25, 42.43, 66.71, 90.23, 85.24, 55.53, None]
-    for val in values:
-        form = CompoundConcentrationPointForm(user=user, data={'concentration': val})
-        assert form.is_valid()
-        form.save(simulation)
-    num_values = sorted(filter(None, values))
-    assert CompoundConcentrationPoint.objects.count() == len(num_values)
-    assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == num_values
+class TestCompoundConcentrationPointFormSet:
+    @pytest.fixture
+    def simulation(self, user, simulation_recipe, o_hara_model):
+        return simulation_recipe.make(model=o_hara_model,
+                                      pk_or_concs=Simulation.PkOptions.compound_concentration_points)
+
+    @pytest.fixture
+    def values(self):
+        return [2.23, 20.25, 42.43, 66.71, 90.23, 85.24, 55.53, None]
+
+    @pytest.fixture
+    def sorted_values(self, values):
+        return sorted(filter(None, values))
+
+    @pytest.mark.django_db
+    def test_CompoundConcentrationPointFormSet(self, user, simulation, values, sorted_values):
+        assert CompoundConcentrationPoint.objects.count() == 0
+        data = {'concentration-' + str(i) + '-concentration': c for i, c in enumerate(values)}
+        data['concentration-TOTAL_FORMS'] = len(values)
+        data['concentration-INITIAL_FORMS'] = 5
+        formset = CompoundConcentrationPointFormSet(data, prefix='concentration', form_kwargs={'user': user})
+        assert formset.is_valid()
+        saved_points = formset.save(simulation)
+        assert CompoundConcentrationPoint.objects.count() == len(sorted_values), str(saved_points) + '\n\n\n'
+        assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == sorted_values
+
+    @pytest.mark.django_db
+    def test_CompoundConcentrationPointForm(self, user, simulation, values, sorted_values):
+        assert CompoundConcentrationPoint.objects.count() == 0
+        for val in values:
+            form = CompoundConcentrationPointForm(user=user, data={'concentration': val})
+            assert form.is_valid()
+            form.save(simulation)
+        assert CompoundConcentrationPoint.objects.count() == len(sorted_values)
+        assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == sorted_values
 
 
 @pytest.mark.django_db
@@ -40,7 +69,7 @@ class TestSimulationForm_and_SimulationEditForm:
         return tempfile
 
     @pytest.fixture
-    def range_data(user, o_hara_model):
+    def range_data(self, user, o_hara_model):
         return {'title': 'range model',
                 'notes': 'some notes',
                 'model': o_hara_model.pk,
@@ -107,7 +136,6 @@ class TestSimulationForm_and_SimulationEditForm:
 
         assert Simulation.objects.count() == 0
 
-
     @pytest.mark.django_db
     def test_StrictlyGreaterValidator(self, range_data, user):
         # test simulations.models.StrictlyGreaterValidator
@@ -115,7 +143,6 @@ class TestSimulationForm_and_SimulationEditForm:
         assert Simulation.objects.count() == 0
         form = SimulationForm(user=user, data=range_data)
         assert not form.is_valid()
-
 
     @pytest.mark.django_db
     def test_SimulationEditForm(self, range_data, user, simulation_range, simulation_points):
@@ -137,13 +164,13 @@ class TestSimulationForm_and_SimulationEditForm:
         assert form.is_valid()
         form.save()
         assert Simulation.objects.count() == 2
-        assert simulation_range.title ==  'range model'
+        assert simulation_range.title == 'range model'
         assert simulation_range.notes == 'new notes'
 
         # try to chnage title to that of another model
         range_data['title'] = simulation_points.title
         form = SimulationEditForm(user=user, data=range_data, instance=simulation_range)
         assert not form.is_valid()
-        assert simulation_range.title ==  'range model'
+        assert simulation_range.title == 'range model'
         assert simulation_range.notes == 'new notes'
 

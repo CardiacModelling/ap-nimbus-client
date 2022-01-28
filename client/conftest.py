@@ -1,8 +1,8 @@
 import pytest
 from accounts.models import User
 from files.models import CellmlModel, IonCurrent
-from simulations.models import Simulation, SimulationIonCurrentParam, CompoundConcentrationPoint
 from model_bakery.recipe import Recipe, seq
+from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 @pytest.fixture

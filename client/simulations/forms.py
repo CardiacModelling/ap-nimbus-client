@@ -14,7 +14,7 @@ class BaseSaveFormSet(forms.BaseFormSet):
     """
     Set of forms with a save method to save all sub forms.
     """
-    def save(self, simulation=None, **kwargs):
+    def save(self, simulation, **kwargs):
         return [form.save(simulation=simulation, **kwargs) for form in self.forms]
 
 
@@ -119,7 +119,7 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
     def clean_title(self):
         title = self.cleaned_data['title']
         if self._meta.model.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
-                                                                                   if self.instance else None]):
+                                                                                          if self.instance else None]):
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
 
