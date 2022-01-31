@@ -22,7 +22,7 @@ def to_int(f):
     return int(f) if f.is_integer() else f
 
 
-class SimulationListView(ListView):
+class SimulationListView(LoginRequiredMixin, ListView):
     """
     List all user's Simulations
     """
