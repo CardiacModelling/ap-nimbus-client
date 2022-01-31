@@ -3,7 +3,7 @@ from files.models import CellmlModel
 
 
 @pytest.mark.django_db
-class test_CellmlModelListView(logged_in_user, other_user, admin_user, client, cellml_model_recipe):
+def test_CellmlModelListView(logged_in_user, other_user, admin_user, client, cellml_model_recipe):
     models = cellml_model_recipe.make(author=logged_in_user, _quantity=3)
     predef_models = cellml_model_recipe.make(author=other_user, _quantity=3, predefined=True)
     cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False)  # uploaded (private) models
@@ -41,7 +41,7 @@ class TestCellmlModelCreateView:
 
 
 @pytest.mark.django_db
-class test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
+def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
     model = cellml_model_recipe.make(
         author=logged_in_admin,
         predefined=True,
