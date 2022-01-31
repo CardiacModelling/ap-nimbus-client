@@ -3,15 +3,14 @@ from files.models import CellmlModel
 
 
 @pytest.mark.django_db
-class TestCellmlModelListView:
-    def test_ListView(self, logged_in_user, other_user, admin_user, client, cellml_model_recipe):
-        models = cellml_model_recipe.make(author=logged_in_user, _quantity=3)
-        predef_models = cellml_model_recipe.make(author=other_user, _quantity=3, predefined=True)
-        cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False)  # uploaded (private) models
+class test_CellmlModelListView(logged_in_user, other_user, admin_user, client, cellml_model_recipe):
+    models = cellml_model_recipe.make(author=logged_in_user, _quantity=3)
+    predef_models = cellml_model_recipe.make(author=other_user, _quantity=3, predefined=True)
+    cellml_model_recipe.make(author=other_user, _quantity=3, predefined=False)  # uploaded (private) models
 
-        response = client.get('/files/models/')
-        assert response.status_code == 200
-        assert set(response.context['object_list']) == set(models + predef_models)
+    response = client.get('/files/models/')
+    assert response.status_code == 200
+    assert set(response.context['object_list']) == set(models + predef_models)
 
 
 @pytest.mark.django_db
@@ -42,36 +41,35 @@ class TestCellmlModelCreateView:
 
 
 @pytest.mark.django_db
-class TestCellmlModelUpdateView:
-    def test_update(self, logged_in_admin, client, cellml_model_recipe):
-        model = cellml_model_recipe.make(
-            author=logged_in_admin,
-            predefined=True,
-            name="O'Hara-Rudy-CiPA",
-            description='human ventricular cell model (endocardial)',
-            version='v1.0',
-            year=2017,
-            cellml_link='https://models.cellml.org/e/4e8/',
-            paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
-            ap_predict_model_call='8',
-        )
-        assert CellmlModel.objects.count() == 1
-        data = {
-            'predefined': model.predefined,
-            'name': 'new test name',
-            'description': model.description,
-            'version': model.version,
-            'year': model.year,
-            'cellml_link': model.cellml_link,
-            'paper_link': model.paper_link,
-            'ap_predict_model_call': model.ap_predict_model_call,
-        }
-        assert CellmlModel.objects.count() == 1
-        response = client.post('/files/models/%d/edit/' % model.pk, data=data)
-        assert response.status_code == 302
-        model.refresh_from_db()
-        assert CellmlModel.objects.count() == 1
-        assert model.name == 'new test name'
+class test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
+    model = cellml_model_recipe.make(
+        author=logged_in_admin,
+        predefined=True,
+        name="O'Hara-Rudy-CiPA",
+        description='human ventricular cell model (endocardial)',
+        version='v1.0',
+        year=2017,
+        cellml_link='https://models.cellml.org/e/4e8/',
+        paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
+        ap_predict_model_call='8',
+    )
+    assert CellmlModel.objects.count() == 1
+    data = {
+        'predefined': model.predefined,
+        'name': 'new test name',
+        'description': model.description,
+        'version': model.version,
+        'year': model.year,
+        'cellml_link': model.cellml_link,
+        'paper_link': model.paper_link,
+        'ap_predict_model_call': model.ap_predict_model_call,
+    }
+    assert CellmlModel.objects.count() == 1
+    response = client.post('/files/models/%d/edit/' % model.pk, data=data)
+    assert response.status_code == 302
+    model.refresh_from_db()
+    assert CellmlModel.objects.count() == 1
+    assert model.name == 'new test name'
 
 
 @pytest.mark.django_db
