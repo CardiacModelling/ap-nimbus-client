@@ -29,7 +29,7 @@ class SimulationListView(LoginRequiredMixin, ListView):
     template_name = 'simulations/simulation_list.html'
 
     def get_queryset(self):
-        return (sim for sim in Simulation.objects.all() if sim.is_visible_to(self.request.user))
+        return [sim for sim in Simulation.objects.all() if sim.is_visible_to(self.request.user)]
 
 
 class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):

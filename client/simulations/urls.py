@@ -12,7 +12,7 @@ urlpatterns = [
 
 
     re_path(
-        r'^new/$',
+        r'^new$',
         views.SimulationCreateView.as_view(),
         name='create_simulation',
     ),
