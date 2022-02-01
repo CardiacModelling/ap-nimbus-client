@@ -73,12 +73,16 @@ class TestCellmlModelForm:
         model = form.save()
         assert model == CellmlModel.objects.get(name="O'Hara-Rudy-CiPA")
 
+        # duplicate name not allowed
+        form = CellmlModelForm(user=admin_user, data=data)
+        assert not form.is_valid()
+
     def test_update(self, o_hara_model, data, admin_user):
-        data['name'] = 'changed model'
+        data['version'] = 'v2'
         form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
         form.is_valid()
         form.save()
-        assert o_hara_model.name == 'changed model'
+        assert o_hara_model.version == 'v2'
 
     def test_file(self, data, file1, file2, admin_user, ion_currents):
         # file upload
@@ -137,3 +141,4 @@ class TestCellmlModelForm:
         form = CellmlModelForm(data, {'cellml_file': file4}, user=admin_user)
         assert not form.is_valid()  # This is an image not really an xml file
         assert "Could not process cellml model: \n    'Unknown unit <coulomb_per_mole>.'" in form.errors['cellml_file']
+

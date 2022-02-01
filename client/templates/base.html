@@ -10,37 +10,35 @@
   </head>
 
   <body id="{% block body_id %}{% endblock %}" >
-    <div id="page">
-
-    <header>
-      <div id="logo">
-        <br /><br />
+      <div id="page">
+        <header>
+          <div id="logo">
+            <br/><br/>
+          </div>
+          {% include "includes/navbar.html" %}
+          <div id="breadcrumb"></div>
+        </header>
+        {% include "notifications.html" %}
+        <div id="body">
+          {% block content %}
+          {% endblock %}
+        </div>
       </div>
-
-      {% include "includes/navbar.html" %}
-
-      <div id="breadcrumb"></div>
-    </header>
-
-    {% include "notifications.html" %}
-
-    <div id="body">
-      {% block content %}
-      {% endblock %}
-    </div>
-
-    <footer>
-      AP Portal &copy; 2013-2021 University of Oxford, 2016-{% now 'Y' %} University of Nottingham
-      <br />
-      <nav>
-        <ul class="footer-navbar">
-          <li><a href="{% url 'contact' %}">Contact/Team</a></li>
-          <li><a href="{% url 'privacy' %}">Privacy</a></li>
-        </ul>
-      </nav>
-    </footer>
-
-    </div>
-
+      <div id="wide-data">
+          {% block data %}
+          {% endblock %}
+      </div>
+      <div id="footer">
+        <footer>
+          AP Portal &copy; 2016-{% now 'Y' %} University of Nottingham, 2013-2021 University of Oxford
+          <br/>
+          <nav>
+            <ul class="footer-navbar">
+              <li><a href="{% url 'contact' %}">Contact/Team</a></li>
+              <li><a href="{% url 'privacy' %}">Privacy</a></li>
+            </ul>
+          </nav>
+        </footer>
+      </div>
   </body>
 </html>

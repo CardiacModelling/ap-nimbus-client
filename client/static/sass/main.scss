@@ -1,16 +1,21 @@
 body {
-  font-family: 'Open Sans', sans-serif;
+  font-family: Arial;
   font-size: 16px; 
   clear: both;
-  padding: 10px; }  
+  padding: 10px;
   }
 
 code, input {
-  font-family: 'Cousine', monospace, sans-serif; }
+  font-family: Georgia; }
 
-#page {
+#page, #footer{
   width: 850px;
-  margin: auto; }
+  margin: auto; 
+}
+#wide-data{
+  max-width: 1650px;
+  margin: auto;
+}
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
@@ -25,7 +30,7 @@ button {
 
 button,
 .button {
-  background-color: #263e6a;
+  background-color: #1a296b;
   padding: 8px 12px;
   font-size: 14px;
   border-radius: 5px;
@@ -152,7 +157,7 @@ button:hover, button.selected,
   padding: 10px; }
 
 footer {
-  background-color: #263e6a;
+  background-image: linear-gradient(to right, #009bbd, #007ca7, #005597, #1a296b);
   color: white;
   padding: 15px;
   clear: both; }
@@ -160,13 +165,13 @@ footer {
 a, a:active, a:visited {
   text-decoration: none;
   cursor: pointer;
-  /*border-bottom: 1px solid #263e6a;*/ }
+  /*border-bottom: 1px solid #1a296b;*/ }
 
 a, a:active, a:visited, #comparisonModeIndicator {
-  color: #263eca; }
+  color: #007ca7; }
 
 h1, h2, h3, h4, h5 {
-  color: #263e6a; }
+  color: #1a296b; }
 
 
 #notifications {
@@ -180,7 +185,7 @@ h1, h2, h3, h4, h5 {
 
 #info, .info {
   background-color: #ced5e5;
-  border: 2px solid #263e6a;
+  border: 2px solid #1a296b;
   padding: 0px 10px; }
 
 .invisible {
@@ -188,10 +193,6 @@ h1, h2, h3, h4, h5 {
 
 form input[type=text], form input[type=email], form input[type=password] {
   width: 20em; }
-
-#cellmlmodelform{
-    color: #339933;
-}
 
 label[for=cellml_file-clear_id]{
     color: #e64d00;
@@ -203,7 +204,14 @@ form label{
   color: black;
 }
 
+legend, legend label{
+  display: inline;
+  font-weight: bold;
+  color: #7E7E7E;
+}
+
 form small, form .helptext, form p + ul, form td > ul {
+  white-space: pre;
   color: #aaa;
   font-size: small;
   display: block; }
@@ -215,3 +223,112 @@ table {
 tr:nth-child(1) {
   border-top: 1px dashed #ccc; }
 
+.suppl {
+  color: #888;
+  font-size: .8em; 
+  margin-bottom: 2em;
+}
+
+h1#entityname{
+  margin-top: 0.5em;
+  margin-bottom: 0px; 
+  margin-block-end: 0px}
+
+#add-row-concentration-points a.active::before {
+  content: url("../images/add.png"); 
+}
+
+#add-row-concentration-points.greyed-out::before {
+  content: url("../images/add.png");
+  opacity: 0.4;
+  filter: alpha(opacity=40); /* msie */
+}
+
+#add-row-concentration-points.greyed-out {
+  color: #BEBEBE;
+}
+
+/* Simulaton and cell upload css*/
+/* green highlight uploaded form */
+#id_cellml_file, #id_PK_data{
+    color: #339933;
+}
+
+/* ion current table in simulation form */
+
+#ioncurrent-formset{
+    font-size: 12px;
+    text-align: left;
+}
+
+#ioncurrent-formset input[type='number']{
+    width: 45px;
+}
+
+.errorlist{
+    color: #DC143C;
+}
+
+#currentname{
+    width: 70px;
+    white-space:nowrap;
+}
+
+#currentval{
+    width: 10px;
+    white-space: nowrap;
+}
+
+#currentval input[type='number']{
+    width: 70px;
+}
+
+#id_ion_units{
+    width: 65px;
+}
+
+#ion-description-header{
+    width: 150px;
+}
+
+.infobutton{
+    border:0;
+    padding:0;
+    background: rgba(0, 0, 0, 0);
+}
+
+#div_pk_or_concs_1 input{
+    width: 70px;
+}
+
+
+/* results datatables adjustment */
+table.dataTable{
+    font-size: 14px;
+    text-align: left;
+}
+
+table.dataTable thead tr:nth-child(2) th{
+    font-weight: normal !important;
+    font-style: italic !important;
+}
+
+.sim-title{
+    table-layout:fixed !important;
+    width: 400px !important;
+    min-width:400px !important;
+    max-width:400px !important;
+}
+.inhibitory-concentrations-header, .compound-concentrations-header, .sim-compound-concentrations, .sim-pacing-freq, .sim-pacing-time, .sim-ion-current, .sim-ion-current-units, .sim-concentration-type, .sim-status, .sim-model, .sim-date, .sim-action{
+    width: 0% !important;
+    white-space: nowrap !important;
+}
+
+button.dt-button{
+    line-height: 0px !important;
+}
+
+div.dt-buttons{
+    margin-left: 0.334em;
+    margin-top: 0.167em;
+}

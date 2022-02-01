@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create simulation - {% endblock title %}
+
+{% block content %}
+<div id='simulationform'>
+{% if template_title %}
+  <div class="info">Using existing simulation <em>{{template_title}}</em> as a template.</div>
+  <h1>Create new simulation based on <em>{{template_title}}</em>.</h1>
+{%else %}
+  <h1>Create simulation.</h1>
+{% endif %}
+
+  <form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ion_formset.management_form}}
+    {{concentration_formset.management_form}}
+    {{form.non_field_errors}}
+    <fieldset>
+    <legend>Info</legend>
+      <p><label for="id_title">Title:</label>{{ form.title.errors }} {{ form.title }}</p>
+      <p><label for="id_notes">Additional notes:</label><br/> {{ form.notes.errors }} {{ form.notes }} <span class="helptext">{{ form.help_text|safe }}</span></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Cellml Model</legend>
+      <p>{{ form.model.errors }} {{ form.model }} or <a href="{% url 'files:create_model' %}">Upload a new annotated CellML model</a></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Pacing details</legend>
+      <p>{{ form.pacing_frequency.label_tag }} {{ form.pacing_frequency.errors }} {{ form.pacing_frequency }} <span class="helptext">{{ form.pacing_frequency.help_text }}</span></p> 
+      <p>{{ form.maximum_pacing_time.label_tag }} {{ form.maximum_pacing_time.errors }} {{ form.maximum_pacing_time }} <span class="helptext">{{ form.maximum_pacing_time.help_text|safe }}</span></p>
+    </fieldset>
+
+    <fieldset>
+    <legend>Ion Channel Current Inhibitory Concentrations</legend>
+      <table class="ioncurrent-formset" id="ioncurrent-formset">
+        {% with firstline=ion_formset|first %}
+          <thead><tr><th colspan="3" title="{{firstline.current.help_text}}">Ion Current<img src="{% static 'images/info.png' %}" class="infobutton"> {{form.ion_current_type}} {{form.ion_units}}</th>
+                     <th title="{{firstline.hill_coefficient.help_text}}">Hill <br/>Coefficient<img src="{% static 'images/info.png' %}" class="infobutton"> </th>
+                     <th title="{{firstline.saturation_level.help_text}}">Saturation <br/>Level (%)<img src="{% static 'images/info.png' %}" class="infobutton"> </th>
+                     <th title="{{firstline.spread_of_uncertainty.help_text}}"><input type="checkbox" id="enable_spread_of_uncertainty">Spread of <br/>Uncertainty<img src="{% static 'images/info.png' %}" class="infobutton"> </th>
+                     <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
+        {% endwith %}
+        <tbody>
+          {% for ion_form in ion_formset %}
+            {{ion_form.non_field_errors}}
+            <tr><td id="currentname"><input type="hidden" name="ion-{{ forloop.counter0 }}-models" value="{{ion_form.initial.models}}" class="used-in-models" title="" id="id_ion-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
+                <td id="currentval">{{ion_form.current.errors}}{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
+                <td>{{ion_form.hill_coefficient.errors}}{{ion_form.hill_coefficient}}</td>
+                <td>{{ion_form.saturation_level.errors}}{{ion_form.saturation_level}}</td>
+                <td>{{ion_form.spread_of_uncertainty.errors}}{{ion_form.default_spread_of_uncertainty.errors}}{{ion_form.spread_of_uncertainty}}{{ion_form.default_spread_of_uncertainty.as_hidden}}</td>
+                <td>{{ion_form.initial.channel_protein.errors}}{{ion_form.initial.channel_protein|safe}}</td>
+                <td><em>{{ion_form.initial.gene}}</em></td>
+                <td>{{ion_form.initial.description}}</td></tr>
+          {% endfor %}
+          </tbody>
+      </table>
+    </fieldset>
+   <fieldset>
+    <legend>{% for radio in form.pk_or_concs%}{{radio}}{% endfor %}</legend>
+           <div id="div_pk_or_concs_0">
+               <p>{{ form.minimum_concentration.label_tag }} {{ form.minimum_concentration.errors }} {{ form.minimum_concentration }} <span class="helptext">{{ form.minimum_concentration.help_text }}</span></p>
+               <p>{{ form.maximum_concentration.label_tag }} {{ form.maximum_concentration.errors }} {{ form.maximum_concentration }} <span class="helptext">{{ form.maximum_concentration.help_text }}</span></p>
+               <p>{{ form.intermediate_point_count.label_tag }} {{ form.intermediate_point_count.errors }} {{ form.intermediate_point_count }} <span class="helptext">{{ form.intermediate_point_count.help_text }}</span></p>
+               <p>{{ form.intermediate_point_log_scale.label_tag }} {{ form.intermediate_point_log_scale.errors }} {{ form.intermediate_point_log_scale }} <span class="helptext">{{ form.intermediate_point_log_scale.help_text }}</span></p>
+           </div>
+           <div id="div_pk_or_concs_1">
+                   <div id="compound-concentration-points">
+                   {% for concentration_form in concentration_formset %}
+                       <div class="compound-concentration-point">
+                           <input type="hidden"  class="compound-concentration-point-index" value="{{forloop.counter}}">
+                           <span class="compound-concentration-point-index-text">{{concentration_form.non_field_errors}}{{forloop.counter|stringformat:"02d" }}. </span>{{concentration_form.concentration.errors}}{{concentration_form.concentration}} µM<br/>
+                       </div>
+                   {% endfor %}
+                   </div>
+                   <p><span id="add-row-concentration-points"> <a class="active" href="javascript:void(0)">add more points</a></span></p>
+           </div>
+           <div id="div_pk_or_concs_2">
+               <p>{{ form.PK_data.label_tag }} {{ form.PK_data.errors }} {{ form.PK_data }} <span class="helptext">{{ form.PK_data.help_text }}</span></p>
+           </div>
+   </fieldset>
+    <p>
+    <button id="savebutton" type="submit">Run simulation</button>
+    <a class="button" id="backbutton" title="Cancel">Cancel</a>
+    </p>
+  </form>
+</div>
+{% endblock content %}

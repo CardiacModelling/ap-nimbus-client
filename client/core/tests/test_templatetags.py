@@ -1,5 +1,5 @@
 import pytest
-from files.templatetags.files import can_edit
+from core.templatetags.ap_nimubs import can_edit
 
 
 @pytest.mark.django_db

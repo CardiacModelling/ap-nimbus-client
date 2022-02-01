@@ -1,12 +1,10 @@
 {% extends "base.html" %}
-{% load files %}
 
 {% block title %}CellML model - {{ object }}{% endblock title %}
 
 {% block content %}
 <div id='cellmlmodeldetail'>
-  <h1>CellMl Model {{ object }}</h1>
-
+{% include "./cellmlmodel_header.html" %}
   <table>
     <tr><td><strong>Name:</strong></td><td>{{ object.name }}</td></tr>
     <tr><td><strong>Version: </strong></td><td>{{ object.version }}</td></tr>
@@ -19,10 +17,7 @@
     {% if object.cellml_file %}<tr><td><strong>CellML file:</strong></td><td><a href="{{ object.cellml_file.url }}">{{ object.cellml_file }}</a></td></tr>{% endif %}
    <tr><td><strong>Ion currents: </strong></td><td>{% for current in object.ion_currents.all %}{% if not forloop.first %}, {% endif %}{{current}}{% endfor %}</td></tr>
   </table>
-  <br/>
-  {% can_edit object as can_edit %}
-  {% if can_edit %}<a class="button" href="{% url 'files:edit_model' object.id%}">Edit</a>
-  <a class="button" href="{% url 'files:delete_model' object.id%}">Delete</a>{% endif %}
+    <a class="button" id="backbutton" title="Close">Close</a>
 
 </div>
 {% endblock content %}

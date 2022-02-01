@@ -27,4 +27,5 @@ urlpatterns = [
     re_path(r'^accounts/', include('accounts.urls', namespace='accounts')),
     re_path(r'^accounts/', include('django.contrib.auth.urls')),
     re_path(r'^files/', include('files.urls', namespace='files')),
+    re_path(r'^simulations/', include('simulations.urls', namespace='simulations')),
 ]

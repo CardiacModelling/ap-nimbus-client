@@ -1,19 +1,22 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{% if object.id %}Edit{% else %}Create{% endif %} CellML model - {% if object.id %}: {{ object }}{% endif %}{% endblock title %}
+{% block title %}{% if object.id %}Edit annotated CellML model: {{ object }} - {% else %}Create annotated CellML model - {% endif %}{% endblock title %}
 
 {% block content %}
 <div id='cellmlmodelform'>
-  <h1>{% if object.id %}Edit{% else %}Create{% endif %} CellML Model{% if object.id %}: {{ object }}{% endif %}</h1>
+{% with in_edit='true' %}
+  {% include "./cellmlmodel_header.html" %}
+{% endwith %}
 
-  <form method="POST" action="" enctype="multipart/form-data">
+<div class="info">The CellML file is expected to be annotated with metadata, See <a href="https://chaste.cs.ox.ac.uk/trac/wiki/ChasteGuides/CodeGenerationFromCellML#ModelannotationwithRDF">The Chaste wiki</a> for more details</div>
+  <form method="POST" action="" enctype="multipart/form-data" name="cellmlform">
     {% csrf_token %}
 
     {{ form.as_p }}
     <p>
     <button id="savebutton" type="submit">Save</button>
-    <a class="button" href="{% url 'files:model_list'%}">Cancel</a>
+     <a class="button" id="backbutton" title="Cancel">Cancel</a>
     </p>
   </form>
 </div>

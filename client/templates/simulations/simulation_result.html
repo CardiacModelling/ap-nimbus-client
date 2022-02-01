@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+{% load simulations %}
+
+
+{% block title %}Edit simulations info - {% endblock title %}
+
+{% block content %}
+{% endblock content %}
+
+{% block data %}
+<section id="simulationresults">
+<h1 id="entityname">{% include "./simulation_header.html" %}Simulation: {{ object.title }}.</h1>
+<small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
+<style>
+
+.row {
+  display: flex;
+  border: 5px solid green;
+}
+
+/* Create two equal columns that sits next to each other */
+.column {
+  flex: 50%;
+  padding: 10px;
+  border: 5px solid red;
+}
+</style>
+
+
+<div class="row">
+  <div class="column">
+  <fieldset>
+    <legend>Info</legend>{{object.title}}
+    <fieldset>
+      <legend>Title</legend>{{object.title}}
+    </fieldset>
+    <fieldset>
+    <legend>Notes</legend>
+       <div class="markdowrenderview">
+         <textarea class="markdownsource">{{object.notes | safe}}</textarea>
+       </div>
+    </fieldset>
+  </fieldset>
+  <fieldset>
+    <legend>Simulation parameters</legend>
+      <fieldset><legend>Model</legend>{{ object.model }}</fieldset>
+      <fieldset><legend>Pacing</legend>
+        <div><label>Frequency: </label> {{ object.pacing_frequency }} (Hz)</div>
+        <div><label>Max time: </label>(mins)</div>
+      </fieldset>
+      <fieldset>
+        <legend>Ion Channel Current Inhibitory Concentrations</legend>
+        <table class="ioncurrent-formset" id="ioncurrent-formset">
+          <thead><tr><th colspan="2">Ion Current {{object.ion_current_type}}</th>
+                     <th>Hill <br/>Coefficient</th>
+                     <th>Saturation <br/>Level (%)</th>
+                     <th>Spread of <br/>Uncertainty</th>
+                     <th>Channel <br/>protein</th><th>Gene</th>
+                     <th>Description</th>
+                 </tr>
+          </thead>
+          <tbody>
+            {% ion_currents as all_currents %}
+            {% for current in all_currents %}
+            {% simulation_ion_current object current as currentparam %}
+            <tr><td>{{ current }}</td>
+                <td>{{ currentparam.current }}{% if currentparam.current%} ({{object.ion_units}}){% endif %}</td>
+                <td>{{ currentparam.hill_coefficient}}</td>
+                <td>{{ currentparam.saturation_level }}</td>
+                <td>{{ currentparam.spread_of_uncertainty }}</td>
+                <td>{{ current.channel_protein|safe }}</td>
+                <td>{{ current.gene }}</td>
+                <td>{{ current.description }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </fieldset>
+    <fieldset>
+      <legend>{% print_field_name object.pk_or_concs %}</legend>
+      {% print_compound_concentrations object as inhconc %}
+      {{ inhconc.0 }}
+    </fieldset>
+    <fieldset>
+      <legend>Status</legend>
+      <label>{{object.status}}</label>
+    </fieldset>
+  </fieldset>
+
+  </div>
+  <div class="column" style="background-color:#bbb;">
+    <h2>Column 2</h2>
+    <p>Some text..</p>
+  </div>
+</div>
+<div>
+</section>
+
+{% endblock data %}
+

@@ -18,6 +18,9 @@ class IonCurrent(models.Model):
                                                "the presence of the current e.g. "
                                                "<em>membrane_fast_sodium_current_conductance, "
                                                "membane_fast_sodium_current_conductance_scaling_factor</em>.")
+    channel_protein = models.CharField(max_length=255, blank=True)
+    gene = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=255, blank=True)
     default_hill_coefficient = models.FloatField(default=1,
                                                  help_text="Default hill coefficient (between 0.1 and 5).")
     default_saturation_level = models.FloatField(default=0, help_text="The (default) level of peak current "
@@ -66,12 +69,13 @@ class CellmlModel(models.Model):
     )
     ap_predict_model_call = models.CharField(
         max_length=255, null=True, blank=True,
-        help_text="call to pass to Ap Predict with --model parameter e.g. <em> 1</em> or <em> "
+        help_text="call to pass to Ap Predict with --model parameter e.g. <em>1</em> or <em> "
                   "shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and cannot be "
                   "combianed with uploading a cellml file."
     )
     cellml_file = models.FileField(blank=True, upload_to="",
-                                   help_text="Please upload the cellml file here.")
+                                   help_text="Please upload the cellml file here. Please note: the cellml file is "
+                                             "expected to be annotated.")
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
     ion_currents = models.ManyToManyField(IonCurrent, help_text="Ion currents used. This selection is ignored when a"
