@@ -3,7 +3,7 @@ from files.models import IonCurrent
 from simulations.models import Simulation
 from simulations.views import to_int
 
-#add tests for initial
+
 @pytest.mark.django_db
 def test_to_int():
     assert to_int(12.4) == 12.4
@@ -24,13 +24,6 @@ class TestSimulationListView:
         response = client.get('/simulations/')
         assert response.status_code == 200
         assert set(response.context['object_list']) == set(my_simulations)
-
-    def test_list_admin(self, client, simulation_recipe, logged_in_admin, other_user, o_hara_model):
-        other_simulations = simulation_recipe.make(author=other_user, model=o_hara_model, _quantity=3)
-        my_simulations = simulation_recipe.make(author=logged_in_admin, model=o_hara_model, _quantity=3)
-        response = client.get('/simulations/')
-        assert response.status_code == 200
-        assert set(response.context['object_list']) == set(other_simulations + my_simulations)
 
 
 @pytest.mark.django_db
@@ -161,15 +154,6 @@ class TestSimulationEditView:
         assert simulation_range.title == data['title']
         assert simulation_range.notes == data['notes']
 
-    def test_admin_can_edit(self, logged_in_admin, client, simulation_range):
-        assert simulation_range.author != logged_in_admin
-        data = {'title': simulation_range.title, 'notes': 'new notes'}
-        response = client.post('/simulations/%d/edit' % simulation_range.pk, data=data)
-        assert response.status_code == 302
-        simulation_range.refresh_from_db()
-        assert simulation_range.title == data['title']
-        assert simulation_range.notes == data['notes']
-
 
 @pytest.mark.django_db
 class TestSimulationResultView:
@@ -183,11 +167,6 @@ class TestSimulationResultView:
         response = client.get('/simulations/%d/result' % simulation_range.pk)
         assert response.status_code == 403
 
-    def test_admin_can_see(self, logged_in_admin, client, simulation_range):
-        assert simulation_range.author != logged_in_admin
-        response = client.get('/simulations/%d/result' % simulation_range.pk)
-        assert response.status_code == 200
-
     def test_owner_can_see(self, logged_in_user, client, cellml_model_recipe, simulation_range):
         assert simulation_range.author == logged_in_user
         response = client.get('/simulations/%d/result' % simulation_range.pk)
@@ -198,14 +177,6 @@ class TestSimulationResultView:
 class TestSimulationDeleteView:
     def test_owner_can_delete(self, logged_in_user, client, simulation_range):
         assert Simulation.objects.count() == 1
-        response = client.post('/simulations/%d/delete' % simulation_range.pk)
-        assert response.status_code == 302
-        assert Simulation.objects.count() == 0
-
-    def test_admin_can_delete(self, logged_in_admin, client, simulation_range):
-        assert Simulation.objects.count() == 1
-        simulation_range.author = logged_in_admin
-        simulation_range.save()
         response = client.post('/simulations/%d/delete' % simulation_range.pk)
         assert response.status_code == 302
         assert Simulation.objects.count() == 0

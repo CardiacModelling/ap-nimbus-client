@@ -42,6 +42,7 @@ class TestCellmlModelCreateView:
 
 @pytest.mark.django_db
 def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
+    # admin can edit predefined
     model = cellml_model_recipe.make(
         author=logged_in_admin,
         predefined=True,
@@ -88,11 +89,6 @@ class TestCellmlModelDetailView:
         response = client.get('/files/models/%d' % model.pk)
         assert response.status_code == 200
 
-    def test_admin_can_see_non_predef_non_owner(self, logged_in_admin, other_user, client, cellml_model_recipe):
-        model = cellml_model_recipe.make(author=other_user, predefined=False)
-        response = client.get('/files/models/%d' % model.pk)
-        assert response.status_code == 200
-
 
 @pytest.mark.django_db
 class TestCellmlModelDeleteView:
@@ -102,7 +98,9 @@ class TestCellmlModelDeleteView:
         assert response.status_code == 302
         assert CellmlModel.objects.count() == 0
 
-    def test_admin_can_delete(self, logged_in_admin, client, o_hara_model):
+    def test_admin_can_delete_predefined(self, logged_in_admin, client, o_hara_model):
+        o_hara_model.predefined = True
+        o_hara_model.save()
         assert CellmlModel.objects.count() == 1
         response = client.post('/files/models/%d/delete' % o_hara_model.pk)
         assert response.status_code == 302

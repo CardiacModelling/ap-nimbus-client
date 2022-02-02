@@ -29,7 +29,7 @@ class SimulationListView(LoginRequiredMixin, ListView):
     template_name = 'simulations/simulation_list.html'
 
     def get_queryset(self):
-        return Simulation.objects.filter(user=self.request.user)
+        return Simulation.objects.filter(author=self.request.user)
 
 
 class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
@@ -80,7 +80,10 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                                                                         else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
-                                'models': [m.id for m in CellmlModel.objects.filter(predefined=True) | CellmlModel.objects.filter(predefined=false, user=self.request.user) if curr in m.ion_currents.all()]})
+                                'models': [m.id for m in
+                                           CellmlModel.objects.filter(predefined=True) |
+                                           CellmlModel.objects.filter(predefined=False, author=self.request.user)
+                                           if curr in m.ion_currents.all()]})
             form_kwargs = {'user': self.request.user}
             self.ion_formset = self.ion_formset_class(self.request.POST or None, initial=initial, prefix='ion',
                                                       form_kwargs=form_kwargs)
