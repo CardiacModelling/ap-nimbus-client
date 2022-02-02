@@ -84,20 +84,6 @@ class Simulation(models.Model):
     def __str__(self):
         return self.title
 
-    def is_editable_by(self, user):
-        """
-        Is the entity editable by the given user?
-        :param user: User object
-        :return: True if deletable, False otherwise
-        """
-        return user.is_superuser or user == self.author
-
-    def is_visible_to(self, user):
-        """
-        Can the user view this model?
-        """
-        return self.is_editable_by(user)
-
 
 class SimulationIonCurrentParam(models.Model):
     """

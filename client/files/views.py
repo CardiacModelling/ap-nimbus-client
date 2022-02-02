@@ -16,7 +16,7 @@ class CellmlModelListView(LoginRequiredMixin, ListView):
     template_name = 'files/cellmlmodel_list.html'
 
     def get_queryset(self):
-        return [model for model in CellmlModel.objects.all() if model.is_visible_to(self.request.user)]
+        return CellmlModel.objects.filter(predefined=True) | CellmlModel.objects.filter(predefined=False, author=self.request.user)
 
 
 class CellmlModelCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
@@ -39,7 +39,7 @@ class CellmlModelUpdateView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
     success_url = reverse_lazy('files:model_list')
 
     def test_func(self):
-        return self.get_object().is_editable_by(self.request.user)
+        return self.get_object().author == self.request.user or (self.get_object().predefined and self.request.user.is_superuser)
 
 
 class CellmlModelDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
@@ -50,7 +50,7 @@ class CellmlModelDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
     template_name = 'files/cellmlmodel_detail.html'
 
     def test_func(self):
-        return self.get_object().is_visible_to(self.request.user)
+        return self.get_object().author == self.request.user or self.get_object().predefined
 
 
 class CellmlModelDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

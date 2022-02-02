@@ -80,8 +80,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                                                                         else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
-                                'models': [m.id for m in CellmlModel.objects.all()
-                                           if curr in m.ion_currents.all() and m.is_visible_to(self.request.user)]})
+                                'models': [m.id for m in CellmlModel.objects.filter(predefined=True) | CellmlModel.objects.filter(predefined=false, user=self.request.user) if curr in m.ion_currents.all()]})
             form_kwargs = {'user': self.request.user}
             self.ion_formset = self.ion_formset_class(self.request.POST or None, initial=initial, prefix='ion',
                                                       form_kwargs=form_kwargs)
@@ -134,7 +133,7 @@ class SimulationEditView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         return reverse_lazy('simulations:simulation_list')
 
     def test_func(self):
-        return self.get_object().is_editable_by(self.request.user)
+        return self.get_object().author == self.request.user
 
 
 class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
@@ -145,7 +144,7 @@ class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwar
     template_name = 'simulations/simulation_result.html'
 
     def test_func(self):
-        return self.get_object().is_editable_by(self.request.user)
+        return self.get_object().author == self.request.user
 
 
 class SimulationDeleteView(UserPassesTestMixin, DeleteView):
@@ -158,7 +157,7 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     raise_exception = True
 
     def test_func(self):
-        return self.get_object().is_editable_by(self.request.user)
+        return self.get_object().author == self.request.user
 
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')

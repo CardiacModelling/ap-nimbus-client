@@ -17,9 +17,6 @@ def test_simulation(simulation_range, simulation_points, simulation_pkdata, user
     assert simulation_range.minimum_concentration == 0
     assert simulation_range.maximum_concentration == 100
     assert simulation_range.intermediate_point_count == '4'
-    assert simulation_range.is_editable_by(user) == simulation_range.is_visible_to(user) is True
-    assert simulation_range.is_editable_by(admin_user) == simulation_range.is_visible_to(admin_user) is True
-    assert simulation_range.is_editable_by(other_user) == simulation_range.is_visible_to(other_user) is False
 
     assert str(simulation_points) == 'my simulation2'
     assert str(simulation_pkdata) == 'my simulation3'
