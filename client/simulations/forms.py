@@ -174,10 +174,8 @@ class SimulationForm(SimulationBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # populate models seperating predefined and uploaded models
-        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                         if m.predefined and m.is_visible_to(self.user)]
-        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                           if not m.predefined and m.is_visible_to(self.user)]
+        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.filter(predefined=True)]
+        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.filter(predefined=False, author=self.user)]
         self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + \
             [(None, '--- Uploaded models ---')] + uploaded_models
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
