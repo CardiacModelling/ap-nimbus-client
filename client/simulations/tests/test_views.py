@@ -3,7 +3,7 @@ from files.models import IonCurrent
 from simulations.models import Simulation
 from simulations.views import to_int
 
-
+#add tests for initial
 @pytest.mark.django_db
 def test_to_int():
     assert to_int(12.4) == 12.4
