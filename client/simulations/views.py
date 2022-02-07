@@ -1,4 +1,5 @@
 from braces.views import UserFormKwargsMixin
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.views.generic.detail import DetailView
@@ -102,7 +103,11 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     def get_context_data(self, **kwargs):
         kwargs['ion_formset'] = self.get_ion_formset()
         kwargs['concentration_formset'] = self.get_concentration_formset()
-        kwargs['template_title'] = Simulation.objects.get(pk=self.pk).title if self.pk else None
+        if self.pk:
+            title = Simulation.objects.get(pk=self.pk).title
+            kwargs['template_title'] = title
+            messages.add_message(self.request, messages.INFO,
+                                 'Using existing simulation <em>%s</em> as a template.' % title)
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):

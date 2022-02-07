@@ -1,10 +1,19 @@
-const $  = require( 'jquery' ); // Jquery UI
+const $ = require( 'jquery' ); // Jquery UI
 require( 'datatables.net' )( window, $ ); // Jquery datatables (npm install datatables.net-dtand)
 const marked = require("./lib/marked.min.js"); // Markdown render
-
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
+var notifications = require('./lib/notifications.js');
 
 $(document).ready(function(){
+    // add dismiss action to notifications
+    $("#dismisserrors").click(function() {
+        notifications.clear("error");
+    });
+
+    $("#dismissnotes").click(function() {
+        notifications.clear("info");
+    });
+
     //Set cancel / close button action
     if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
         $('#backbutton').attr("href", $('#home_link').attr("href"));
