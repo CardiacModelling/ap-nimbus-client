@@ -3,5 +3,4 @@
 /opt/django/venv/bin/python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput
 /opt/django/venv/bin/python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput
 /etc/init.d/nginx restart
-#/opt/django/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --logto2 /var/log/uwsgi.log
-$@
+/opt/django/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --logto2 /var/log/uwsgi.log
