@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             name='Simulation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(blank=True, choices=[('NOT_STARTED', 'Not Started'), ('RUNNING', 'Running'), ('SUCCESS', 'Success'), ('FAILED', 'Status Failed')], default='NOT_STARTED', max_length=255)),
+                ('status', models.CharField(blank=True, choices=[('NOT_STARTED', 'Not Started'), ('RUNNING', 'Running'), ('SUCCESS', 'Success'), ('FAILED', 'Failed')], default='NOT_STARTED', max_length=255)),
                 ('title', models.CharField(help_text='A short title to identify this simulation.', max_length=255)),
                 ('notes', models.TextField(blank=True, default='', help_text='Any notes related to this simulation. Please note: These will also be visible to admin users.')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

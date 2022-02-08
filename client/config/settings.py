@@ -169,3 +169,4 @@ MEDIA_ROOT = '/opt/django/media/'
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
 
 AP_PREDICT_ENDPOINT = os.environ['AP_PREDICT_ENDPOINT']
+AP_PREDICT_TIMEOUT = os.environ.get('AP_PREDICT_TIMEOUT', 5)

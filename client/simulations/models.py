@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
+import requests
 
 
 @deconstructible
@@ -29,7 +30,7 @@ class Simulation(models.Model):
         NOT_STARTED = "NOT_STARTED"
         RUNNING = "RUNNING"
         SUCCESS = "SUCCESS"
-        STATUS_FAILED = "FAILED"
+        FAILED = "FAILED"
 
     class IonCurrentType(models.TextChoices):
         PIC50 = 'pIC50', 'pIC50'
@@ -136,3 +137,19 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     if instance.PK_data:
         if os.path.isfile(instance.PK_data.path):
             os.remove(instance.PK_data.path)
+
+
+@receiver(models.signals.post_save, sender=Simulation)
+def start_simulation_on_save(sender, instance, **kwargs):
+    """
+    Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
+    """
+    if instance.status == Simulation.Status.NOT_STARTED:
+        url = settings.AP_PREDICT_ENDPOINT
+        timeout = settings.AP_PREDICT_TIMEOUT
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()  # Raise exception if request response doesn't return succesful status
+        except requests.exceptions.RequestException as http_err: #requests.HTTPError as http_err:
+            raise Exception('HTTP call to start simulation failed: \n%s' % http_err)
+
