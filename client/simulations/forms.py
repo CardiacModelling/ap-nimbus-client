@@ -174,10 +174,11 @@ class SimulationForm(SimulationBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # populate models seperating predefined and uploaded models
-        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.filter(predefined=True)]
-        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.filter(predefined=False, author=self.user)]
-        self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + \
-            [(None, '--- Uploaded models ---')] + uploaded_models
+        predef_models = CellmlModel.objects.filter(predefined=True).values_list('pk', 'name', flat=False)
+        uploaded_models = CellmlModel.objects.filter(predefined=False,
+                                                     author=self.user).values_list('pk', 'name', flat=False)
+        self.fields['model'].choices = [(None, '--- Predefined models ---')] + list(predef_models) + \
+            [(None, '--- Uploaded models ---')] + list(uploaded_models)
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
 
         self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}

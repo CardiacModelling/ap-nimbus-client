@@ -68,6 +68,9 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
     def get_ion_formset(self):
         if not hasattr(self, 'ion_formset') or self.ion_formset is None:
             initial = []
+            visible_models = (CellmlModel.objects.filter(predefined=True) |
+                              CellmlModel.objects.filter(predefined=False,
+                                                         author=self.request.user)).values_list('pk', flat=True)
             for curr in IonCurrent.objects.all():
                 param = SimulationIonCurrentParam.objects.filter(simulation=self.pk, ion_current=curr).first()
                 initial.append({'current': param.current if param else None,
@@ -81,10 +84,9 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                                                                         else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
-                                'models': [m.id for m in
-                                           CellmlModel.objects.filter(predefined=True) |
-                                           CellmlModel.objects.filter(predefined=False, author=self.request.user)
-                                           if curr in m.ion_currents.all()]})
+                                'models': CellmlModel.objects.filter(pk__in=visible_models,
+                                                                     ion_currents__pk=curr.pk).values_list('pk',
+                                                                                                           flat=True)})
             form_kwargs = {'user': self.request.user}
             self.ion_formset = self.ion_formset_class(self.request.POST or None, initial=initial, prefix='ion',
                                                       form_kwargs=form_kwargs)

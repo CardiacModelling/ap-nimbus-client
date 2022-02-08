@@ -28,7 +28,7 @@ $(document).ready(function(){
             models_str = $('#id_ion-' + id + '-models').val();
             models = [];
             if(models_str.length > 2){
-                models = models_str.slice(1,-1).split(", ");
+                models = models_str.split(",");
             }
             $(this).attr('disabled', $('#id_model').val()=='' || !models.includes($('#id_model').val()));
         });
