@@ -26,7 +26,7 @@ class Simulation(models.Model):
     Main simulation model
     """
     class Status(models.TextChoices):
-        QUEUED = "QUEUED"
+        NOT_STARTED = "NOT_STARTED"
         RUNNING = "RUNNING"
         SUCCESS = "SUCCESS"
         STATUS_FAILED = "FAILED"
@@ -46,7 +46,7 @@ class Simulation(models.Model):
         compound_concentration_points = 'compound_concentration_points', 'Compound Concentration Points'
         pharmacokinetics = 'pharmacokinetics', 'Pharmacokinetics'
 
-    status = models.CharField(choices=Status.choices, max_length=255, blank=True, default=Status.QUEUED)
+    status = models.CharField(choices=Status.choices, max_length=255, blank=True, default=Status.NOT_STARTED)
     title = models.CharField(max_length=255, help_text="A short title to identify this simulation.")
     notes = models.TextField(blank=True, default='',
                              help_text="Any notes related to this simulation. Please note: These will also be visible "
@@ -76,6 +76,7 @@ class Simulation(models.Model):
     intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
+    ap_predict_call_id = models.CharField(max_length=255, blank=True)
 
     class Meta:
         unique_together = ('title', 'author')

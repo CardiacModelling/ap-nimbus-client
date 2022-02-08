@@ -167,3 +167,5 @@ MEDIA_ROOT = '/opt/django/media/'
 
 # Force using temporary fiile for upload
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
+
+AP_PREDICT_ENDPOINT = os.environ['AP_PREDICT_ENDPOINT']

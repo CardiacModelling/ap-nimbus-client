@@ -20,3 +20,6 @@ smtp_server=
 
 # this email address is used as the from address in any emails sent by the client
 django_email_from_addr=
+
+# this email address is used as the base url to make API requests to the AP_manager back-end
+AP_PREDICT_ENDPOINT=
