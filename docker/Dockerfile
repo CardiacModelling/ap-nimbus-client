@@ -2,14 +2,6 @@ FROM python:3.9-slim
 
 USER root
 
-# environment variables
-ENV PYTHONUNBUFFERED=1
-ENV POSTGRES_DB=django
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_HOST=ap_nimbus_postgres
-ENV POSTGRES_PORT=5432
-ENV DJANGO_PORT=8000
-
 RUN mkdir /opt/django
 WORKDIR /opt/django
 
