@@ -123,6 +123,25 @@ class TestSimulationCreateView_andTemplateView:
         simulation_range.refresh_from_db()
         assert simulation_range.notes != new_sim_data['notes']
 
+    def test_initial(self, logged_in_user, client, simulation_range):
+        response = client.get('/simulations/%d/template' % simulation_range.pk)
+        assert response.context['form'].initial == {
+            'notes': simulation_range.notes,
+            'model': simulation_range.model,
+            'pacing_frequency': simulation_range.pacing_frequency,
+            'maximum_pacing_time': simulation_range.maximum_pacing_time,
+            'ion_current_type': simulation_range.ion_current_type,
+            'ion_units': simulation_range.ion_units,
+            'pk_or_concs': simulation_range.pk_or_concs,
+            'minimum_concentration': simulation_range.minimum_concentration,
+            'maximum_concentration': simulation_range.maximum_concentration,
+            'intermediate_point_count': simulation_range.intermediate_point_count,
+            'intermediate_point_log_scale': simulation_range.intermediate_point_log_scale,
+            'PK_data': simulation_range.PK_data
+        }
+        assert str([m.message for m in response.context['INFO_MESSAGES']]) == \
+            "['Using existing simulation <em>%s</em> as a template.']" % simulation_range.title
+
 
 @pytest.mark.django_db
 class TestSimulationEditView:
@@ -153,6 +172,10 @@ class TestSimulationEditView:
         simulation_range.refresh_from_db()
         assert simulation_range.title == data['title']
         assert simulation_range.notes == data['notes']
+
+    def test_initial(self, logged_in_user, client, simulation_range):
+        response = client.get('/simulations/%d/edit' % simulation_range.pk)
+        assert response.context['form'].initial == {'title': simulation_range.title, 'notes': simulation_range.notes}
 
 
 @pytest.mark.django_db
