@@ -1,8 +1,9 @@
-const $ = require( 'jquery' ); // Jquery UI
-require( 'datatables.net' )( window, $ ); // Jquery datatables (npm install datatables.net-dtand)
+const $ = require('jquery'); // Jquery UI
+global.$ = $;
+require('datatables.net')(window, $); // Jquery datatables (npm install datatables.net-dtand)
 const marked = require("./lib/marked.min.js"); // Markdown render
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
-var notifications = require('./lib/notifications.js');
+const notifications = require('./lib/notifications.js');
 
 $(document).ready(function(){
     // add dismiss action to notifications

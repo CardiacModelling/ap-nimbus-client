@@ -1,6 +1,7 @@
 import os
 
 import django.db.models.deletion
+import requests
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -8,7 +9,6 @@ from django.dispatch import receiver
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
-import requests
 
 
 @deconstructible
@@ -28,6 +28,7 @@ class Simulation(models.Model):
     """
     class Status(models.TextChoices):
         NOT_STARTED = "NOT_STARTED"
+        CALLING = "CALLING"
         RUNNING = "RUNNING"
         SUCCESS = "SUCCESS"
         FAILED = "FAILED"
@@ -78,6 +79,10 @@ class Simulation(models.Model):
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
+    ap_predict_messages = models.CharField(max_length=255, blank=True)
+    ap_predict_q_net = models.CharField(max_length=255, blank=True)
+    ap_predict_voltage_traces = models.CharField(max_length=255, blank=True)
+    ap_predict_voltage_results = models.CharField(max_length=255, blank=True)
 
     class Meta:
         unique_together = ('title', 'author')
@@ -103,7 +108,7 @@ class SimulationIonCurrentParam(models.Model):
                                                    " range 0% (default) to <100% (compound has no effect).\n- For an "
                                                    "activator Minimum > 100% (no effect) to Maximum 500% (as a "
                                                    "guideline).")
-    spread_of_uncertainty = models.FloatField(blank=True, null=True, default=1,
+    spread_of_uncertainty = models.FloatField(blank=True, null=True,
                                               validators=[StrictlyGreaterValidator(0), MaxValueValidator(2)],
                                               help_text="Spread of uncertainty (between 0 and 2).\nDefaults are "
                                                         "estimates based on a study by Elkins et all.\nIdeally all "
@@ -144,12 +149,42 @@ def start_simulation_on_save(sender, instance, **kwargs):
     """
     Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
     """
-    if instance.status == Simulation.Status.NOT_STARTED:
-        url = settings.AP_PREDICT_ENDPOINT
-        timeout = settings.AP_PREDICT_TIMEOUT
-        try:
-            response = requests.get(url, timeout=timeout)
-            response.raise_for_status()  # Raise exception if request response doesn't return succesful status
-        except requests.exceptions.RequestException as http_err: #requests.HTTPError as http_err:
-            raise Exception('HTTP call to start simulation failed: \n%s' % http_err)
+    if instance.status == Simulation.Status.CALLING:
+        call_data = {'pacingFrequency': instance.pacing_frequency,
+                     'pacingMaxTime': instance.maximum_pacing_time,
+                     'plasmaMaximum': instance.minimum_concentration,
+                     'plasmaMinimum': instance.maximum_concentration,
+                     'plasmaIntermediatePointCount': instance.intermediate_point_count,
+                     'plasmaIntermediatePointLogScale': instance.intermediate_point_log_scale}
 
+        if instance.model.ap_predict_model_call:
+            call_data['modelId'] = instance.model.ap_predict_model_call
+        else:
+            call_data['modelId'] = instance.model.cellml_file
+
+        for current_param in SimulationIonCurrentParam.objects.filter(simulation=instance):
+            call_data[current_param.ion_current.name] = {
+                'associatedData': [{instance.ion_current_type: current_param.current,
+                                    'hill': current_param.hill_coefficient,
+                                    'saturation': current_param.saturation_level}]
+            }
+            if current_param.spread_of_uncertainty:
+                call_data[current_param.ion_current.name]['spreads'] = \
+                    {'c50Spread': current_param.spread_of_uncertainty}
+
+        call_response = {}
+        instance.status = Simulation.Status.FAILED
+        try:
+            response = requests.get(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
+            response.raise_for_status()  # Raise exception if request response doesn't return succesful status
+            call_response = response.json()
+            instance.ap_predict_call_id = call_response['success']['id']
+            instance.status = Simulation.Status.RUNNING
+        except requests.exceptions.RequestException as http_err:
+            instance.ap_predict_messages = 'HTTP call to start simulation failed for:\n%s\n%s\n%s' % \
+                                           (settings.AP_PREDICT_ENDPOINT, call_data, http_err)
+        except KeyError:
+            instance.ap_predict_messages = 'Unexpected api response for\n%s\n%s\n%s' % \
+                                           (settings.AP_PREDICT_ENDPOINT, call_data, call_response)
+        finally:
+            instance.save()

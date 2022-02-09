@@ -123,6 +123,9 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             simulation = form.save()
             ion_formset.save(simulation=simulation)
             concentration_formset.save(simulation=simulation)
+            # kick off simulation (via signal)
+            simulation.status = Simulation.Status.CALLING
+            simulation.save()
             return self.form_valid(form)
         else:
             self.object = getattr(self, 'object', None)
