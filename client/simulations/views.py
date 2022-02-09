@@ -6,6 +6,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
+from django.views.generic.base import RedirectView
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -174,3 +175,20 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
 
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')
+
+class RerunSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, RedirectView):
+    """
+    View restarting the simulation
+    """
+    model = Simulation
+
+    def test_func(self):
+        simulation_set = Simulation.objects.filter(pk=self.kwargs['pk'])
+        return simulation_set.count() == 1 and simulation_set.first().author == self.request.user
+
+
+    def get_redirect_url(self, *args, **kwargs):
+        simulation = Simulation.objects.get(pk=self.kwargs['pk'])
+        simulation.status=Simulation.Status.CALLING
+        simulation.save()
+        return reverse_lazy('simulations:simulation_result', args=[self.kwargs['pk']])

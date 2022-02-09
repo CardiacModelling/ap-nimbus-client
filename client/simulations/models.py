@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
@@ -78,6 +79,7 @@ class Simulation(models.Model):
     intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
+    ap_predict_last_called = models.DateTimeField(blank=True, null=True)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)
     ap_predict_q_net = models.CharField(max_length=255, blank=True)
@@ -149,6 +151,7 @@ def start_simulation_on_save(sender, instance, **kwargs):
     """
     Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
     """
+    #todo: ic50, ic50 units, concentration points, pk_data, cellml_file
     if instance.status == Simulation.Status.CALLING:
         call_data = {'pacingFrequency': instance.pacing_frequency,
                      'pacingMaxTime': instance.maximum_pacing_time,
@@ -174,6 +177,7 @@ def start_simulation_on_save(sender, instance, **kwargs):
 
         call_response = {}
         instance.status = Simulation.Status.FAILED
+        instance.ap_predict_last_called = timezone.now()
         try:
             response = requests.get(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
             response.raise_for_status()  # Raise exception if request response doesn't return succesful status
@@ -181,10 +185,8 @@ def start_simulation_on_save(sender, instance, **kwargs):
             instance.ap_predict_call_id = call_response['success']['id']
             instance.status = Simulation.Status.RUNNING
         except requests.exceptions.RequestException as http_err:
-            instance.ap_predict_messages = 'HTTP call to start simulation failed for:\n%s\n%s\n%s' % \
-                                           (settings.AP_PREDICT_ENDPOINT, call_data, http_err)
+            instance.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
         except KeyError:
-            instance.ap_predict_messages = 'Unexpected api response for\n%s\n%s\n%s' % \
-                                           (settings.AP_PREDICT_ENDPOINT, call_data, call_response)
+            instance.ap_predict_messages = call_response
         finally:
             instance.save()

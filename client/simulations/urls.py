@@ -40,5 +40,11 @@ urlpatterns = [
         views.SimulationDeleteView.as_view(),
         name='simulation_delete',
     ),
+
+    re_path(
+        r'^(?P<pk>\d+)/rerun$',
+        views.RerunSimulationView.as_view(),
+        name='simulation_rerun',
+    ),
 ]
 app_name = 'simulations'
