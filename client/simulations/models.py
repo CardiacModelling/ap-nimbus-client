@@ -160,33 +160,34 @@ def start_simulation_on_save(sender, instance, **kwargs):
                      'plasmaIntermediatePointCount': instance.intermediate_point_count,
                      'plasmaIntermediatePointLogScale': instance.intermediate_point_log_scale}
 
-#        if instance.model.ap_predict_model_call:
-#            call_data['modelId'] = instance.model.ap_predict_model_call
-#        else:
-#            call_data['modelId'] = instance.model.cellml_file
-#
-#        for current_param in SimulationIonCurrentParam.objects.filter(simulation=instance):
-#            call_data[current_param.ion_current.name] = {
-#                'associatedData': [{instance.ion_current_type: current_param.current,
-#                                    'hill': current_param.hill_coefficient,
-#                                    'saturation': current_param.saturation_level}]
-#            }
-#            if current_param.spread_of_uncertainty:
-#                call_data[current_param.ion_current.name]['spreads'] = \
-#                    {'c50Spread': current_param.spread_of_uncertainty}
-#
-#        call_response = {}
-#        instance.status = Simulation.Status.FAILED
-#        instance.ap_predict_last_called = timezone.now()
-#        try:
-#            response = requests.get(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
-#            response.raise_for_status()  # Raise exception if request response doesn't return succesful status
-#            call_response = response.json()
-#            instance.ap_predict_call_id = call_response['success']['id']
-#            instance.status = Simulation.Status.RUNNING
-#        except requests.exceptions.RequestException as http_err:
-#            instance.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
-#        except KeyError:
-#            instance.ap_predict_messages = call_response
-#        finally:
-#            instance.save()
+        if instance.model.ap_predict_model_call:
+            call_data['modelId'] = instance.model.ap_predict_model_call
+        else:
+#            assert False, str(instance.model.cellml_file.url)
+            call_data['modelId'] = instance.model.cellml_file.url
+
+        for current_param in SimulationIonCurrentParam.objects.filter(simulation=instance):
+            call_data[current_param.ion_current.name] = {
+                'associatedData': [{instance.ion_current_type: current_param.current,
+                                    'hill': current_param.hill_coefficient,
+                                    'saturation': current_param.saturation_level}]
+            }
+            if current_param.spread_of_uncertainty:
+                call_data[current_param.ion_current.name]['spreads'] = \
+                    {'c50Spread': current_param.spread_of_uncertainty}
+
+        call_response = {}
+        instance.status = Simulation.Status.FAILED
+        instance.ap_predict_last_called = timezone.now()
+        try:
+            response = requests.get(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
+            response.raise_for_status()  # Raise exception if request response doesn't return succesful status
+            call_response = response.json()
+            instance.ap_predict_call_id = call_response['success']['id']
+            instance.status = Simulation.Status.RUNNING
+        except requests.exceptions.RequestException as http_err:
+            instance.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
+        except KeyError:
+            instance.ap_predict_messages = call_response
+        finally:
+            instance.save()
