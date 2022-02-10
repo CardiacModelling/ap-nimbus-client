@@ -176,7 +176,7 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')
 
-class RerunSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, RedirectView):
+class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, RedirectView):
     """
     View restarting the simulation
     """

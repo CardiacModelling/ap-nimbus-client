@@ -43,8 +43,8 @@ urlpatterns = [
 
     re_path(
         r'^(?P<pk>\d+)/rerun$',
-        views.RerunSimulationView.as_view(),
-        name='simulation_rerun',
+        views.RestartSimulationView.as_view(),
+        name='simulation_restart',
     ),
 ]
 app_name = 'simulations'
