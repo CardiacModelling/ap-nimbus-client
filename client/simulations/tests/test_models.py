@@ -6,7 +6,7 @@ from simulations.models import CompoundConcentrationPoint, Simulation, Simulatio
 @pytest.mark.django_db
 def test_simulation(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
     assert str(simulation_range) == 'my simulation1'
-    assert simulation_range.status == Simulation.Status.QUEUED
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
     assert simulation_range.author == user
     assert simulation_range.model == o_hara_model
     assert simulation_range.pacing_frequency == 0.05
