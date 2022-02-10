@@ -1,3 +1,6 @@
+import requests
+from django.utils import timezone
+from django.conf import settings
 from braces.views import UserFormKwargsMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -23,6 +26,63 @@ def to_int(f):
     """
     return int(f) if f.is_integer() else f
 
+
+def start_simulation(instance):
+    """
+    Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
+    """
+    #todo: ic50, ic50 units, concentration points, pk_data, cellml_file
+    call_data = {'pacingFrequency': instance.pacing_frequency,
+                 'pacingMaxTime': instance.maximum_pacing_time,
+                 'plasmaMaximum': instance.maximum_concentration,
+                 'plasmaMinimum': instance.minimum_concentration,
+                 'plasmaIntermediatePointCount': instance.intermediate_point_count,
+                 'plasmaIntermediatePointLogScale': instance.intermediate_point_log_scale}
+
+    if instance.model.ap_predict_model_call:
+        call_data['modelId'] = instance.model.ap_predict_model_call
+    else:
+#assert False, str(instance.model.cellml_file.url)
+        call_data['modelId'] = instance.model.cellml_file.url
+
+    for current_param in SimulationIonCurrentParam.objects.filter(simulation=instance):
+        call_data[current_param.ion_current.name] = {
+            'associatedData': [{instance.ion_current_type: current_param.current,
+                                'hill': current_param.hill_coefficient,
+                                'saturation': current_param.saturation_level}]
+        }
+        if current_param.spread_of_uncertainty:
+            call_data[current_param.ion_current.name]['spreads'] = \
+                {'c50Spread': current_param.spread_of_uncertainty}
+
+    call_response = {}
+    instance.status = Simulation.Status.FAILED
+    instance.ap_predict_last_called = timezone.now()
+    try:
+        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
+        response.raise_for_status()  # Raise exception if request response doesn't return succesful status
+        call_response = response.json()
+        instance.ap_predict_call_id = call_response['success']['id']
+        instance.status = Simulation.Status.RUNNING
+    except requests.exceptions.RequestException as http_err:
+        instance.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
+    except KeyError:
+        instance.ap_predict_messages = call_response
+    finally:
+        instance.save()
+
+def re_start_simulation(instance):
+    # try to stop simulation
+    if instance.ap_predict_call_id and instance.status == Simulation.Status.RUNNING:
+        try:
+            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % instance.ap_predict_call_id,
+                                    timeout=settings.AP_PREDICT_TIMEOUT)
+        except requests.exceptions.RequestException as http_err:
+            instance.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
+    start_simulation(instance)
+
+def update_status(instance):
+    pass #todo, use starting status
 
 class SimulationListView(LoginRequiredMixin, ListView):
     """
@@ -125,8 +185,8 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             ion_formset.save(simulation=simulation)
             concentration_formset.save(simulation=simulation)
             # kick off simulation (via signal)
-            simulation.status = Simulation.Status.CALLING
-            simulation.save()
+            start_simulation(simulation)
+            #simulation.save()
             return self.form_valid(form)
         else:
             self.object = getattr(self, 'object', None)
@@ -189,6 +249,16 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
 
     def get_redirect_url(self, *args, **kwargs):
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
-        simulation.status=Simulation.Status.CALLING
-        simulation.save()
+        re_start_simulation(simulation)
         return self.request.META['HTTP_REFERER']
+
+class StatusSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+    """
+    Update the status of the simulation
+    """
+    model = Simulation
+    template_name = 'simulations/simulation_status.html'
+
+    def test_func(self):
+        update_status(self.get_object())
+        return self.get_object().author == self.request.user

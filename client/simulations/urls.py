@@ -46,5 +46,10 @@ urlpatterns = [
         views.RestartSimulationView.as_view(),
         name='simulation_restart',
     ),
+    re_path(
+        r'^(?P<pk>\d+)/status$',
+        views.StatusSimulationView.as_view(),
+        name='simulation_status',
+    ),
 ]
 app_name = 'simulations'
