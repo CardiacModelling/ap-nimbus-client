@@ -2,11 +2,11 @@ from braces.views import UserFormKwargsMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
+from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
-from django.views.generic.base import RedirectView
 
 from .forms import (
     CompoundConcentrationPointFormSet,
