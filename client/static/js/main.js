@@ -185,6 +185,7 @@ $(document).ready(function(){
         stateSave: false,
         order: [],
         dom: 'lBfrtip',
+        stateSave: true,
     });
 
     //Render markdown editor

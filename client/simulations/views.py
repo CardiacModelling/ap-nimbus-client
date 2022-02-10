@@ -191,4 +191,4 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
         simulation.status=Simulation.Status.CALLING
         simulation.save()
-        return reverse_lazy('simulations:simulation_result', args=[self.kwargs['pk']])
+        return self.request.META['HTTP_REFERER']

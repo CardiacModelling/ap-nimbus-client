@@ -42,7 +42,7 @@ urlpatterns = [
     ),
 
     re_path(
-        r'^(?P<pk>\d+)/rerun$',
+        r'^(?P<pk>\d+)/restart$',
         views.RestartSimulationView.as_view(),
         name='simulation_restart',
     ),
