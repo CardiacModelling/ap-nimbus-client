@@ -27,6 +27,7 @@ class Simulation(models.Model):
     """
     class Status(models.TextChoices):
         NOT_STARTED = "NOT_STARTED"
+        INITIALISING = "INITIALISING"
         RUNNING = "RUNNING"
         SUCCESS = "SUCCESS"
         FAILED = "FAILED"
@@ -76,6 +77,7 @@ class Simulation(models.Model):
     intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
+    progress = models.PositiveSmallIntegerField(default=0)
     ap_predict_last_called = models.DateTimeField(blank=True, null=True)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)

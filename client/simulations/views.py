@@ -20,6 +20,26 @@ from .forms import (
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
+
+PROGRESS_STATUS_CHOICES = {'Initialising..': 1,
+                           '0% completed': 2,
+                           '7% completed': 7,
+                           '15% completed': 15,
+                           '23% completed': 23,
+                           '30% completed': 30,
+                           '38% completed': 38,
+                           '46% completed': 46,
+                           '53% completed': 53,
+                           '61% completed': 61,
+                           '69% completed': 69,
+                           '76% completed': 76,
+                           '84% completed': 84,
+                           '92% completed': 92,
+                           'Finalising..': 95,
+                           '100% completed': 99,
+                           '..done!': 100}
+
+
 def to_int(f):
     """
     Convert to into only if it is an in else don't convert.
@@ -27,27 +47,27 @@ def to_int(f):
     return int(f) if f.is_integer() else f
 
 
-def start_simulation(instance):
+def start_simulation(sim):
     """
     Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
     """
     #todo: ic50, ic50 units, concentration points, pk_data, cellml_file
-    call_data = {'pacingFrequency': instance.pacing_frequency,
-                 'pacingMaxTime': instance.maximum_pacing_time,
-                 'plasmaMaximum': instance.maximum_concentration,
-                 'plasmaMinimum': instance.minimum_concentration,
-                 'plasmaIntermediatePointCount': instance.intermediate_point_count,
-                 'plasmaIntermediatePointLogScale': instance.intermediate_point_log_scale}
+    call_data = {'pacingFrequency': sim.pacing_frequency,
+                 'pacingMaxTime': sim.maximum_pacing_time,
+                 'plasmaMaximum': sim.maximum_concentration,
+                 'plasmaMinimum': sim.minimum_concentration,
+                 'plasmaIntermediatePointCount': sim.intermediate_point_count,
+                 'plasmaIntermediatePointLogScale': sim.intermediate_point_log_scale}
 
-    if instance.model.ap_predict_model_call:
-        call_data['modelId'] = instance.model.ap_predict_model_call
+    if sim.model.ap_predict_model_call:
+        call_data['modelId'] = sim.model.ap_predict_model_call
     else:
-#assert False, str(instance.model.cellml_file.url)
-        call_data['modelId'] = instance.model.cellml_file.url
+#assert False, str(sim.model.cellml_file.url)
+        call_data['modelId'] = sim.model.cellml_file.url
 
-    for current_param in SimulationIonCurrentParam.objects.filter(simulation=instance):
+    for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
         call_data[current_param.ion_current.name] = {
-            'associatedData': [{instance.ion_current_type: current_param.current,
+            'associatedData': [{sim.ion_current_type: current_param.current,
                                 'hill': current_param.hill_coefficient,
                                 'saturation': current_param.saturation_level}]
         }
@@ -56,33 +76,53 @@ def start_simulation(instance):
                 {'c50Spread': current_param.spread_of_uncertainty}
 
     call_response = {}
-    instance.status = Simulation.Status.FAILED
-    instance.ap_predict_last_called = timezone.now()
+    sim.ap_predict_last_called = timezone.now()
     try:
         response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
-        response.raise_for_status()  # Raise exception if request response doesn't return succesful status
+        response.raise_for_status()  # Raise exception if request response doesn't return successful status
         call_response = response.json()
-        instance.ap_predict_call_id = call_response['success']['id']
-        instance.status = Simulation.Status.RUNNING
+        sim.ap_predict_call_id = call_response['success']['id']
+        sim.status = Simulation.Status.INITIALISING
     except requests.exceptions.RequestException as http_err:
-        instance.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
+        sim.status = Simulation.Status.FAILED
+        sim.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
     except KeyError:
-        instance.ap_predict_messages = call_response
+        sim.status = Simulation.Status.FAILED
+        sim.ap_predict_messages = call_response
     finally:
-        instance.save()
+        sim.save()
 
-def re_start_simulation(instance):
-    # try to stop simulation
-    if instance.ap_predict_call_id and instance.status == Simulation.Status.RUNNING:
-        try:
-            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % instance.ap_predict_call_id,
+def re_start_simulation(sim):
+    # restart if it was a succesful run, or there is no new progress we missed
+    if sim.progress = 100 or sim.progress == update_progress(sim):
+        # try to stop simulation
+        try:#can_restart template-tag
+            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % sim.ap_predict_call_id,
                                     timeout=settings.AP_PREDICT_TIMEOUT)
         except requests.exceptions.RequestException as http_err:
-            instance.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
-    start_simulation(instance)
+            sim.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
+        # restart simulation
+        start_simulation(sim)
 
-def update_status(instance):
-    pass #todo, use starting status
+def update_progress(sim):
+    if sim.ap_predict_call_id:  # can't update without call_id
+        try:
+            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/messages' % sim.ap_predict_call_id,
+                                    timeout=settings.AP_PREDICT_TIMEOUT)
+            response.raise_for_status()  # Raise exception if request response doesn't return successful status
+            call_response = response.json()
+            if 'success' in call_response:
+                sim.messages = call_response['success']
+                progress_text = next((p for p in reversed(call_response['success']) if p), '')
+                sim.progress = PROGRESS_STATUS_CHOICES.get(progress_text, 0)
+                if sim.progress == 100:
+                    sim.status = Simulation.Status.SUCCESS if sim.progress == 100 else Simulation.Status.RUNNING
+        except requests.exceptions.RequestException as http_err:
+            sim.status = Simulation.Status.FAILED
+            sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
+        finally:
+            sim.save()
+        return sim.progress
 
 class SimulationListView(LoginRequiredMixin, ListView):
     """
@@ -260,5 +300,5 @@ class StatusSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwar
     template_name = 'simulations/simulation_status.html'
 
     def test_func(self):
-        update_status(self.get_object())
+        update_progress(self.get_object())
         return self.get_object().author == self.request.user
