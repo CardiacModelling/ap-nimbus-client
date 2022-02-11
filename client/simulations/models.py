@@ -56,7 +56,7 @@ class Simulation(models.Model):
     author = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)
 
     model = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=CellmlModel)
-    pacing_frequency = models.FloatField(default=0.05, help_text="(in Hz) Frequency of pacing (between 0.05 and 5).",
+    pacing_frequency = models.FloatField(default=1.0, help_text="(in Hz) Frequency of pacing (between 0.05 and 5).",
                                          validators=[MinValueValidator(0.05), MaxValueValidator(5)])
     maximum_pacing_time = models.FloatField(default=5, help_text="(in mins) Maximum pacing time (between 0 and 120).",
                                             validators=[StrictlyGreaterValidator(0), MaxValueValidator(120)])
@@ -77,7 +77,7 @@ class Simulation(models.Model):
     intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
-    progress = models.PositiveSmallIntegerField(default=0)
+    progress = models.CharField(max_length=255, blank=True, default='Initialising..')
     ap_predict_last_called = models.DateTimeField(blank=True, null=True)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)

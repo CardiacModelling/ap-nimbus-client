@@ -54,8 +54,6 @@ var buildJs = (watch, done) => {
       var bundle = () => bundler.bundle()
           .pipe(source(entry))
           .pipe(buffer())
-//          .pipe(sourcemaps.init({ loadMaps : true }))
-//          .pipe(sourcemaps.write(config.js.mapDir))
           .pipe(minify({noSource: true}))
           .pipe(gulp.dest(config.js.outputDir));
 

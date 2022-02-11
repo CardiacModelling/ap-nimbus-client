@@ -10,6 +10,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
+from django.http import JsonResponse
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -19,25 +20,6 @@ from .forms import (
 )
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
-
-
-PROGRESS_STATUS_CHOICES = {'Initialising..': 1,
-                           '0% completed': 2,
-                           '7% completed': 7,
-                           '15% completed': 15,
-                           '23% completed': 23,
-                           '30% completed': 30,
-                           '38% completed': 38,
-                           '46% completed': 46,
-                           '53% completed': 53,
-                           '61% completed': 61,
-                           '69% completed': 69,
-                           '76% completed': 76,
-                           '84% completed': 84,
-                           '92% completed': 92,
-                           'Finalising..': 95,
-                           '100% completed': 99,
-                           '..done!': 100}
 
 
 def to_int(f):
@@ -94,35 +76,40 @@ def start_simulation(sim):
 
 def re_start_simulation(sim):
     # restart if it was a succesful run, or there is no new progress we missed
-    if sim.progress = 100 or sim.progress == update_progress(sim):
+    if sim.progress == 100 or sim.progress == update_progress(sim).progress:
         # try to stop simulation
-        try:#can_restart template-tag
+        try:
             response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % sim.ap_predict_call_id,
                                     timeout=settings.AP_PREDICT_TIMEOUT)
         except requests.exceptions.RequestException as http_err:
             sim.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
         # restart simulation
+        sim.status=Simulation.Status.NOT_STARTED
+        sim.progress = 'Initialising..'
+        sim.save()
         start_simulation(sim)
 
 def update_progress(sim):
     if sim.ap_predict_call_id:  # can't update without call_id
         try:
-            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/messages' % sim.ap_predict_call_id,
+            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/progress_status' % sim.ap_predict_call_id,
                                     timeout=settings.AP_PREDICT_TIMEOUT)
             response.raise_for_status()  # Raise exception if request response doesn't return successful status
             call_response = response.json()
             if 'success' in call_response:
-                sim.messages = call_response['success']
                 progress_text = next((p for p in reversed(call_response['success']) if p), '')
-                sim.progress = PROGRESS_STATUS_CHOICES.get(progress_text, 0)
-                if sim.progress == 100:
-                    sim.status = Simulation.Status.SUCCESS if sim.progress == 100 else Simulation.Status.RUNNING
-        except requests.exceptions.RequestException as http_err:
+                sim.status = Simulation.Status.RUNNING
+                if progress_text == '..done!':
+                    sim.status = Simulation.Status.SUCCESS
+                else:
+                    sim.status = Simulation.Status.RUNNING
+                sim.progress = progress_text
+        except requests.exceptions.RequestException as http_err: #also add timeout
             sim.status = Simulation.Status.FAILED
             sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
         finally:
             sim.save()
-        return sim.progress
+        return sim
 
 class SimulationListView(LoginRequiredMixin, ListView):
     """
@@ -226,9 +213,9 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             concentration_formset.save(simulation=simulation)
             # kick off simulation (via signal)
             start_simulation(simulation)
-            #simulation.save()
             return self.form_valid(form)
         else:
+            assert False, str(form.errors)
             self.object = getattr(self, 'object', None)
             return self.form_invalid(form)
 
@@ -292,13 +279,17 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         re_start_simulation(simulation)
         return self.request.META['HTTP_REFERER']
 
-class StatusSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+class StatusSimulationView(LoginRequiredMixin, UserFormKwargsMixin, ListView):
     """
     Update the status of the simulation
     """
     model = Simulation
-    template_name = 'simulations/simulation_status.html'
 
-    def test_func(self):
-        update_progress(self.get_object())
-        return self.get_object().author == self.request.user
+    def get_queryset(self):
+        pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
+        return Simulation.objects.filter(author=self.request.user, pk__in=pks)
+
+    def get(self, request, *args, **kwargs):
+        data = [{'pk': s.pk, 'progress': s.progress, 'status': s.status} for s in map(update_progress,
+                                                                                      self.get_queryset())]
+        return JsonResponse(data, status=200, safe=False)

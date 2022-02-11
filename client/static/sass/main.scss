@@ -332,3 +332,18 @@ div.dt-buttons{
     margin-left: 0.334em;
     margin-top: 0.167em;
 }
+
+.ui-progressbar-value{
+    background: #009bbd;
+}
+
+.ui-progressbar {
+    position: relative;
+}
+
+.progress-label {
+    padding-left: 10px;
+    position: absolute;
+    top: 6px;
+    font-weight: bold;
+}
