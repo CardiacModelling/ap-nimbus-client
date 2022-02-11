@@ -81,9 +81,9 @@ class Simulation(models.Model):
     ap_predict_last_update = models.DateTimeField(blank=True, null=True)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)
-    ap_predict_q_net = models.CharField(max_length=255, blank=True)
-    ap_predict_voltage_traces = models.CharField(max_length=255, blank=True)
-    ap_predict_voltage_results = models.CharField(max_length=255, blank=True)
+    q_net = models.TextField(max_length=255, blank=True)
+    voltage_traces = models.TextField(max_length=255, blank=True)
+    voltage_results = models.TextField(max_length=255, blank=True)
 
     class Meta:
         unique_together = ('title', 'author')

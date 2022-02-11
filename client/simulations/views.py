@@ -31,7 +31,7 @@ def to_int(f):
 
 def start_simulation(sim):
     """
-    Makes the request to (re-)start the simulation if a simulation without ap_predict_call_id is saved.
+    Makes the request to start the simulation if a simulation.
     """
     #todo: ic50, ic50 units, concentration points, pk_data, cellml_file
     call_data = {'pacingFrequency': sim.pacing_frequency,
@@ -75,8 +75,13 @@ def start_simulation(sim):
         sim.save()
 
 def re_start_simulation(sim):
+    """
+    First try to get fresh progress  going. If that doesn't work, try to stop the simulation, then restart.
+    """
     # restart if it was a succesful run, or there is no new progress we missed
-    if sim.progress == 100 or sim.progress == update_progress(sim).progress:
+    progress, status = sim.progress, sim.status
+    update_progress(sim)
+    if sim.progress == progress and sim.status == status:
         # try to stop simulation
         try:
             response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % sim.ap_predict_call_id,
@@ -90,6 +95,9 @@ def re_start_simulation(sim):
         start_simulation(sim)
 
 def update_progress(sim):
+    """
+    Updates the current progress of a running simulation.
+    """
     if sim.ap_predict_call_id:  # can't update without call_id
         try:
             response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/progress_status' % sim.ap_predict_call_id,
@@ -98,9 +106,8 @@ def update_progress(sim):
             call_response = response.json()
             if 'success' in call_response:
                 progress_text = next((p for p in reversed(call_response['success']) if p), '')
-                sim.status = Simulation.Status.RUNNING
                 if progress_text == '..done!':
-                    sim.status = Simulation.Status.SUCCESS
+                    store_results(sim)
                 else:
                     sim.status = Simulation.Status.RUNNING
                     if sim.progress != progress_text:
@@ -108,13 +115,40 @@ def update_progress(sim):
                         sim.ap_predict_last_update = timezone.now()
                     else:
                         now = timezone.now()
-#                        assert False, str(now - sim.ap_predict_last_update)
-        except requests.exceptions.RequestException as http_err: #also add timeout
+                        delta = now - sim.ap_predict_last_update
+                        if delta.seconds > settings.AP_PREDICT_STATUS_TIMEOUT:
+                            sim.status = Simulation.Status.FAILED
+                            sim.ap_predict_messages = 'status has not changed in %s seconds' % settings.AP_PREDICT_STATUS_TIMEOUT
+        except requests.exceptions.RequestException as http_err:
             sim.status = Simulation.Status.FAILED
             sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
         finally:
             sim.save()
         return sim
+
+def store_results(sim):
+    """
+    Stores simulation results.
+    """
+    for command in ('q_net', 'voltage_traces', 'voltage_results'):
+        try:
+            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/%s' % (sim.ap_predict_call_id, command),
+                                    timeout=settings.AP_PREDICT_TIMEOUT)
+            response.raise_for_status()  # Raise exception if request response doesn't return successful status
+            call_response = response.json()
+            setattr(sim, command, call_response['success'])
+        except requests.exceptions.RequestException as http_err: #also add timeout
+            sim.status = Simulation.Status.FAILED
+            sim.ap_predict_messages = 'Call to get results failed: %s' % type(http_err)
+            sim.status = Simulation.Status.FAILED
+        except KeyError:
+            pass  # these types of results are not available
+        if sim.voltage_traces and sim.voltage_results:
+            sim.status = Simulation.Status.SUCCESS
+            sim.progress = 100
+    sim.save()
+
+
 
 class SimulationListView(LoginRequiredMixin, ListView):
     """
