@@ -58,13 +58,13 @@ def start_simulation(sim):
                 {'c50Spread': current_param.spread_of_uncertainty}
 
     call_response = {}
-    sim.ap_predict_last_called = timezone.now()
     try:
         response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
         response.raise_for_status()  # Raise exception if request response doesn't return successful status
         call_response = response.json()
         sim.ap_predict_call_id = call_response['success']['id']
         sim.status = Simulation.Status.INITIALISING
+        sim.ap_predict_last_update = timezone.now()
     except requests.exceptions.RequestException as http_err:
         sim.status = Simulation.Status.FAILED
         sim.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
@@ -103,7 +103,12 @@ def update_progress(sim):
                     sim.status = Simulation.Status.SUCCESS
                 else:
                     sim.status = Simulation.Status.RUNNING
-                sim.progress = progress_text
+                    if sim.progress != progress_text:
+                        sim.progress = progress_text
+                        sim.ap_predict_last_update = timezone.now()
+                    else:
+                        now = timezone.now()
+#                        assert False, str(now - sim.ap_predict_last_update)
         except requests.exceptions.RequestException as http_err: #also add timeout
             sim.status = Simulation.Status.FAILED
             sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
@@ -215,7 +220,6 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             start_simulation(simulation)
             return self.form_valid(form)
         else:
-            assert False, str(form.errors)
             self.object = getattr(self, 'object', None)
             return self.form_invalid(form)
 

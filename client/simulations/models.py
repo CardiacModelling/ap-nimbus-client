@@ -78,7 +78,7 @@ class Simulation(models.Model):
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     progress = models.CharField(max_length=255, blank=True, default='Initialising..')
-    ap_predict_last_called = models.DateTimeField(blank=True, null=True)
+    ap_predict_last_update = models.DateTimeField(blank=True, null=True)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)
     ap_predict_q_net = models.CharField(max_length=255, blank=True)
