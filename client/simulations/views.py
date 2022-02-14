@@ -29,141 +29,6 @@ def to_int(f):
     return int(f) if f.is_integer() else f
 
 
-def start_simulation(sim):
-    """
-    Makes the request to start the simulation if a simulation.
-    """
-    #todo: pk_data, cellml_file
-    call_data = {'pacingFrequency': sim.pacing_frequency,
-                 'pacingMaxTime': sim.maximum_pacing_time}
-
-    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
-        pass #pkdata
-    elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-        call_data['plasmaPoints'] = [c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]
-    else: # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
-        call_data['plasmaMaximum'] = sim.maximum_concentration
-        call_data['plasmaMinimum'] = sim.minimum_concentration
-        call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
-        call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
-
-    if sim.model.ap_predict_model_call:
-        call_data['modelId'] = sim.model.ap_predict_model_call
-    else:
-        call_data['modelId'] = sim.model.cellml_file.url
-
-    for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
-        call_data[current_param.ion_current.name] = {
-            'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
-                                'hill': current_param.hill_coefficient,
-                                'saturation': current_param.saturation_level}]
-        }
-        if current_param.spread_of_uncertainty:
-            call_data[current_param.ion_current.name]['spreads'] = \
-                {'c50Spread': current_param.spread_of_uncertainty}
-
-    call_response = {}
-    try:
-        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
-        response.raise_for_status()  # Raise exception if request response doesn't return successful status
-        call_response = response.json()
-        sim.ap_predict_call_id = call_response['success']['id']
-        sim.status = Simulation.Status.INITIALISING
-        sim.ap_predict_last_update = timezone.now()
-    except requests.exceptions.RequestException as http_err:
-        sim.status = Simulation.Status.FAILED
-        sim.progress = 'Failed!'
-        sim.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
-    except KeyError:
-        sim.status = Simulation.Status.FAILED
-        sim.progress = 'Failed!'
-        sim.ap_predict_messages = call_response
-    finally:
-        sim.save()
-
-def re_start_simulation(sim):
-    """
-    First try to get fresh progress  going. If that doesn't work, try to stop the simulation, then restart.
-    """
-    # restart if it was a succesful run, or there is no new progress we missed
-    progress, status = sim.progress, sim.status
-    update_progress(sim)
-    if sim.progress == progress and sim.status == status:
-        # try to stop simulation
-        try:
-            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % sim.ap_predict_call_id,
-                                    timeout=settings.AP_PREDICT_TIMEOUT)
-        except requests.exceptions.RequestException as http_err:
-            sim.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
-        # restart simulation
-        sim.status=Simulation.Status.NOT_STARTED
-        sim.progress = 'Initialising..'
-        sim.save()
-        start_simulation(sim)
-
-def update_progress(sim):
-    """
-    Updates the current progress of a running simulation.
-    """
-    # can't update without call_id
-    # no need updating if we have result
-    if not sim.ap_predict_call_id or sim.status == Simulation.Status.SUCCESS:
-        return sim
-    else:
-        try:
-            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/progress_status' % sim.ap_predict_call_id,
-                                    timeout=settings.AP_PREDICT_TIMEOUT)
-            response.raise_for_status()  # Raise exception if request response doesn't return successful status
-            call_response = response.json()
-            last_update = sim.ap_predict_last_update
-            if 'success' in call_response:
-                progress_text = next((p for p in reversed(call_response['success']) if p), '')
-                sim.status = Simulation.Status.RUNNING
-                if progress_text == '..done!':
-                    sim.progress = progress_text
-                    store_results(sim)
-                    last_update = sim.ap_predict_last_update = timezone.now()
-                elif sim.progress != progress_text:
-                    sim.progress = progress_text
-                    last_update = sim.ap_predict_last_update = timezone.now()
-            delta = timezone.now() - last_update
-            if delta.seconds > settings.AP_PREDICT_STATUS_TIMEOUT:
-                sim.status = Simulation.Status.FAILED
-                sim.progress = 'Failed!'
-                sim.ap_predict_messages = 'status has not changed in %s seconds' % settings.AP_PREDICT_STATUS_TIMEOUT
-
-        except requests.exceptions.RequestException as http_err:
-            sim.status = Simulation.Status.FAILED
-            sim.progress = 'Failed!'
-            sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
-        finally:
-            sim.save()
-            return sim
-
-def store_results(sim):
-    """
-    Stores simulation results.
-    """
-    for command in ('q_net', 'voltage_traces', 'voltage_results'):
-        try:
-            response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/%s' % (sim.ap_predict_call_id, command),
-                                    timeout=settings.AP_PREDICT_TIMEOUT)
-            response.raise_for_status()  # Raise exception if request response doesn't return successful status
-            call_response = response.json()
-            setattr(sim, command, call_response['success'])
-        except requests.exceptions.RequestException as http_err: #also add timeout
-            sim.status = Simulation.Status.FAILED
-            sim.progress = 'Failed!'
-            sim.ap_predict_messages = 'Call to get results failed: %s' % type(http_err)
-        except KeyError:
-            pass  # these types of results are not available
-    sim.save()
-    if sim.voltage_traces and sim.voltage_results:
-        sim.status = Simulation.Status.SUCCESS
-        sim.save()
-
-
-
 class SimulationListView(LoginRequiredMixin, ListView):
     """
     List all user's Simulations
@@ -265,7 +130,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             ion_formset.save(simulation=simulation)
             concentration_formset.save(simulation=simulation)
             # kick off simulation (via signal)
-            start_simulation(simulation)
+            simulation.start_simulation()
             return self.form_valid(form)
         else:
             self.object = getattr(self, 'object', None)
@@ -328,7 +193,7 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
 
     def get_redirect_url(self, *args, **kwargs):
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
-        re_start_simulation(simulation)
+        simulation.re_start_simulation()
         return self.request.META['HTTP_REFERER']
 
 class StatusSimulationView(LoginRequiredMixin, UserFormKwargsMixin, ListView):
@@ -342,6 +207,8 @@ class StatusSimulationView(LoginRequiredMixin, UserFormKwargsMixin, ListView):
         return Simulation.objects.filter(author=self.request.user, pk__in=pks)
 
     def get(self, request, *args, **kwargs):
-        data = [{'pk': s.pk, 'progress': s.progress, 'status': s.status} for s in map(update_progress,
-                                                                                      self.get_queryset())]
+        data = []
+        for sim in self.get_queryset():
+            sim.update_progress()
+            data.append({'pk': s.pk, 'progress': s.progress, 'status': s.status})
         return JsonResponse(data, status=200, safe=False)
