@@ -109,6 +109,18 @@ class Simulation(models.Model):
         """
         Makes the request to start the simulation if a simulation.
         """
+        # (re)set status and result
+        self.status=Simulation.Status.NOT_STARTED
+        self.progress = 'Initialising..'
+        self.ap_predict_last_update = timezone.now()
+        self.ap_predict_call_id = ''
+        self.ap_predict_messages = ''
+        self.q_net = ''
+        self.voltage_traces = ''
+        self.voltage_results = ''
+        self.save()
+
+        # create api call
         #todo: pk_data, cellml_file
         call_data = {'pacingFrequency': self.pacing_frequency,
                      'pacingMaxTime': self.maximum_pacing_time}
@@ -139,13 +151,13 @@ class Simulation(models.Model):
                     {'c50Spread': current_param.spread_of_uncertainty}
 
         call_response = {}
+        # call api to start simulation
         try:
             response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
             response.raise_for_status()  # Raise exception if request response doesn't return successful status
             call_response = response.json()
             self.ap_predict_call_id = call_response['success']['id']
             self.status = Simulation.Status.INITIALISING
-            self.ap_predict_last_update = timezone.now()
         except requests.exceptions.RequestException as http_err:
             self.status = Simulation.Status.FAILED
             self.progress = 'Failed!'
@@ -171,10 +183,8 @@ class Simulation(models.Model):
                                         timeout=settings.AP_PREDICT_TIMEOUT)
             except requests.exceptions.RequestException as http_err:
                 self.ap_predict_messages = 'Call to stop sim failed: %s' % type(http_err)
+                self.save()
             # restart simulation
-            self.status=Simulation.Status.NOT_STARTED
-            self.progress = 'Initialising..'
-            self.save()
             self.start_simulation()
 
     def update_progress(self):
@@ -183,7 +193,7 @@ class Simulation(models.Model):
         """
         # can't update without call_id
         # no need updating if we have result
-        if not self.ap_predict_call_id or self.status == Simulation.Status.SUCCESS:
+        if (not self.ap_predict_call_id) or self.status == Simulation.Status.SUCCESS:
             return self
         else:
             try:
@@ -197,7 +207,7 @@ class Simulation(models.Model):
                     self.status = Simulation.Status.RUNNING
                     if progress_text == '..done!':
                         self.progress = progress_text
-                        store_results(self)
+                        self.store_results()
                         last_update = self.ap_predict_last_update = timezone.now()
                     elif self.progress != progress_text:
                         self.progress = progress_text
