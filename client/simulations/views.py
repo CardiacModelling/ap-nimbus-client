@@ -210,5 +210,5 @@ class StatusSimulationView(LoginRequiredMixin, UserFormKwargsMixin, ListView):
         data = []
         for sim in self.get_queryset():
             sim.update_progress()
-            data.append({'pk': s.pk, 'progress': s.progress, 'status': s.status})
+            data.append({'pk': sim.pk, 'progress': sim.progress, 'status': sim.status})
         return JsonResponse(data, status=200, safe=False)

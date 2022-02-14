@@ -10,6 +10,7 @@ from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
 from django.utils import timezone
+import requests
 
 
 @deconstructible
@@ -176,7 +177,7 @@ class Simulation(models.Model):
             self.save()
             self.start_simulation()
 
-    def update_progress_json(self):
+    def update_progress(self):
         """
         Updates the current progress of a running simulation.
         """
