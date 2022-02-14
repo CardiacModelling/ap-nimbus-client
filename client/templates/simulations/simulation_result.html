@@ -14,15 +14,8 @@
 <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
 <style>
 
-.row {
-  display: flex;
-  border: 5px solid green;
-}
-
 /* Create two equal columns that sits next to each other */
 .column {
-  flex: 50%;
-  padding: 10px;
   border: 5px solid red;
 }
 </style>
@@ -83,17 +76,34 @@
     </fieldset>
     <fieldset>
       <legend>Status</legend>
-      <div id="progressbar-{{object.pk}}" class="progressbar"><div class="progress-label"></div></div>
+      <div id="progressbar-{{object.pk}}" class="progressbar progressbar-wide"><div class="progress-label"></div></div>
     </fieldset>
   </fieldset>
 
   </div>
-  <div class="column" style="background-color:#bbb;">
-    <h2>Column 2</h2>
-    <p>Some text..</p>
+  <div class="column">
+    <div class="row">
+        <div class="column">
+            <h2>Results 1</h2>
+            <p>Some text..</p>
+        </div>
+        <div class="column">
+            <h2>Download</h2>
+            <p>Some text..</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column">
+            <h2>Results 1</h2>
+            <p>Some text..</p>
+        </div>
+        <div class="column">
+            <h2>Download</h2>
+            <p>Some text..</p>
+        </div>
+    </div>
   </div>
 </div>
-<div>
 </section>
 
 {% endblock data %}
