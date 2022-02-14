@@ -1,4 +1,5 @@
 import os
+import math
 
 import django.db.models.deletion
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.dispatch import receiver
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
+from django.utils import timezone
 
 
 @deconstructible
@@ -41,6 +43,16 @@ class Simulation(models.Model):
         M = 'M', 'M'
         µM = 'µM', 'µM'
         nM = 'nM', 'nM'
+
+    def conversion(choice):
+        if choice == Simulation.IonCurrentUnits.M:
+            return lambda c: - math.log10(c)
+        elif choice == Simulation.IonCurrentUnits.µM:
+            return lambda c: - math.log10(1e-6 * c)
+        elif choice == Simulation.IonCurrentUnits.nM:
+            return lambda c: - math.log10(1e-9 * c)
+        else:
+            return lambda c: c
 
     class PkOptions(models.TextChoices):
         compound_concentration_range = 'compound_concentration_range', 'Compound Concentration Range'
@@ -78,7 +90,7 @@ class Simulation(models.Model):
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     progress = models.CharField(max_length=255, blank=True, default='Initialising..')
-    ap_predict_last_update = models.DateTimeField(blank=True, null=True)
+    ap_predict_last_update = models.DateTimeField(blank=True, default=timezone.now)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)
     q_net = models.TextField(max_length=255, blank=True)

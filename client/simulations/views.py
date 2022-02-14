@@ -33,23 +33,28 @@ def start_simulation(sim):
     """
     Makes the request to start the simulation if a simulation.
     """
-    #todo: ic50, ic50 units, concentration points, pk_data, cellml_file
+    #todo: pk_data, cellml_file
     call_data = {'pacingFrequency': sim.pacing_frequency,
-                 'pacingMaxTime': sim.maximum_pacing_time,
-                 'plasmaMaximum': sim.maximum_concentration,
-                 'plasmaMinimum': sim.minimum_concentration,
-                 'plasmaIntermediatePointCount': sim.intermediate_point_count,
-                 'plasmaIntermediatePointLogScale': sim.intermediate_point_log_scale}
+                 'pacingMaxTime': sim.maximum_pacing_time}
+
+    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
+        pass #pkdata
+    elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+        call_data['plasmaPoints'] = [c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]
+    else: # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+        call_data['plasmaMaximum'] = sim.maximum_concentration
+        call_data['plasmaMinimum'] = sim.minimum_concentration
+        call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
+        call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
 
     if sim.model.ap_predict_model_call:
         call_data['modelId'] = sim.model.ap_predict_model_call
     else:
-#assert False, str(sim.model.cellml_file.url)
         call_data['modelId'] = sim.model.cellml_file.url
 
     for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
         call_data[current_param.ion_current.name] = {
-            'associatedData': [{sim.ion_current_type: current_param.current,
+            'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
                                 'hill': current_param.hill_coefficient,
                                 'saturation': current_param.saturation_level}]
         }
@@ -67,9 +72,11 @@ def start_simulation(sim):
         sim.ap_predict_last_update = timezone.now()
     except requests.exceptions.RequestException as http_err:
         sim.status = Simulation.Status.FAILED
+        sim.progress = 'Failed!'
         sim.ap_predict_messages = 'Call to start sim failed: %s' % type(http_err)
     except KeyError:
         sim.status = Simulation.Status.FAILED
+        sim.progress = 'Failed!'
         sim.ap_predict_messages = call_response
     finally:
         sim.save()
@@ -98,33 +105,40 @@ def update_progress(sim):
     """
     Updates the current progress of a running simulation.
     """
-    if sim.ap_predict_call_id:  # can't update without call_id
+    # can't update without call_id
+    # no need updating if we have result
+    if not sim.ap_predict_call_id or sim.status == Simulation.Status.SUCCESS:
+        return sim
+    else:
         try:
             response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/progress_status' % sim.ap_predict_call_id,
                                     timeout=settings.AP_PREDICT_TIMEOUT)
             response.raise_for_status()  # Raise exception if request response doesn't return successful status
             call_response = response.json()
+            last_update = sim.ap_predict_last_update
             if 'success' in call_response:
                 progress_text = next((p for p in reversed(call_response['success']) if p), '')
+                sim.status = Simulation.Status.RUNNING
                 if progress_text == '..done!':
+                    sim.progress = progress_text
                     store_results(sim)
-                else:
-                    sim.status = Simulation.Status.RUNNING
-                    if sim.progress != progress_text:
-                        sim.progress = progress_text
-                        sim.ap_predict_last_update = timezone.now()
-                    else:
-                        now = timezone.now()
-                        delta = now - sim.ap_predict_last_update
-                        if delta.seconds > settings.AP_PREDICT_STATUS_TIMEOUT:
-                            sim.status = Simulation.Status.FAILED
-                            sim.ap_predict_messages = 'status has not changed in %s seconds' % settings.AP_PREDICT_STATUS_TIMEOUT
+                    last_update = sim.ap_predict_last_update = timezone.now()
+                elif sim.progress != progress_text:
+                    sim.progress = progress_text
+                    last_update = sim.ap_predict_last_update = timezone.now()
+            delta = timezone.now() - last_update
+            if delta.seconds > settings.AP_PREDICT_STATUS_TIMEOUT:
+                sim.status = Simulation.Status.FAILED
+                sim.progress = 'Failed!'
+                sim.ap_predict_messages = 'status has not changed in %s seconds' % settings.AP_PREDICT_STATUS_TIMEOUT
+
         except requests.exceptions.RequestException as http_err:
             sim.status = Simulation.Status.FAILED
+            sim.progress = 'Failed!'
             sim.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
         finally:
             sim.save()
-        return sim
+            return sim
 
 def store_results(sim):
     """
@@ -139,14 +153,14 @@ def store_results(sim):
             setattr(sim, command, call_response['success'])
         except requests.exceptions.RequestException as http_err: #also add timeout
             sim.status = Simulation.Status.FAILED
+            sim.progress = 'Failed!'
             sim.ap_predict_messages = 'Call to get results failed: %s' % type(http_err)
-            sim.status = Simulation.Status.FAILED
         except KeyError:
             pass  # these types of results are not available
-        if sim.voltage_traces and sim.voltage_results:
-            sim.status = Simulation.Status.SUCCESS
-            sim.progress = 100
     sim.save()
+    if sim.voltage_traces and sim.voltage_results:
+        sim.status = Simulation.Status.SUCCESS
+        sim.save()
 
 
 

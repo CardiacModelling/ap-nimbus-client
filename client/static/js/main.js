@@ -220,44 +220,41 @@ $(document).ready(function(){
     function updateProgressbars(){
         url = $(location).attr('href');
         var i = url.lastIndexOf('/simulations/');
-        if (i != -1) {
+        if (i != -1 && progressbars.length > 0){
             url = url.substr(0, i) + '/simulations/status/' + progressbars.join('/');
-        }
-        $.ajax({
-            type: 'GET',
-            url: url,
-            dataType: 'json',
-            success: function(data) {
-                data.forEach(function (simulation) {
-                    bar = $('#progressbar-' + simulation['pk']);
-                    progress = simulation['progress']
-                    // deal with failed, finalising and done
-                    if(simulation['status'] == 'FAILED'){
-                        progress = 'Failed!';
-                    }else if(progress == 'Finalising..'){
-                        progress = '99% completed'
-                    }else if(progress == '..done!'){
-                        progress = '100% completed'
-                    }
-                    // set label
-                    bar.find('.progress-label').text(progress);
-                    // convert into number
-                    progress_number = progress.replace('% completed', '');
-                    if(!isNaN(progress_number)){
-                        bar.progressbar('value', parseInt(progress_number));
-                    }
-                    // remove from updates if we have finished or failed
-                    if(simulation['status'] == 'FAILED' || simulation['status'] =='SUCCESS'){
-                        findIndex = progressbars.indexOf(simulation['pk'].toString());
-                        if(findIndex != -1){
-                            progressbars.splice(findIndex, 1);
+            $.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'json',
+                timeout: progressBarTimeout,
+                success: function(data) {
+                    data.forEach(function (simulation) {
+                        bar = $('#progressbar-' + simulation['pk']);
+                        progress = simulation['progress']
+                        // deal with failed, finalising and done
+                        if(progress == 'Finalising..'){
+                            progress = '99% completed'
+                        }else if(progress == '..done!'){
+                            progress = '100% completed'
                         }
-                    }
-                })
-            }
-        });
-        // reschedule update if we still have running bars
-        if(progressbars.length > 0){
+                        // set label
+                        bar.find('.progress-label').text(progress);
+                        // convert into number
+                        progress_number = progress.replace('% completed', '');
+                        if(!isNaN(progress_number)){
+                            bar.progressbar('value', parseInt(progress_number));
+                        }
+                        // remove from updates if we have finished or failed
+                        if(simulation['status'] == 'FAILED' || simulation['status'] == 'SUCCESS'){
+                            findIndex = progressbars.indexOf(simulation['pk'].toString());
+                            if(findIndex != -1){
+                                progressbars.splice(findIndex, 1);
+                            }
+                        }
+                    })
+                }
+            });
+            // reschedule update if we still have running bars
             setTimeout(updateProgressbars, progressBarTimeout);
         }
     }
