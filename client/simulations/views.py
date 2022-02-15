@@ -1,4 +1,3 @@
-import requests
 from django.utils import timezone
 from django.conf import settings
 from braces.views import UserFormKwargsMixin
@@ -9,8 +8,17 @@ from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
+from django.views.generic import View
 from files.models import CellmlModel, IonCurrent
 from django.http import JsonResponse
+import asyncio
+import requests
+import httpx
+import aiohttp
+from django.utils.decorators import classonlymethod
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+from json.decoder import JSONDecodeError
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -196,19 +204,58 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         simulation.re_start_simulation()
         return self.request.META['HTTP_REFERER']
 
-class StatusSimulationView(LoginRequiredMixin, UserFormKwargsMixin, ListView):
-    """
-    Update the status of the simulation
-    """
-    model = Simulation
 
-    def get_queryset(self):
+from asgiref.sync import async_to_sync, sync_to_async
+class StatusSimulationView(View):
+
+    @classonlymethod
+    def as_view(cls, **initkwargs):
+        view = super().as_view(**initkwargs)
+        view._is_coroutine = asyncio.coroutines._is_coroutine
+        return view
+
+    async def update_sim(self, session, sim):
+        url = '/api/collection/%s/progress_status' % sim.ap_predict_call_id
+        try:
+            async with session.get(url) as res:
+                response = await res.json(content_type=None)
+                # get progress if there is progress
+                progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
+                if progress_text and progress_text != sim.progress:  # if progress has changed, save it
+                    sim.progress = progress_text
+                    sim.status = Simulation.Status.SUCCESS if sim.progress == '..done!' else Simulation.Status.RUNNING
+                    last_update = sim.ap_predict_last_update = timezone.now()
+                # handle timeout
+                elif (timezone.now() - sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
+                    sim.status = Simulation.Status.FAILED
+                    sim.progress = 'Failed!'
+                    sim.ap_predict_messages = 'Progress timeout, not changed in %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT
+        except (JSONDecodeError, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError):
+            sim.ap_predict_messages = 'Call to get progress failed. %s : %' % (type(e), str(e))
+        finally:  # save
+            await asyncio.create_task(sync_to_async(sim.save)())
+
+    async def get(self, request, *args, **kwargs):
         pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
-        return Simulation.objects.filter(author=self.request.user, pk__in=pks)
+        # get user info
+        authenticated, user_pk = await sync_to_async(lambda req: (req.user.is_authenticated, req.user.pk))(request)
 
-    def get(self, request, *args, **kwargs):
-        data = []
-        for sim in self.get_queryset():
-            sim.update_progress()
-            data.append({'pk': sim.pk, 'progress': sim.progress, 'status': sim.status})
-        return JsonResponse(data, status=200, safe=False)
+        if not authenticated:  # user login is required
+            return HttpResponseForbidden()
+
+        # get simulations to get status for and the ones that need updating
+        simulations = Simulation.objects.filter(author__pk=user_pk, pk__in=pks)
+        sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED, Simulation.Status.SUCCESS)))
+
+        if sims_to_update:
+            async with aiohttp.ClientSession(base_url = settings.AP_PREDICT_ENDPOINT, raise_for_status=True,
+                                             timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT)) as session:
+                await asyncio.wait([asyncio.ensure_future(self.update_sim(session, sim)) for sim in sims_to_update])
+
+        # gather data for status responses
+        data = await asyncio.create_task(sync_to_async(lambda sims:
+                                                       [{'pk': sim.pk,
+                                                         'progress': sim.progress,
+                                                         'status': sim.status} for sim in sims])(simulations))
+        return JsonResponse(data=data,
+                            status=200, safe=False)
