@@ -169,13 +169,13 @@ class Simulation(models.Model):
         finally:
             self.save()
 
+
     def re_start_simulation(self):
         """
         First try to get fresh progress  going. If that doesn't work, try to stop the simulation, then restart.
         """
         # restart if it was a succesful run, or there is no new progress we missed
         progress, status = self.progress, self.status
-        self.update_progress()
         if self.progress == progress and self.status == status:
             # try to stop simulation
             try:
@@ -187,44 +187,6 @@ class Simulation(models.Model):
             # restart simulation
             self.start_simulation()
 
-    def update_progress(self):
-        """
-        Updates the current progress of a running simulation.
-        """
-        # can't update without call_id
-        # no need updating if we have result
-        if (not self.ap_predict_call_id) or self.status == Simulation.Status.SUCCESS:
-            return self
-        else:
-            try:
-                response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/progress_status' % self.ap_predict_call_id,
-                                        timeout=settings.AP_PREDICT_TIMEOUT)
-                response.raise_for_status()  # Raise exception if request response doesn't return successful status
-                call_response = response.json()
-                last_update = self.ap_predict_last_update
-                if 'success' in call_response:
-                    progress_text = next((p for p in reversed(call_response['success']) if p), '')
-                    self.status = Simulation.Status.RUNNING
-                    if progress_text == '..done!':
-                        self.progress = progress_text
-                        self.store_results()
-                        last_update = self.ap_predict_last_update = timezone.now()
-                    elif self.progress != progress_text:
-                        self.progress = progress_text
-                        last_update = self.ap_predict_last_update = timezone.now()
-                delta = timezone.now() - last_update
-                if delta.seconds > settings.AP_PREDICT_STATUS_TIMEOUT:
-                    self.status = Simulation.Status.FAILED
-                    self.progress = 'Failed!'
-                    self.ap_predict_messages = 'status has not changed in %s seconds' % settings.AP_PREDICT_STATUS_TIMEOUT
-
-            except requests.exceptions.RequestException as http_err:
-                self.status = Simulation.Status.FAILED
-                self.progress = 'Failed!'
-                self.ap_predict_messages = 'Call to get progress failed: %s' % type(http_err)
-            finally:
-                self.save()
-                return self
 
     def store_results(self):
         """
