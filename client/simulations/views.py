@@ -206,20 +206,19 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         return self.request.META['HTTP_REFERER']
 
 
-class AsyncLoginRequiredView(View):
+class AsyncView(View):
     @classonlymethod
     def as_view(cls, **initkwargs):
         view = super().as_view(**initkwargs)
         view._is_coroutine = asyncio.coroutines._is_coroutine
         return view
 
-    async def get(self, request, *args, **kwargs):
-        # get user info
-        authenticated, self.user_pk = await sync_to_async(lambda req: (req.user.is_authenticated, req.user.pk))(request)
-        if not authenticated:  # user login is required
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
             return HttpResponseForbidden()
+        self.user_pk = request.user.pk
 
-class StatusSimulationView(AsyncLoginRequiredView):
+class StatusSimulationView(AsyncView):
     async def update_sim(self, session, sim):
         url = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/progress_status' % sim.ap_predict_call_id)
         try:
@@ -242,7 +241,10 @@ class StatusSimulationView(AsyncLoginRequiredView):
             await asyncio.create_task(sync_to_async(sim.save)())
 
     async def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
+        authenticated, user_pk = await sync_to_async(lambda req: (req.user.is_authenticated, req.user.pk))(request)
+        if not authenticated:  # user login is required
+            return HttpResponseForbidden()
+        await sync_to_async(super().get)(request, *args, **kwargs)
         pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
         # get simulations to get status for and the ones that need updating
         simulations = Simulation.objects.filter(author__pk=self.user_pk, pk__in=pks)
