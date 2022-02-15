@@ -206,7 +206,7 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         return self.request.META['HTTP_REFERER']
 
 
-class AsyncView(View):
+class AsyncLoginRequiredView(View):
     @classonlymethod
     def as_view(cls, **initkwargs):
         view = super().as_view(**initkwargs)
@@ -219,7 +219,7 @@ class AsyncView(View):
         if not authenticated:  # user login is required
             return HttpResponseForbidden()
 
-class StatusSimulationView(AsyncView):
+class StatusSimulationView(AsyncLoginRequiredView):
     async def update_sim(self, session, sim):
         url = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/progress_status' % sim.ap_predict_call_id)
         try:

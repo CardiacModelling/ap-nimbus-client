@@ -188,30 +188,6 @@ class Simulation(models.Model):
             self.start_simulation()
 
 
-    def store_results(self):
-        """
-        Stores simulation results.
-        """
-        for command in ('q_net', 'voltage_traces', 'voltage_results'):
-            try:
-                response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/%s' % (self.ap_predict_call_id, command),
-                                        timeout=settings.AP_PREDICT_TIMEOUT)
-                response.raise_for_status()  # Raise exception if request response doesn't return successful status
-                call_response = response.json()
-                setattr(self, command, call_response['success'])
-            except requests.exceptions.RequestException as http_err: #also add timeout
-                self.status = Simulation.Status.FAILED
-                self.progress = 'Failed!'
-                self.ap_predict_messages = 'Call to get results failed: %s' % type(http_err)
-            except KeyError:
-                pass  # these types of results are not available
-        self.save()
-        if self.voltage_traces and self.voltage_results:
-            self.status = Simulation.Status.SUCCESS
-            self.save()
-
-
-
 class SimulationIonCurrentParam(models.Model):
     """
     Ion current parameter for a given simulation
