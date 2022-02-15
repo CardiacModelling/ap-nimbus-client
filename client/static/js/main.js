@@ -9,11 +9,54 @@ const marked = require("./lib/marked.min.js"); // Markdown render
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 const notifications = require('./lib/notifications.js');
 
-const progressBarTimeout = 3000;
-//const multiProgressBarTimeout = 1000;
-
-
+// set progressbar timeout, progressbars to update and get base url
+var progressBarTimeout = 3000;
 var progressbars = [];
+var base_url = $(location).attr('href');
+var i = base_url.lastIndexOf('/simulations/');
+if (i != -1){
+    base_url = base_url.substr(0, i);
+}else{
+    base_url = false;
+}
+
+function updateProgressbars(){
+    if (base_url && progressbars.length > 0){
+        $.ajax({
+            type: 'GET',
+            url: base_url + '/simulations/status/' + progressbars.join('/'),
+            dataType: 'json',
+            success: function(data) {
+                data.forEach(function (simulation) {
+                    // schedule next update
+                    setTimeout(updateProgressbars, progressBarTimeout);
+                    bar = $('#progressbar-' + simulation['pk']);
+                    progress = simulation['progress']
+                    // deal with failed, finalising and done
+                    if(progress == 'Finalising..'){
+                        progress = '99% completed'
+                    }else if(progress == '..done!'){
+                        progress = '100% completed'
+                    }
+                    // set label
+                    bar.find('.progress-label').text(progress);
+                    // convert into number
+                    progress_number = progress.replace('% completed', '');
+                    if(!isNaN(progress_number)){
+                        bar.progressbar('value', parseInt(progress_number));
+                    }
+                    // remove from updates if we have finished or failed
+                    if(simulation['status'] == 'FAILED' || simulation['status'] == 'SUCCESS'){
+                        findIndex = progressbars.indexOf(simulation['pk'].toString());
+                        if(findIndex != -1){
+                            progressbars.splice(findIndex, 1);
+                        }
+                    }
+                })
+            }
+        });
+    }
+}
 
 $(document).ready(function(){
     // add dismiss action to notifications
@@ -217,48 +260,6 @@ $(document).ready(function(){
         progressbars.push($(bar).attr('id').replace('progressbar-',''));
     });
 
-    function updateProgressbars(){
-        url = $(location).attr('href');
-        var i = url.lastIndexOf('/simulations/');
-        if (i != -1 && progressbars.length > 0){
-            url = url.substr(0, i) + '/simulations/status/' + progressbars.join('/');
-            $.ajax({
-                type: 'GET',
-                url: url,
-                dataType: 'json',
-                timeout: progressBarTimeout,
-                success: function(data) {
-                    data.forEach(function (simulation) {
-                        bar = $('#progressbar-' + simulation['pk']);
-                        progress = simulation['progress']
-                        // deal with failed, finalising and done
-                        if(progress == 'Finalising..'){
-                            progress = '99% completed'
-                        }else if(progress == '..done!'){
-                            progress = '100% completed'
-                        }
-                        // set label
-                        bar.find('.progress-label').text(progress);
-                        // convert into number
-                        progress_number = progress.replace('% completed', '');
-                        if(!isNaN(progress_number)){
-                            bar.progressbar('value', parseInt(progress_number));
-                        }
-                        // remove from updates if we have finished or failed
-                        if(simulation['status'] == 'FAILED' || simulation['status'] == 'SUCCESS'){
-                            findIndex = progressbars.indexOf(simulation['pk'].toString());
-                            if(findIndex != -1){
-                                progressbars.splice(findIndex, 1);
-                            }
-                        }
-                    })
-                }
-            });
-            // reschedule update if we still have running bars
-            setTimeout(updateProgressbars, progressBarTimeout);
-        }
-    }
-
-    //update progressbar now
+    //update progress bar now
     updateProgressbars();
 });
