@@ -213,6 +213,12 @@ class AsyncView(View):
         view._is_coroutine = asyncio.coroutines._is_coroutine
         return view
 
+    async def get(self, request, *args, **kwargs):
+        # get user info
+        authenticated, self.user_pk = await sync_to_async(lambda req: (req.user.is_authenticated, req.user.pk))(request)
+        if not authenticated:  # user login is required
+            return HttpResponseForbidden()
+
 class StatusSimulationView(AsyncView):
     async def update_sim(self, session, sim):
         url = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/progress_status' % sim.ap_predict_call_id)
@@ -236,15 +242,10 @@ class StatusSimulationView(AsyncView):
             await asyncio.create_task(sync_to_async(sim.save)())
 
     async def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
         pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
-        # get user info
-        authenticated, user_pk = await sync_to_async(lambda req: (req.user.is_authenticated, req.user.pk))(request)
-
-        if not authenticated:  # user login is required
-            return HttpResponseForbidden()
-
         # get simulations to get status for and the ones that need updating
-        simulations = Simulation.objects.filter(author__pk=user_pk, pk__in=pks)
+        simulations = Simulation.objects.filter(author__pk=self.user_pk, pk__in=pks)
         sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED, Simulation.Status.SUCCESS)))
 
         if sims_to_update:
@@ -261,3 +262,32 @@ class StatusSimulationView(AsyncView):
                             status=200, safe=False)
 
 
+
+
+
+
+
+
+
+
+#    def store_results(self):
+#        """
+#        Stores simulation results.
+#        """
+#        for command in ('q_net', 'voltage_traces', 'voltage_results'):
+#            try:
+#                response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/%s' % (self.ap_predict_call_id, command),
+#                                        timeout=settings.AP_PREDICT_TIMEOUT)
+#                response.raise_for_status()  # Raise exception if request response doesn't return successful status
+#                call_response = response.json()
+#                setattr(self, command, call_response['success'])
+#            except requests.exceptions.RequestException as http_err: #also add timeout
+#                self.status = Simulation.Status.FAILED
+#                self.progress = 'Failed!'
+#                self.ap_predict_messages = 'Call to get results failed: %s' % type(http_err)
+#            except KeyError:
+#                pass  # these types of results are not available
+#        self.save()
+#        if self.voltage_traces and self.voltage_results:
+#            self.status = Simulation.Status.SUCCESS
+#            self.save()
