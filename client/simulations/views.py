@@ -210,6 +210,9 @@ class StatusSimulationView(View):
     COMMANDS = ('q_net', 'voltage_traces', 'voltage_results')
     URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
 
+    class ApManagerCallTimeOut(Exception):
+        pass
+    
     @classonlymethod
     def as_view(cls, **initkwargs):
         view = super().as_view(**initkwargs)
@@ -218,7 +221,13 @@ class StatusSimulationView(View):
 
     async def save_data(self, session, command, sim):
         sim.ap_predict_messages = command
-        pass
+        try:
+            async with session.get(self.URL % (sim.ap_predict_call_id, command)) as res:
+                response = await res.json(content_type=None)
+                setattr(sim, command, call_response['success'])
+        except (JSONDecodeError, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError, KeyError):
+            sim.status = Simulation.Status.FAILED
+            sim.ap_predict_messages = 'Call to save data failed. %s : %' % (type(e), str(e))
 
     async def update_sim(self, session, sim):
         try:
@@ -228,17 +237,19 @@ class StatusSimulationView(View):
                 progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
                 if progress_text and progress_text != sim.progress:  # if progress has changed, save it
                     sim.progress = progress_text
-                    sim.status =Simulation.Status.RUNNING
+                    sim.status = Simulation.Status.SUCCESS if Simulation.Status.RUNNING
                     if sim.progress == '..done!':
                         await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
+                        if sim.status != Simulation.Status.FAILED:
+                            sim.status = Simulation.Status.SUCCESS 
                     last_update = sim.ap_predict_last_update = timezone.now()
                 # handle timeout
                 elif (timezone.now() - sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
-                    sim.status = Simulation.Status.FAILED
-                    sim.progress = 'Failed!'
-                    sim.ap_predict_messages = 'Progress timeout, not changed in %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT
-        except (JSONDecodeError, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError):
-            sim.ap_predict_messages = 'Call to get progress failed. %s : %' % (type(e), str(e))
+                    raise ApManagerCallTimeOut('Progress timeout, not changed in %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT)
+        except (JSONDecodeError, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError, ApManagerCallTimeOut) as e:
+            sim.progress = 'Failed!'
+            sim.status = Simulation.Status.FAILED
+            sim.ap_predict_messages = 'Progress failed. %s : %' % (type(e), str(e))
         finally:  # save
             await sync_to_async(sim.save)()
 
