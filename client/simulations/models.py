@@ -177,7 +177,7 @@ class Simulation(models.Model):
         # restart if it was a succesful run, or there is no new progress we missed
         progress, status = self.progress, self.status
         if self.progress == progress and self.status == status:
-            # try to stop simulation
+            # try to stop simulation (we're not that interested in the result)
             try:
                 response = requests.get(settings.AP_PREDICT_ENDPOINT + '/api/collection/%s/STOP' % self.ap_predict_call_id,
                                         timeout=settings.AP_PREDICT_TIMEOUT)
