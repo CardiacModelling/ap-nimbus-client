@@ -15,9 +15,11 @@ from django.http import JsonResponse
 import asyncio
 import requests
 import aiohttp
+import xlsxwriter
+import io
 from asgiref.sync import sync_to_async, async_to_sync
 from django.utils.decorators import classonlymethod
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseNotFound, FileResponse
 from django.contrib.auth.decorators import login_required
 from json.decoder import JSONDecodeError
 
@@ -257,14 +259,36 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
     model = Simulation
 
     def test_func(self):
-        simulation_set = Simulation.objects.filter(pk=self.kwargs['pk'])
-        return simulation_set.count() == 1 and simulation_set.first().author == self.request.user
+        return Simulation.objects.get(pk=self.kwargs['pk']).author == self.request.user
 
     def get_redirect_url(self, *args, **kwargs):
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
         start_simulation(simulation)
         return self.request.META['HTTP_REFERER']
 
+
+class ExcelSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+    """
+    Download the data as Excel
+    """
+    model = Simulation
+
+    def test_func(self):
+        return Simulation.objects.get(pk=self.kwargs['pk']).author == self.request.user
+
+    def get(self, request, *args, **kwargs):
+        buffer = io.BytesIO()
+        workbook = xlsxwriter.Workbook(buffer)
+        input_values =  workbook.add_worksheet('Input Values')
+        qNet = ('% Change and qNet')
+        voltage_traces =  workbook.add_worksheet('Voltage Traces')
+        voltage_traces_plot =  workbook.add_worksheet('Voltage Traces (Plot format)')
+        voltage_results =  workbook.add_worksheet('Voltage Results (Plot format)')
+
+        input_values.write('A1', 'Some Data')
+        workbook.close()
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename='AP-Portal_%s.xlsx' % self.get_object().pk)
 
 class StatusSimulationView(View):
     """
