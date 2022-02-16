@@ -43,18 +43,9 @@ def to_int(f):
 
 def start_simulation(sim):
     """
-    Makes the request to start the simulation if a simulation.
+    Makes the request to start the simulation.
     """
-    # if the simulation is potentially still running, make a call to stop it
-    if sim.ap_predict_call_id and sim.status not in (Simulation.Status.FAILED, Simulation.Status.SUCCESS):
-        try:
-            requests.get(AP_MANAGER_URLlection % (sim.ap_predict_call_id, 'STOP'),
-                         timeout=settings.AP_PREDICT_TIMEOUT)
-        except requests.exceptions.RequestException:
-            pass
-
     # (re)set status and result
-
     sim.status = Simulation.Status.NOT_STARTED
     sim.progress = 'Initialising..'
     sim.ap_predict_last_update = timezone.now()
