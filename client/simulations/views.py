@@ -57,7 +57,7 @@ def start_simulation(sim):
     sim.voltage_traces = ''
     sim.voltage_results = ''
 
-    # create api call
+    # build json data for api call
     #todo: pk_data, cellml_file
     call_data = {'pacingFrequency': sim.pacing_frequency,
                  'pacingMaxTime': sim.maximum_pacing_time}
@@ -76,20 +76,21 @@ def start_simulation(sim):
         call_data['modelId'] = sim.model.ap_predict_model_call
     else:
         call_data['modelId'] = sim.model.cellml_file.url
-        for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
-            call_data[current_param.ion_current.name] = {
-                'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
-                                    'hill': current_param.hill_coefficient,
-                                    'saturation': current_param.saturation_level}]
-            }
-            if current_param.spread_of_uncertainty:
-                call_data[current_param.ion_current.name]['spreads'] = \
-                    {'c50Spread': current_param.spread_of_uncertainty}
 
-    call_response = {}
-    # call api to start simulation
+    for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
+        call_data[current_param.ion_current.name] = {
+            'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
+                                'hill': current_param.hill_coefficient,
+                                'saturation': current_param.saturation_level}]
+        }
+        if current_param.spread_of_uncertainty:
+            call_data[current_param.ion_current.name]['spreads'] = \
+                {'c50Spread': current_param.spread_of_uncertainty}
+
+    # call api
     try:
-        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
+        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT,
+                                 json=call_data)
         response.raise_for_status()  # Raise exception if request response doesn't return successful status
         call_response = response.json()
         sim.ap_predict_call_id = call_response['success']['id']
@@ -277,15 +278,61 @@ class ExcelSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwarg
         return Simulation.objects.get(pk=self.kwargs['pk']).author == self.request.user
 
     def get(self, request, *args, **kwargs):
+        sim = self.get_object()
         buffer = io.BytesIO()
         workbook = xlsxwriter.Workbook(buffer)
+
+        # add input values
         input_values =  workbook.add_worksheet('Input Values')
-        qNet = ('% Change and qNet')
+        input_values.write(0, 0, 'Title')
+        input_values.write(0, 1, sim.title)
+
+        input_values.write(2, 0, 'Model')
+        input_values.write(2, 1, str(sim.model))
+        input_values.write(4, 1, 'Pacing')
+        input_values.write(4, 2, 'Frequency')
+        input_values.write(4, 3, sim.pacing_frequency)
+        input_values.write(4, 4, 'Hz')
+        input_values.write(5, 2, 'Max time')
+        input_values.write(5, 3, sim.maximum_pacing_time)
+        input_values.write(5, 4, 'mins')
+
+        input_values.write(7, 0, 'Ion Channel Current Inhibitory Concentrations')
+        input_values.write(7, 3, 'Hill Coefficient')
+        input_values.write(7, 4, 'Saturation Level (%)')
+        input_values.write(7, 5, 'Spread of Uncertainty')
+        input_values.write(7, 6, 'Channel protein')
+        input_values.write(7, 7, 'Gene')
+        input_values.write(7, 8, 'Description')
+        for i, current in enumerate(SimulationIonCurrentParam.objects.filter(simulation=sim)):
+            input_values.write(i + 7, 0, current.ion_current.name)
+            input_values.write(i + 7, 1, current.current)
+            input_values.write(i + 7, 2, sim.ion_units)
+            input_values.write(i + 7, 3, current.hill_coefficient)
+            input_values.write(i + 7, 4, current.saturation_level)
+            input_values.write(i + 7, 5, current.spread_of_uncertainty)
+            input_values.write(i + 7, 6, current.ion_current.channel_protein.replace('<sub>', ''). replace('</sub>', ' '))
+            input_values.write(i + 7, 7, current.ion_current.gene)
+            input_values.write(i + 7, 8, current.ion_current.description)
+
+#        if simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+#            simulation.minimum_concentration
+#            simulation.maximum_concentration
+#        elif simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+#            points = [p.concentration for p in CompoundConcentrationPoint.objects.filter(simulation=simulation)]
+#            points_range = str(points) if len(points) <= 2 else '[' + str(points[0]) + ' ... ' + str(points[-1]) + ']'
+#            return (str(points) + ' (µM)', points_range + ' (µM)')
+#        else:
+#            file_name = str(simulation.PK_data)
+#            truncated = file_name[:20] + '...' if len(file_name) > 23 else file_name
+#            return ('Compound concentrations from TSV file: %s.' % file_name, truncated)
+
+
+        qNet = workbook.add_worksheet('% Change and qNet')
         voltage_traces =  workbook.add_worksheet('Voltage Traces')
         voltage_traces_plot =  workbook.add_worksheet('Voltage Traces (Plot format)')
         voltage_results =  workbook.add_worksheet('Voltage Results (Plot format)')
 
-        input_values.write('A1', 'Some Data')
         workbook.close()
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename='AP-Portal_%s.xlsx' % self.get_object().pk)
