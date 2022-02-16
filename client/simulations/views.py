@@ -15,7 +15,7 @@ from django.http import JsonResponse
 import asyncio
 import requests
 import aiohttp
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 from django.utils.decorators import classonlymethod
 from django.http import HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
@@ -31,12 +31,82 @@ from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrent
 
 
 
+AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
+
+
 def to_int(f):
     """
     Convert to into only if it is an in else don't convert.
     """
     return int(f) if f.is_integer() else f
 
+
+def start_simulation(sim):
+    """
+    Makes the request to start the simulation if a simulation.
+    """
+    # if the simulation is potentially still running, make a call to stop it
+    if sim.ap_predict_call_id and sim.status not in (Simulation.Status.FAILED, Simulation.Status.SUCCESS):
+        try:
+            requests.get(AP_MANAGER_URLlection % (sim.ap_predict_call_id, 'STOP'),
+                         timeout=settings.AP_PREDICT_TIMEOUT)
+        except requests.exceptions.RequestException:
+            pass
+
+    # (re)set status and result
+
+    sim.status = Simulation.Status.NOT_STARTED
+    sim.progress = 'Initialising..'
+    sim.ap_predict_last_update = timezone.now()
+    sim.ap_predict_call_id = ''
+    sim.ap_predict_messages = ''
+    sim.q_net = ''
+    sim.voltage_traces = ''
+    sim.voltage_results = ''
+
+    # create api call
+    #todo: pk_data, cellml_file
+    call_data = {'pacingFrequency': sim.pacing_frequency,
+                 'pacingMaxTime': sim.maximum_pacing_time}
+
+    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
+        pass #pkdata
+    elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+        call_data['plasmaPoints'] = [c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]
+    else: # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+        call_data['plasmaMaximum'] = sim.maximum_concentration
+        call_data['plasmaMinimum'] = sim.minimum_concentration
+        call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
+        call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
+
+    if sim.model.ap_predict_model_call:
+        call_data['modelId'] = sim.model.ap_predict_model_call
+    else:
+        call_data['modelId'] = sim.model.cellml_file.url
+        for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
+            call_data[current_param.ion_current.name] = {
+                'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
+                                    'hill': current_param.hill_coefficient,
+                                    'saturation': current_param.saturation_level}]
+            }
+            if current_param.spread_of_uncertainty:
+                call_data[current_param.ion_current.name]['spreads'] = \
+                    {'c50Spread': current_param.spread_of_uncertainty}
+
+    call_response = {}
+    # call api to start simulation
+    try:
+        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT, json=call_data)
+        response.raise_for_status()  # Raise exception if request response doesn't return successful status
+        call_response = response.json()
+        sim.ap_predict_call_id = call_response['success']['id']
+        sim.status = Simulation.Status.INITIALISING
+    except (JSONDecodeError, requests.exceptions.RequestException, KeyError) as e:
+        sim.progress = 'Failed!'
+        sim.status = Simulation.Status.FAILED
+        sim.ap_predict_messages = 'Progress failed. %s : %s' % (type(e), str(e))
+    finally:  # save
+        sim.save()
 
 class SimulationListView(LoginRequiredMixin, ListView):
     """
@@ -138,8 +208,8 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             simulation = form.save()
             ion_formset.save(simulation=simulation)
             concentration_formset.save(simulation=simulation)
-            # kick off simulation (via signal)
-            simulation.start_simulation()
+            # kick off simulation
+            start_simulation(simulation)
             return self.form_valid(form)
         else:
             self.object = getattr(self, 'object', None)
@@ -201,13 +271,18 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
 
     def get_redirect_url(self, *args, **kwargs):
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
-        simulation.re_start_simulation()
+        start_simulation(simulation)
         return self.request.META['HTTP_REFERER']
 
 
 class StatusSimulationView(View):
+    """
+    View updating and retreiving simulation ststuses for a number of simulations
+    Also stores data for any that have finished.
+    Maes use of asyncio and aoihttp, to speed up making what could be many requests
+    """
+
     COMMANDS = ('q_net', 'voltage_traces', 'voltage_results')
-    URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
 
     class ApManagerTimeoutException(Exception):
         pass
@@ -219,14 +294,14 @@ class StatusSimulationView(View):
         return view
 
     async def save_data(self, session, command, sim):
-        async with session.get(self.URL % (sim.ap_predict_call_id, command)) as res:
+        async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, command)) as res:
             response = await res.json(content_type=None)
             if 'success' in response:
                 setattr(sim, command, response['success'])
 
     async def update_sim(self, session, sim):
         try:
-            async with session.get(self.URL % (sim.ap_predict_call_id, 'progress_status')) as res:
+            async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, 'progress_status')) as res:
                 response = await res.json(content_type=None)
                 # get progress if there is progress
                 progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
@@ -245,8 +320,6 @@ class StatusSimulationView(View):
             sim.progress = 'Failed!'
             sim.status = Simulation.Status.FAILED
             sim.ap_predict_messages = 'Progress failed. %s : %s' % (type(e), str(e))
-        except Exception as e:
-            sim.ap_predict_messages = str(e)
         finally:  # save
             await sync_to_async(sim.save)()
 
