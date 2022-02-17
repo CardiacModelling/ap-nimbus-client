@@ -33,8 +33,6 @@ from .forms import (
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
-AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
-
 
 def to_int(v):
     """
@@ -54,7 +52,12 @@ def to_float(v):
 class ApManagerCallTimeOut(Exception):
     pass
 
-API_EXCEPTIONS = (JSONDecodeError, KeyError, ApManagerCallTimeOut, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError, requests.exceptions.RequestException)
+
+class ApManagerCallStopped(Exception):
+    pass
+
+AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
+API_EXCEPTIONS = (JSONDecodeError, KeyError, ApManagerCallTimeOut, ApManagerCallStopped, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError, requests.exceptions.RequestException)
 
 def process_api_exception(e, when, response, sim):
     sim.progress = 'Failed!'
@@ -68,6 +71,8 @@ def process_api_exception(e, when, response, sim):
         sim.ap_predict_messages = 'API returned unexpected JSON: %s' % str(call_response)
     elif isinstance(e, ApManagerCallTimeOut):
         sim.ap_predict_messages = 'Progress timeout. Progress not changed for more than %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT
+    elif isinstance(e, ApManagerCallStopped):
+        sim.ap_predict_messages = 'Simulation stopped prematurely.'
     else:
         sim.ap_predict_messages = 'API connection failed: %s' % type(e)
     sim.ap_predict_messages = sim.ap_predict_messages[:254]  # truncate to make sure it fits
@@ -484,7 +489,8 @@ class StatusSimulationView(View):
         try:
             async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, command)) as res:
                 response = await res.json(content_type=None)
-                setattr(sim, command, response['success'])
+                if 'success' in response:
+                    setattr(sim, command, response['success'])
         except API_EXCEPTIONS as e:
             await sync_to_async(process_api_exception)(e, 'saving %s' % command, response, sim)
 
@@ -498,14 +504,26 @@ class StatusSimulationView(View):
                 if progress_text and progress_text != sim.progress:  # if progress has changed, save it
                     sim.progress = progress_text
                     sim.status = Simulation.Status.RUNNING
-                    if sim.progress == '..done!':
-                        actions = [asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS]
-                        await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
-                        sim.status = Simulation.Status.SUCCESS
                     sim.ap_predict_last_update = timezone.now()
-                # handle timeout
+                # handle timeout (no progress change within timeout interval)
                 elif (timezone.now() - sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
-                    raise ApManagerCallTimeOut('Progress timeout, not changed in %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT)
+                    raise ApManagerCallTimeOut()
+                else: # check if the simulation has stopped
+                    stop_response = {}
+                    try:
+                        async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, 'STOP')) as res:
+                            stop_response = await res.json(content_type=None)
+                            if 'success' in stop_response and stop_response['success']:
+                                # simulation has stopped, try to save results
+                                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
+                                # check we have voltage_traces and haven't FAILED one of the save steps
+                                if sim.voltage_traces and not sim.status == Simulation.Status.FAILED:
+                                    sim.status = Simulation.Status.SUCCESS
+                                    sim.progress = '..done!'
+                                else:  # saving results failed we stopped prematurely
+                                    raise ApManagerCallStopped()
+                    except API_EXCEPTIONS as e:
+                        await sync_to_async(process_api_exception)(e, 'checking stop', stop_response, sim)
         except API_EXCEPTIONS as e:
             await sync_to_async(process_api_exception)(e, 'update progress', response, sim)
         finally:  # save
