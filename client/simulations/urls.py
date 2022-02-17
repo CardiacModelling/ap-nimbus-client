@@ -52,9 +52,9 @@ urlpatterns = [
         name='simulation_status',
     ),
     re_path(
-        r'^(?P<pk>\d+)/excel$',
-        views.ExcelSimulationView.as_view(),
-        name='simulation_status',
+        r'^(?P<pk>\d+)/spreadsheet$',
+        views.SpreadsheetSimulationView.as_view(),
+        name='simulation_spreadsheet',
     ),
 ]
 app_name = 'simulations'

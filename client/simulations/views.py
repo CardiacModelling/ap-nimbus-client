@@ -1,28 +1,28 @@
+import asyncio
+import io
+from itertools import zip_longest
+from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
-from django.utils import timezone
-from django.conf import settings
+
+import aiohttp
+import requests
+import xlsxwriter
+from asgiref.sync import async_to_sync, sync_to_async
 from braces.views import UserFormKwargsMixin
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import FileResponse, HttpResponseNotFound, JsonResponse
 from django.urls import reverse_lazy
+from django.utils import timezone
+from django.utils.decorators import classonlymethod
+from django.views.generic import View
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
-from django.views.generic import View
 from files.models import CellmlModel, IonCurrent
-from django.http import JsonResponse
-import asyncio
-import requests
-import aiohttp
-import xlsxwriter
-import io
-from itertools import zip_longest
-from asgiref.sync import sync_to_async, async_to_sync
-from django.utils.decorators import classonlymethod
-from django.http import HttpResponseNotFound, FileResponse
-from django.contrib.auth.decorators import login_required
-from json.decoder import JSONDecodeError
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -31,7 +31,6 @@ from .forms import (
     SimulationForm,
 )
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
-
 
 
 AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
@@ -277,9 +276,9 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
         return self.request.META['HTTP_REFERER']
 
 
-class ExcelSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
     """
-    Download the data as Excel
+    Download the data as Spreadseet (.xlsx)
     """
     model = Simulation
     def test_func(self):

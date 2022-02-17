@@ -1,15 +1,15 @@
-import os
 import math
+import os
 
 import django.db.models.deletion
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
-from django.utils import timezone
 
 
 @deconstructible
