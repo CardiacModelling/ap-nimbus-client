@@ -17,6 +17,7 @@ import requests
 import aiohttp
 import xlsxwriter
 import io
+from itertools import zip_longest
 from asgiref.sync import sync_to_async, async_to_sync
 from django.utils.decorators import classonlymethod
 from django.http import HttpResponseNotFound, FileResponse
@@ -36,11 +37,18 @@ from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrent
 AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
 
 
-def to_int(f):
+def to_int(v):
     """
     Convert to into only if it is an in else don't convert.
     """
-    return int(f) if f.is_integer() else f
+    return int(v) if v.is_integer() else v
+
+
+def to_float(v):
+    try:
+        return float(v)
+    except ValueError :
+        return v
 
 
 def start_simulation(sim):
@@ -98,7 +106,8 @@ def start_simulation(sim):
     except (JSONDecodeError, requests.exceptions.RequestException, KeyError) as e:
         sim.progress = 'Failed!'
         sim.status = Simulation.Status.FAILED
-        sim.ap_predict_messages = 'Progress failed. %s : %s' % (type(e), str(e))
+        error_mgs = 'Progress failed. %s : %s' % (type(e), str(e))
+        sim.ap_predict_messages = error_mgs[:254]  # truncate to make sure it fits
     finally:  # save
         sim.save()
 
@@ -273,65 +282,162 @@ class ExcelSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwarg
     Download the data as Excel
     """
     model = Simulation
-
     def test_func(self):
         return Simulation.objects.get(pk=self.kwargs['pk']).author == self.request.user
+
+    def input_values(self, workbook, bold, sim):
+        input_values = workbook.add_worksheet('Input Values')
+        row = 0
+        input_values.write(row, 0, 'Title', bold)
+        input_values.write(row, 1, sim.title)
+        row += 1
+
+        input_values.write(row, 0, 'Created at', bold)
+        input_values.write(row, 2, str(sim.created_at))
+        row += 1
+
+        input_values.write(row, 0, 'Created by', bold)
+        input_values.write(row, 2, sim.author.full_name)
+        row += 2
+
+        input_values.write(row, 0, 'Model', bold)
+        input_values.write(row, 1, str(sim.model))
+        row += 2
+
+        input_values.write(row, 1, 'Pacing', bold)
+        input_values.write(row, 2, 'Frequency', bold)
+        input_values.write(row, 3, sim.pacing_frequency)
+        input_values.write(row, 4, 'Hz')
+        row += 1
+
+        input_values.write(row, 2, 'Max time', bold)
+        input_values.write(row, 3, sim.maximum_pacing_time)
+        input_values.write(row, 4, 'mins')
+        row += 2
+
+        input_values.write(row, 0, 'Ion Channel Current Inhibitory Concentrations', bold)
+        input_values.write(row, 3, 'Hill Coefficient', bold)
+        input_values.write(row, 4, 'Saturation Level (%)', bold)
+        input_values.write(row, 5, 'Spread of Uncertainty', bold)
+        input_values.write(row, 6, 'Channel protein', bold)
+        input_values.write(row, 7, 'Gene', bold)
+        input_values.write(row, 8, 'Description', bold)
+        row += 1
+
+        for current in SimulationIonCurrentParam.objects.filter(simulation=sim):
+            input_values.write(row, 0, current.ion_current.name)
+            input_values.write(row, 1, current.current)
+            input_values.write(row, 2, sim.ion_units)
+            input_values.write(row, 3, current.hill_coefficient)
+            input_values.write(row, 4, current.saturation_level)
+            input_values.write(row, 5, current.spread_of_uncertainty)
+            input_values.write(row, 6, current.ion_current.channel_protein.replace('<sub>', ''). replace('</sub>', ' '))
+            input_values.write(row, 7, current.ion_current.gene)
+            input_values.write(row, 8, current.ion_current.description)
+            row += 1
+
+        row += 1
+        if sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+            input_values.write(row, 0, 'Compound Concentration Range', bold)
+            input_values.write(row, 1, 'Minimum Concentration', bold)
+            input_values.write(row, 2, sim.minimum_concentration)
+            row += 1
+
+            input_values.write(row, 1, 'Maximum Concentration', bold)
+            input_values.write(row, 2, sim.maximum_concentration)
+            row += 1
+
+            input_values.write(row, 1, 'Intermediate Point Count', bold)
+            input_values.write(row, 2, sim.intermediate_point_count)
+            row += 1
+
+            input_values.write(row, 1, 'Intermediate Point Log Scale', bold)
+            input_values.write(row, 2, sim.intermediate_point_log_scale)
+            row += 1
+        elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+            input_values.write(row, 0, 'Compound Concentration Points', bold)
+            for point in CompoundConcentrationPoint.objects.filter(simulation=sim):
+                input_values.write(row, 1, point.concentration)
+                row += 1
+        else:
+            input_values.write(row, 0, 'PK data file', bold)
+            input_values.write(row, 1, str(sim.PK_data))
+            row += 1
+        row += 1
+        input_values.write(row, 0, 'Notes', bold)
+        input_values.write(row, 1, sim.notes)
+
+    def qNet(self, workbook, bold, sim):
+        qNet = workbook.add_worksheet('% Change and qNet')
+        row = 0
+        qNet.write(row, 0, 'Concentration (µM)', bold)
+        qNet.write(row, 1, 'Δ APD90 (%)', bold)
+        qNet.write(row, 2, 'qNet (C/F)', bold)
+        qNet.write(row, 3, 'PeakVm(mV)', bold)
+        qNet.write(row, 4, 'UpstrokeVelocity(mV/ms)', bold)
+        qNet.write(row, 5, 'APD50(ms)', bold)
+        qNet.write(row, 6, 'APD90(ms)', bold)
+        row += 1
+
+        for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+            qNet.write(row, 0, to_float(v_res['c']))
+            qNet.write(row, 1, to_float(v_res['da90'][0]) if len(v_res['da90']) == 1 else str(v_res['da90']))
+            qNet.write(row, 2, to_float(qnet['qnet']) if qnet else 'n/a')
+            qNet.write(row, 3, to_float(v_res['pv']))
+            qNet.write(row, 4, to_float(v_res['uv']))
+            qNet.write(row, 5, to_float(v_res['a50']))
+            qNet.write(row, 6, to_float(v_res['a90']))
+            row += 1
+
+    def voltage_traces(self, workbook, bold, sim):
+        voltage_traces =  workbook.add_worksheet('Voltage Traces (concentration)')
+        voltage_traces.write(1, 0, 'Time (ms)', bold)
+        column = 0
+        for trace in sim.voltage_traces:
+            voltage_traces.write(0, column, 'Conc. %s µM' % trace['name'], bold)
+            voltage_traces.write(1, column + 1, 'Membrane Voltage (mV)', bold)
+            for i, series in enumerate(trace['series']):
+                row = i + 2
+                voltage_traces.write(row, column, to_float(series['name']))
+                voltage_traces.write(row, column + 1, to_float(series['value']))
+            column += 3
+
+
+    def voltage_traces_plot(self, workbook, bold, sim):
+        # gather and sort all the different timepoints used in any of the series
+        # not all series uses every timepoint, so we need to know which ones exist in order for printing
+        voltage_traces_plot =  workbook.add_worksheet('Voltage Traces (Plot format)')
+        voltage_traces_plot.write(0, 0, 'Time (ms)', bold)
+
+        time_keys = set()
+        for trace in sim.voltage_traces:
+            for series in trace['series']:
+                time_keys.add(to_float(series['name']))
+        time_keys = sorted(time_keys)
+
+        column = 1
+        for trace in sim.voltage_traces:
+            voltage_traces_plot.write(0, column, 'Conc. %s µM' % trace['name'], bold)
+            column += 1
+
+        for i, time in enumerate(time_keys):
+            voltage_traces_plot.write(i + 1, 0, time)
+
+        for i, trace in enumerate(sim.voltage_traces):
+            column = i + 1
+            for series in trace['series']:
+                row = time_keys.index(to_float(series['name'])) + 1
+                voltage_traces_plot.write(row, column, to_float(series['value']))
 
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
         buffer = io.BytesIO()
         workbook = xlsxwriter.Workbook(buffer)
-
-        # add input values
-        input_values =  workbook.add_worksheet('Input Values')
-        input_values.write(0, 0, 'Title')
-        input_values.write(0, 1, sim.title)
-
-        input_values.write(2, 0, 'Model')
-        input_values.write(2, 1, str(sim.model))
-        input_values.write(4, 1, 'Pacing')
-        input_values.write(4, 2, 'Frequency')
-        input_values.write(4, 3, sim.pacing_frequency)
-        input_values.write(4, 4, 'Hz')
-        input_values.write(5, 2, 'Max time')
-        input_values.write(5, 3, sim.maximum_pacing_time)
-        input_values.write(5, 4, 'mins')
-
-        input_values.write(7, 0, 'Ion Channel Current Inhibitory Concentrations')
-        input_values.write(7, 3, 'Hill Coefficient')
-        input_values.write(7, 4, 'Saturation Level (%)')
-        input_values.write(7, 5, 'Spread of Uncertainty')
-        input_values.write(7, 6, 'Channel protein')
-        input_values.write(7, 7, 'Gene')
-        input_values.write(7, 8, 'Description')
-        for i, current in enumerate(SimulationIonCurrentParam.objects.filter(simulation=sim)):
-            input_values.write(i + 7, 0, current.ion_current.name)
-            input_values.write(i + 7, 1, current.current)
-            input_values.write(i + 7, 2, sim.ion_units)
-            input_values.write(i + 7, 3, current.hill_coefficient)
-            input_values.write(i + 7, 4, current.saturation_level)
-            input_values.write(i + 7, 5, current.spread_of_uncertainty)
-            input_values.write(i + 7, 6, current.ion_current.channel_protein.replace('<sub>', ''). replace('</sub>', ' '))
-            input_values.write(i + 7, 7, current.ion_current.gene)
-            input_values.write(i + 7, 8, current.ion_current.description)
-
-#        if simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
-#            simulation.minimum_concentration
-#            simulation.maximum_concentration
-#        elif simulation.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-#            points = [p.concentration for p in CompoundConcentrationPoint.objects.filter(simulation=simulation)]
-#            points_range = str(points) if len(points) <= 2 else '[' + str(points[0]) + ' ... ' + str(points[-1]) + ']'
-#            return (str(points) + ' (µM)', points_range + ' (µM)')
-#        else:
-#            file_name = str(simulation.PK_data)
-#            truncated = file_name[:20] + '...' if len(file_name) > 23 else file_name
-#            return ('Compound concentrations from TSV file: %s.' % file_name, truncated)
-
-
-        qNet = workbook.add_worksheet('% Change and qNet')
-        voltage_traces =  workbook.add_worksheet('Voltage Traces')
-        voltage_traces_plot =  workbook.add_worksheet('Voltage Traces (Plot format)')
-        voltage_results =  workbook.add_worksheet('Voltage Results (Plot format)')
+        bold = workbook.add_format({'bold': True})
+        self.input_values(workbook, bold, sim)
+        self.qNet(workbook, bold, sim)
+        self.voltage_traces(workbook, bold, sim)
+        self.voltage_traces_plot(workbook, bold, sim)
 
         workbook.close()
         buffer.seek(0)

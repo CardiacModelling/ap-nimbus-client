@@ -10,7 +10,6 @@ from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 from files.models import CellmlModel, IonCurrent
 from django.utils import timezone
-import requests
 
 
 @deconstructible
@@ -94,9 +93,9 @@ class Simulation(models.Model):
     ap_predict_last_update = models.DateTimeField(blank=True, default=timezone.now)
     ap_predict_call_id = models.CharField(max_length=255, blank=True)
     ap_predict_messages = models.CharField(max_length=255, blank=True)
-    q_net = models.TextField(max_length=255, blank=True)
-    voltage_traces = models.TextField(max_length=255, blank=True)
-    voltage_results = models.TextField(max_length=255, blank=True)
+    q_net = models.JSONField(blank=True, null=True)
+    voltage_traces = models.JSONField(blank=True, null=True)
+    voltage_results = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = ('title', 'author')
