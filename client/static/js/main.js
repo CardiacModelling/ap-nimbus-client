@@ -32,18 +32,16 @@ function updateProgressbars(){
                     setTimeout(updateProgressbars, progressBarTimeout);
                     bar = $('#progressbar-' + simulation['pk']);
                     progress = simulation['progress']
-                    // deal with failed, finalising and done
-                    if(progress == 'Finalising..'){
-                        progress = '99% completed'
-                    }else if(progress == '..done!'){
-                        progress = '100% completed'
-                    }
                     // set label
-                    bar.find('.progress-label').text(progress);
-                    // convert into number
-                    progress_number = progress.replace('% completed', '');
-                    if(!isNaN(progress_number)){
-                        bar.progressbar('value', parseInt(progress_number));
+                    bar.find('.progress-label').text(progress); // set label
+                    // update progress bar
+                    if(simulation['status'] == 'SUCCESS'){
+                        bar.progressbar('value', 100);
+                    }else{ // convert into number
+                        progress_number = progress.replace('% completed', '');
+                        if(!isNaN(progress_number)){
+                            bar.progressbar('value', parseInt(progress_number));
+                        }
                     }
                     // remove from updates if we have finished or failed
                     if(simulation['status'] == 'FAILED' || simulation['status'] == 'SUCCESS'){

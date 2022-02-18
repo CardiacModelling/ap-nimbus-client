@@ -7,11 +7,10 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 import xlsxwriter
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from braces.views import UserFormKwargsMixin
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import FileResponse, HttpResponseNotFound, JsonResponse
 from django.urls import reverse_lazy
@@ -33,7 +32,6 @@ from .forms import (
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
-
 def to_int(v):
     """
     Convert to into only if it is an in else don't convert.
@@ -44,9 +42,8 @@ def to_int(v):
 def to_float(v):
     try:
         return float(v)
-    except ValueError :
+    except ValueError:
         return v
-
 
 
 class ApManagerCallTimeOut(Exception):
@@ -56,27 +53,31 @@ class ApManagerCallTimeOut(Exception):
 class ApManagerCallStopped(Exception):
     pass
 
+
+DONE = '..done!'
 AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
-API_EXCEPTIONS = (JSONDecodeError, KeyError, ApManagerCallTimeOut, ApManagerCallStopped, asyncio.TimeoutError, aiohttp.client_exceptions.ClientError, requests.exceptions.RequestException)
+API_EXCEPTIONS = (JSONDecodeError, KeyError, ApManagerCallTimeOut, ApManagerCallStopped, asyncio.TimeoutError,
+                  aiohttp.client_exceptions.ClientError, requests.exceptions.RequestException)
+
 
 def process_api_exception(e, when, response, sim):
     sim.progress = 'Failed!'
     sim.status = Simulation.Status.FAILED
-    sim.ap_predict_messages = 'Simulation %s failed:\n' % when
+    sim.api_errors = 'Simulation %s failed:\n' % when
     if 'error' in response:
-        sim.ap_predict_messages += str(response['error']) + '\n'
+        sim.api_errors += str(response['error']) + '\n'
     if isinstance(e, JSONDecodeError):
-        sim.ap_predict_messages += 'API returned invalid JSON.'
+        sim.api_errors = 'API call %s returned invalid JSON.' % when
     elif isinstance(e, KeyError):
-        sim.ap_predict_messages = 'API returned unexpected JSON: %s' % str(call_response)
+        sim.api_errors = 'API call %s returned unexpected JSON: %s' % (when, str(response))
     elif isinstance(e, ApManagerCallTimeOut):
-        sim.ap_predict_messages = 'Progress timeout. Progress not changed for more than %s seconds.' % settings.AP_PREDICT_STATUS_TIMEOUT
+        sim.api_errors = ('Progress timeout. Progress not changed for more than %s seconds.'
+                          % settings.AP_PREDICT_STATUS_TIMEOUT)
     elif isinstance(e, ApManagerCallStopped):
-        sim.ap_predict_messages = 'Simulation stopped prematurely.'
+        sim.api_errors = 'Simulation stopped prematurely.'
     else:
-        sim.ap_predict_messages = 'API connection failed: %s' % type(e)
-    sim.ap_predict_messages = sim.ap_predict_messages[:254]  # truncate to make sure it fits
-
+        sim.api_errors = 'API connection %s failed: %s' % (when, type(e))
+    sim.api_errors = sim.api_errors[:254]  # truncate to make sure it fits
 
 
 def start_simulation(sim):
@@ -88,7 +89,8 @@ def start_simulation(sim):
     sim.progress = 'Initialising..'
     sim.ap_predict_last_update = timezone.now()
     sim.ap_predict_call_id = ''
-    sim.ap_predict_messages = ''
+    sim.api_errors = ''
+    sim.messages = ''
     sim.q_net = ''
     sim.voltage_traces = ''
     sim.voltage_results = ''
@@ -99,10 +101,10 @@ def start_simulation(sim):
                  'pacingMaxTime': sim.maximum_pacing_time}
 
     if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
-        pass #pkdata
+        assert False, "PK data not yet implemented" # pkdata
     elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
         call_data['plasmaPoints'] = [c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]
-    else: # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+    else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
         call_data['plasmaMaximum'] = sim.maximum_concentration
         call_data['plasmaMinimum'] = sim.minimum_concentration
         call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
@@ -111,7 +113,7 @@ def start_simulation(sim):
     if sim.model.ap_predict_model_call:
         call_data['modelId'] = sim.model.ap_predict_model_call
     else:
-        call_data['modelId'] = sim.model.cellml_file.url
+        assert False, "uploaded cellml not yet implemented" #call_data['modelId'] = sim.model.cellml_file.url
 
     for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
         call_data[current_param.ion_current.name] = {
@@ -289,6 +291,7 @@ class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     def get_success_url(self, *args, **kwargs):
         return reverse_lazy('simulations:simulation_list')
 
+
 class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, RedirectView):
     """
     View restarting the simulation
@@ -309,6 +312,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
     Download the data as Spreadseet (.xlsx)
     """
     model = Simulation
+
     def test_func(self):
         return Simulation.objects.get(pk=self.kwargs['pk']).author == self.request.user
 
@@ -417,7 +421,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
             row += 1
 
     def voltage_traces(self, workbook, bold, sim):
-        voltage_traces =  workbook.add_worksheet('Voltage Traces (concentration)')
+        voltage_traces = workbook.add_worksheet('Voltage Traces (concentration)')
         voltage_traces.write(1, 0, 'Time (ms)', bold)
         column = 0
         for trace in sim.voltage_traces:
@@ -429,11 +433,10 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                 voltage_traces.write(row, column + 1, to_float(series['value']))
             column += 3
 
-
     def voltage_traces_plot(self, workbook, bold, sim):
         # gather and sort all the different timepoints used in any of the series
         # not all series uses every timepoint, so we need to know which ones exist in order for printing
-        voltage_traces_plot =  workbook.add_worksheet('Voltage Traces (Plot format)')
+        voltage_traces_plot = workbook.add_worksheet('Voltage Traces (Plot format)')
         voltage_traces_plot.write(0, 0, 'Time (ms)', bold)
 
         time_keys = set()
@@ -470,6 +473,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename='AP-Portal_%s.xlsx' % self.get_object().pk)
 
+
 class StatusSimulationView(View):
     """
     View updating and retreiving simulation ststuses for a number of simulations
@@ -477,7 +481,7 @@ class StatusSimulationView(View):
     Maes use of asyncio and aoihttp, to speed up making what could be many requests
     """
 
-    COMMANDS = ('q_net', 'voltage_traces', 'voltage_results')
+    COMMANDS = ('messages' 'q_net', 'voltage_traces', 'voltage_results')
 
     @classonlymethod
     def as_view(cls, **initkwargs):
@@ -501,26 +505,33 @@ class StatusSimulationView(View):
                 response = await res.json(content_type=None)
                 # get progress if there is progress
                 progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
-                if progress_text and progress_text != sim.progress:  # if progress has changed, save it
+                progress_changed = progress_text and progress_text != sim.progress
+                if progress_changed:  # if progress has changed, save it
                     sim.progress = progress_text
                     sim.status = Simulation.Status.RUNNING
                     sim.ap_predict_last_update = timezone.now()
-                # handle timeout (no progress change within timeout interval)
-                elif (timezone.now() - sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
+
+                # handle timeout (no progress change within timeout interval, we're not done)
+                if not progress_changed and progress_text != DONE and \
+                        (timezone.now() -
+                         sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
                     raise ApManagerCallTimeOut()
-                else: # check if the simulation has stopped
+                elif not progress_changed or progress_text == DONE:
+                    # If there is no change, or if we are done see if we have stopped and try to save data
                     stop_response = {}
                     try:
+                        # check if the simulation has stopped
                         async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, 'STOP')) as res:
                             stop_response = await res.json(content_type=None)
                             if 'success' in stop_response and stop_response['success']:
                                 # simulation has stopped, try to save results
-                                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
+                                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim))
+                                                   for command in self.COMMANDS])
                                 # check we have voltage_traces and haven't FAILED one of the save steps
                                 if sim.voltage_traces and not sim.status == Simulation.Status.FAILED:
                                     sim.status = Simulation.Status.SUCCESS
-                                    sim.progress = '..done!'
-                                else:  # saving results failed we stopped prematurely
+                                    sim.progress = 'Completed'
+                                else:  # saving results failed we must have stopped prematurely
                                     raise ApManagerCallStopped()
                     except API_EXCEPTIONS as e:
                         await sync_to_async(process_api_exception)(e, 'checking stop', stop_response, sim)
@@ -537,7 +548,8 @@ class StatusSimulationView(View):
         pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
         # get simulations to get status for and the ones that need updating
         simulations = Simulation.objects.filter(author__pk=user_pk, pk__in=pks)
-        sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED, Simulation.Status.SUCCESS)))
+        sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED,
+                                                                                   Simulation.Status.SUCCESS)))
 
         if sims_to_update:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT),
