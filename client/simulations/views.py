@@ -32,7 +32,7 @@ from .forms import (
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
-def to_int(v):
+def to_int(v: str):
     """
     Convert to into only if it is an in else don't convert.
     """
@@ -196,8 +196,8 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                                                            else curr.default_hill_coefficient),
                                 'saturation_level': to_int(param.saturation_level if param
                                                            else curr.default_saturation_level),
-                                'spread_of_uncertainty': param.spread_of_uncertainty if param else None,
-                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param
+                                'spread_of_uncertainty': param.spread_of_uncertainty if param and param.spread_of_uncertainty else None,
+                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param and param.spread_of_uncertainty
                                                                         else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
