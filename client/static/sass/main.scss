@@ -31,7 +31,6 @@ button {
 button,
 .button {
   background-color: #1a296b;
-  padding: 8px 12px;
   font-size: 14px;
   border-radius: 5px;
   height: 20px;
@@ -360,7 +359,66 @@ div.dt-buttons{
 .row {
   display: flex;
 }
+
 .column {
   flex: 50%;
-  padding: 10px;
+}
+
+.graph-column{
+    flex: 100%;
+}
+
+.control-column{
+    width: 270px;
+}
+
+/* buttons for switching graphs */
+.graph-button {
+  background-color: #D3D3D3;
+  margin-left: 5px;
+  font-size: 12px;
+  border-radius: 5px;
+  height: 20px;
+  vertical-align: bottom;
+  display: inline-block; 
+   border: 0px;
+}
+
+.graph-button:hover{
+  background-color: #696969;
+  border: 0px;
+}
+
+.graph-button:disabled{
+/*  background-color: #D3D3D3;*/
+    background-color: #989898;
+  border: 0px;
+}
+
+.show-graph{
+    visibility: visible;
+    display: block;
+}
+
+.hide-graph{
+    visibility: hidden;
+    display: none;
+}
+
+fieldset ul {
+    display: block;
+    list-style-type: disc;
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+}
+
+.zoom-msg{
+    font-size: small;
+    font-style: italic;
+    margin-bottom:10px;
+}
+
+.x1LabelLayer, .y1LabelLayer{
+    font-size: small;
+    font-weight: bold;
 }

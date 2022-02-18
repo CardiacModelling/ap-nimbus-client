@@ -258,6 +258,35 @@ $(document).ready(function(){
         progressbars.push($(bar).attr('id').replace('progressbar-',''));
     });
 
+    //buttons for switching between graphs
+    $('#adp90').click(function(){
+        $('#adp90-graph').removeClass('hide-graph');
+        $('#qnet-graph').removeClass('show-graph');
+        $('#adp90-graph').addClass('show-graph');
+        $('#qnet-graph').addClass('hide-graph');
+        $('#adp90').attr('disabled', true);
+        $('#qnet').attr('disabled', false);
+    });
+
+    $('#qnet').click(function(){
+        $('#adp90-graph').removeClass('show-graph');
+        $('#qnet-graph').removeClass('hide-graph');
+        $('#adp90-graph').addClass('hide-graph');
+        $('#qnet-graph').addClass('show-graph');
+        $('#adp90').attr('disabled', false);
+        $('#qnet').attr('disabled', true);
+    });
+
     //update progress bar now
     updateProgressbars();
+
+    // plot the graphs
+////    $.plot($('#adp90', data, option);
+//    var graphGlobal = {};
+//    var prefix='';
+//
+//    var plugins = [
+//        require('./visualizers/displayPlotFlot/displayPlotFlot.js'),
+//    ];
+
 });
