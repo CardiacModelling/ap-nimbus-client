@@ -39,6 +39,17 @@
     stroke-width: 1;
 }
 
+.control-items{
+    padding: 100px 0;
+}
+
+#legendContainerQnet{
+    width:9em;
+    height:8em;
+    border-style:solid;
+    border-color:threedface;
+}
+
 #tooltip{
     position: absolute;
     display: none;
@@ -126,21 +137,22 @@
   <div class="column">
     <div class="row">
         <div class="graph-column">
-            <fieldset><legend><button type="button" class="graph-button" id="adp90" disabled>Δ APD90 vs. Conc</button><button type="button" class="graph-button" id="qnet">qNet vs. Conc</button></legend>
+            <fieldset><legend><button type="button" class="graph-button" id="adp90">Δ APD90 vs. Conc</button><button type="button" class="graph-button" id="qnet">qNet vs. Conc</button></legend>
               <div class="zoom-msg">Zoom in by selecting a region or using your mouse scroll wheel.</div>
-              <div id="adp90-graph" style="width:600px;height:300px">
+              <div id="adp90-graph" style="width:550px;height:300px">
               </div>
-              <div id="qnet-graph" class="hide-graph">
+              <div id="qnet-graph" style="width:550px;height:300px;">
                   <div><label>qnet: </label> {{ object.maximum_pacing_time }} (mins)</div>
               </div>
             </fieldset>
         </div>
         <div class="control-column">
-          <label><input id="enablePosition" type="checkbox" checked="checked">Show mouse position</label>
-             <span id="hoverdata"></span>
-                  <p>Legend Container:</p>
-                  <div id="legendContainerQnet" class="legend" style="width:9em;height:8em;border-style:solid;border-color:threedface"></div>
-
+            <div class="control-items">
+                <div id="qnetSource"><label>Source</label></div>
+                <div id="legendContaineradp90" class="legend"></div>
+                <button type="button" id="resetqnet">Reset graph</button>
+                <div id="hoverdata"><p><label>Conc.:</label>  µM</p><p><label>Δ APD90: </label> %</p></div>
+            </div>
         </div>
     </div>
     <div class="row">
@@ -182,65 +194,101 @@
 
 	<script type="text/javascript">
 $(function() {
+    data = {adp90: [{label: "Simulation @ 0.5 Hz", data:[[0, 0],
+                                                        [0.001, 0.0172213],
+                                                        [0.00329677, 0.056906],
+                                                        [0.0108687, 0.187568],
+                                                        [0.0358315, 0.616387],
+                                                        [0.118128, 2.0087],
+                                                        [0.38944, 6.3821],
+                                                        [1.28389, 18.8775],
+                                                        [4.2327, 47.835],
+                                                        [13.9542, 98.9162],
+                                                        [46.0038, 173.981],
+                                                        [151.664, 258.132],
+                                                        [500, 476.319]]
+                  }],
+            qnet: [{label: "Simulation @ 0.5 Hz", data:[[0, 0.0690176],
+                                                        [0.001, 0.069005],
+                                                        [0.00329677, 0.0689783],
+                                                        [0.0108687, 0.0688906],
+                                                        [0.0358315, 0.0686047],
+                                                        [0.118128, 0.0676783],
+                                                        [0.38944, 0.0648382],
+                                                        [1.28389, 0.0573016],
+                                                        [4.2327, 0.0433198],
+                                                        [13.9542, 0.0302223],
+                                                        [46.0038, 0.0293574],
+                                                        [151.664, 0.0396153],
+                                                        [500, 0.0449682]]
+                  }]
+           }
+                             
     function zoom(ranges, graphId){
-        zoomOptions = $.extend({}, qnetOptions, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
+        zoomOptions = $.extend({}, adp90Options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
                                                           yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
-        plot = $.plot(graphId, startData, zoomOptions);
+        plot = $.plot(graphId, data['adp90'], zoomOptions);
 
     }
 
-    function hover(event, pos, item){
+    function hover(event, pos, item, x_label, x_units, y_label, y_units){
         if (pos.x && pos.y) {
-            var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
-            $("#hoverdata").text(str);
+            x = pos.x.toFixed(3);
+            y = pos.y.toFixed(3);
+            var hoverData = '<p><label>' + x_label +'</label>' + x + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y + y_units + '</p>';
+            $("#hoverdata").html(hoverData);
             if (item) {
-                var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
-                $("#tooltip").html(item.series.label + " of " + x + " = " + y)
+                x = item.datapoint[0].toFixed(3);
+                y = item.datapoint[1].toFixed(3);
+                content = '[' + item.series.label + '] : ' + x_label + x + x_units + ' - ' + y_label + y + y_units;
+                $("#tooltip").html(content)
                              .css({top: item.pageY+5, left: item.pageX+5})
                              .fadeIn(200);
-            } else {
-                $("#tooltip").hide();
+            }else{
+                $("#tooltip").fadeOut(200);
+                
             }
         }
     }
 
-    function hoverOut (event, pos, item) {
+    function hoverOut (x_label, x_units, y_label, y_units) {
         $("#tooltip").hide();
+        var hoverData = '<p><label>' + x_label +'</label>' + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y_units + '</p>';
+        $("#hoverdata").html(hoverData);
     }
 
-       // setup qnet
-        var qnetOptions = {legend: {show: true, container: $('#legendContainerQnet').get(0)},
-                           series: {lines: {show: true	}, points: {show: true}},
-                           grid: {hoverable: true, clickable: true},
-                           zoom: {interactive: true},
-                           xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
-                           yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
-                           selection: {mode: "xy"}
-		};
+    // setup adp90
+    var adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
+                       series: {lines: {show: true}, points: {show: true}},
+                       grid: {hoverable: true, clickable: true},
+                       zoom: {interactive: true},
+                       xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
+                       yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                       selection: {mode: "xy"}
+    };
 
-                startData = [{label: "simulation", data:[[0, 0],
-                                                         [0.001, 0.0172213],
-                                                         [0.00329677, 0.056906],
-                                                         [0.0108687, 0.187568],
-                                                         [0.0358315, 0.616387],
-                                                         [0.118128, 2.0087],
-                                                         [0.38944, 6.3821],
-                                                         [1.28389, 18.8775],
-                                                         [4.2327, 47.835],
-                                                         [13.9542, 98.9162],
-                                                         [46.0038, 173.981],
-                                                         [151.664, 258.132],
-                                                         [500, 476.319]]
-                             }]
+    $.plot("#adp90-graph", data['adp90'], adp90Options);
+    $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph'));
+    $("#adp90-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %'));
+    $("#adp90-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %'));
 
+    qnetOptions=adp90Options;
+    qnetOptions['legend']={'show': false};
+    qnetOptions['yaxis']['axisLabel'] = 'qNet (C/F)';
+    $.plot("#qnet-graph", data['qnet'], qnetOptions);
+    $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph'));
+    $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
+    $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
+    $('#adp90').click(); // now select adp90 graph
 
-		var plot = $.plot("#adp90-graph", startData, qnetOptions);
-                $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph'));
-                $("#adp90-graph").bind("plothover", hover);
-		$("#adp90-graph").bind("plothovercleanup", hoverOut);
+    $('#resetqnet').click(function(){
+        if($("#adp90-graph").hasClass("show-graph")){
+            $.plot("#adp90-graph", data['adp90'], adp90Options);
+        }else if($("#qnet-graph").hasClass("show-graph")){
+            $.plot("#qnet-graph", data['qnet'], qnetOptions);
+        }
+    });
+});
+</script>
 
-	});
-	</script>
 {% endblock data %}
-
