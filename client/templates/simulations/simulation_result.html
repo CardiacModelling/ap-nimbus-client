@@ -224,10 +224,10 @@ $(function() {
                   }]
            }
                              
-    function zoom(ranges, graphId){
-        zoomOptions = $.extend({}, adp90Options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
-                                                          yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
-        plot = $.plot(graphId, data['adp90'], zoomOptions);
+    function zoom(ranges, graphId, options, data){
+        zoomOptions = $.extend({}, options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
+                                             yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
+        plot = $.plot(graphId, data, zoomOptions);
 
     }
 
@@ -268,7 +268,7 @@ $(function() {
     };
 
     $.plot("#adp90-graph", data['adp90'], adp90Options);
-    $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph'));
+    $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, data['adp90']));
     $("#adp90-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %'));
     $("#adp90-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %'));
 
@@ -276,7 +276,7 @@ $(function() {
     qnetOptions['legend']={'show': false};
     qnetOptions['yaxis']['axisLabel'] = 'qNet (C/F)';
     $.plot("#qnet-graph", data['qnet'], qnetOptions);
-    $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph'));
+    $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
     $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
     $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
     $('#adp90').click(); // now select adp90 graph
