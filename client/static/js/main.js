@@ -21,42 +21,50 @@ if (i != -1){
 }
 
 function updateProgressbars(){
-    if (base_url && progressbars.length > 0){
-        $.ajax({
-            type: 'GET',
-            url: base_url + '/simulations/status/' + progressbars.join('/'),
-            dataType: 'json',
-            success: function(data) {
-                data.forEach(function (simulation) {
-                    // schedule next update
-                    setTimeout(updateProgressbars, progressBarTimeout);
-                    bar = $('#progressbar-' + simulation['pk']);
-                    progress = simulation['progress']
-                    // set label
-                    bar.find('.progress-label').text(progress); // set label
-                    // update progress bar
-                    if(simulation['status'] == 'SUCCESS'){
-                        bar.progressbar('value', 100);
-                    }else{ // convert into number
-                        progress_number = progress.replace('% completed', '');
-                        if(!isNaN(progress_number)){
-                            bar.progressbar('value', parseInt(progress_number));
-                        }
+    $.ajax({
+        type: 'GET',
+        url: base_url + '/simulations/status/' + progressbars.join('/'),
+        dataType: 'json',
+        success: function(data) {
+            progressbars = [];
+            data.forEach(function (simulation) {
+                bar = $('#progressbar-' + simulation['pk']);
+                // set label
+                bar.find('.progress-label').text(simulation['progress']); // set label
+                // update progress bar
+                if(simulation['status'] == 'SUCCESS'){
+                    bar.progressbar('value', 100);
+                }else{ // convert into number
+                    progress_number = simulation['progress'].replace('% completed', '');
+                    if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
+                        bar.progressbar('value', parseInt(progress_number));
                     }
-                    // remove from updates if we have finished or failed
-                    if(simulation['status'] == 'FAILED' || simulation['status'] == 'SUCCESS'){
-                        findIndex = progressbars.indexOf(simulation['pk'].toString());
-                        if(findIndex != -1){
-                            progressbars.splice(findIndex, 1);
-                        }
-                    }
-                })
+                }
+                // save key for future update if simulation is still running
+                if(simulation['status'] != 'FAILED' && simulation['status'] != 'SUCCESS'){
+                    progressbars.push(simulation['pk']);
+                }
+            })
+            // schedule next update, if there are still running simulations
+            if (progressbars.length > 0){
+                setTimeout(updateProgressbars, progressBarTimeout);
             }
-        });
-    }
+        }
+    });
 }
 
 $(document).ready(function(){
+    //init progress bars
+    $('.progressbar').each(function(){
+        bar = $(this).progressbar();
+        progressbars.push($(bar).attr('id').replace('progressbar-',''));
+    });
+    //update progress bar now
+    if (base_url && progressbars.length > 0){
+        updateProgressbars();
+    }
+
+
     // add dismiss action to notifications
     $("#dismisserrors").click(function() {
         notifications.clear("error");
@@ -252,12 +260,6 @@ $(document).ready(function(){
           $(this).html(marked(source));
       });
 
-    //init progress bars
-    $('.progressbar').each(function(){
-        bar = $(this).progressbar();
-        progressbars.push($(bar).attr('id').replace('progressbar-',''));
-    });
-
     //buttons for switching between graphs
     $('#adp90').click(function(){
         $('#adp90-graph').removeClass('hide-graph');
@@ -276,9 +278,6 @@ $(document).ready(function(){
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', true);
     });
-
-    //update progress bar now
-    updateProgressbars();
 
     // plot the graphs
 ////    $.plot($('#adp90', data, option);

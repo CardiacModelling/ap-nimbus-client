@@ -39,6 +39,15 @@
     stroke-width: 1;
 }
 
+#tooltip{
+    position: absolute;
+    display: none;
+    border: 1px solid #fdd;
+    padding: 2px;
+    background-color: #fee;
+    opacity: 0.80;
+}
+
 </style>
 
 
@@ -118,7 +127,7 @@
     <div class="row">
         <div class="graph-column">
             <fieldset><legend><button type="button" class="graph-button" id="adp90" disabled>Δ APD90 vs. Conc</button><button type="button" class="graph-button" id="qnet">qNet vs. Conc</button></legend>
-              <div class="zoom-msg">Zoom in by selecting a region.</div>
+              <div class="zoom-msg">Zoom in by selecting a region or using your mouse scroll wheel.</div>
               <div id="adp90-graph" style="width:600px;height:300px">
               </div>
               <div id="qnet-graph" class="hide-graph">
@@ -130,7 +139,7 @@
           <label><input id="enablePosition" type="checkbox" checked="checked">Show mouse position</label>
              <span id="hoverdata"></span>
                   <p>Legend Container:</p>
-                  <div id="legendContainer" class="legend" style="width:9em;height:8em;border-style:solid;border-color:threedface"></div>
+                  <div id="legendContainerQnet" class="legend" style="width:9em;height:8em;border-style:solid;border-color:threedface"></div>
 
         </div>
     </div>
@@ -146,6 +155,7 @@
     </div>
   </div>
 </div>
+<div id='tooltip'></div>
 </section>
 
         <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.canvaswrapper.js"></script>
@@ -171,58 +181,43 @@
         <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.flot.logaxis.js"></script>
 
 	<script type="text/javascript">
-//see cs-flotting.js
-	$(function() {
+$(function() {
+    function zoom(ranges, graphId){
+        zoomOptions = $.extend({}, qnetOptions, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
+                                                          yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
+        plot = $.plot(graphId, startData, zoomOptions);
 
-		// setup plot
+    }
 
-		var options = {
-                        legend: {show: true,
-                                 container: $('#legendContainer').get(0)
-                        },
-			series: {
-				lines: {
-					show: true
-				},
-				points: {
-					show: true
-				}
-			},
+    function hover(event, pos, item){
+        if (pos.x && pos.y) {
+            var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+            $("#hoverdata").text(str);
+            if (item) {
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                $("#tooltip").html(item.series.label + " of " + x + " = " + y)
+                             .css({top: item.pageY+5, left: item.pageX+5})
+                             .fadeIn(200);
+            } else {
+                $("#tooltip").hide();
+            }
+        }
+    }
 
+    function hoverOut (event, pos, item) {
+        $("#tooltip").hide();
+    }
 
-			grid: {
-				hoverable: true,
-				clickable: true
-			},
-			zoom: {
-				interactive: true
-			},
-			pan: {
-				interactive: true,
-				enableTouch: true
-			},
-
-           xaxes : [
-                { axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05,},
-            ],
-            yaxes : [
-                { axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05,},
-            ],
-
-			selection: {
-				mode: "xy"
-			}
+       // setup qnet
+        var qnetOptions = {legend: {show: true, container: $('#legendContainerQnet').get(0)},
+                           series: {lines: {show: true	}, points: {show: true}},
+                           grid: {hoverable: true, clickable: true},
+                           zoom: {interactive: true},
+                           xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
+                           yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                           selection: {mode: "xy"}
 		};
-
-		$("<div id='tooltip'></div>").css({
-			position: "absolute",
-			display: "none",
-			border: "1px solid #fdd",
-			padding: "2px",
-			"background-color": "#fee",
-			opacity: 0.80
-		}).appendTo("body");
-
 
                 startData = [{label: "simulation", data:[[0, 0],
                                                          [0.001, 0.0172213],
@@ -240,58 +235,12 @@
                              }]
 
 
-		var plot = $.plot("#adp90-graph", startData, options);
-
-		$("#adp90-graph").bind("plotselected", function (event, ranges) {
-
-			// clamp the zooming to prevent eternal zoom
-
-			if (ranges.xaxis.to - ranges.xaxis.from < 0.00001) {
-				ranges.xaxis.to = ranges.xaxis.from + 0.00001;
-			}
-
-			if (ranges.yaxis.to - ranges.yaxis.from < 0.00001) {
-				ranges.yaxis.to = ranges.yaxis.from + 0.00001;
-			}
-
-			// do the zooming
-
-			plot = $.plot("#adp90-graph", getData(ranges.xaxis.from, ranges.xaxis.to),
-				$.extend(true, {}, options, {
-					xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
-					yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
-				})
-			);
-
-		});
-
-		$("#adp90-graph").bind("plothover", function (event, pos, item) {
-
-			if (!pos.x || !pos.y) {
-				return;
-			}
-
-			var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
-			$("#hoverdata").text(str);
-
-			if (item) {
-				var x = item.datapoint[0].toFixed(2),
-					y = item.datapoint[1].toFixed(2);
-                        
-				$("#tooltip").html(item.series.label + " of " + x + " = " + y)
-					.css({top: item.pageY+5, left: item.pageX+5})
-					.fadeIn(200);
-			} else {
-				$("#tooltip").hide();
-			}
-		});
-
-		$("#adp90-graph").bind("plothovercleanup", function (event, pos, item) {
-				$("#tooltip").hide();
-		});
+		var plot = $.plot("#adp90-graph", startData, qnetOptions);
+                $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph'));
+                $("#adp90-graph").bind("plothover", hover);
+		$("#adp90-graph").bind("plothovercleanup", hoverOut);
 
 	});
 	</script>
-
 {% endblock data %}
 
