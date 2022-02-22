@@ -1,9 +1,29 @@
 const $ = require('jquery'); // Jquery UI
+//require('jquery-migrate');
 global.$ = $;
 global.jQuery = $;
 const ui = require('jquery-ui'); // Jquery UI
 require('jquery-ui/ui/widgets/progressbar');
 require('datatables.net')(window, $); // Jquery datatables (npm install datatables.net-dtand)
+//flotcharts
+require('./lib/flotcharts/jquery.canvaswrapper.js');
+require('./lib/flotcharts/jquery.colorhelpers.js');
+require('./lib/flotcharts/jquery.event.drag.js');
+require('./lib/flotcharts/jquery.flot.js');
+require('./lib/flotcharts/jquery.flot.saturated.js');
+require('./lib/flotcharts/jquery.flot.browser.js');
+require('./lib/flotcharts/jquery.flot.drawSeries.js');
+require('./lib/flotcharts/jquery.flot.uiConstants.js');
+require('./lib/flotcharts/jquery.flot.selection.js');
+require('./lib/flotcharts/jquery.flot.axislabels.js');
+require('./lib/flotcharts/jquery.flot.navigate.js');
+require('./lib/flotcharts/jquery.flot.touchNavigate.js');
+require('./lib/flotcharts/jquery.flot.hover.js');
+require('./lib/flotcharts/jquery.flot.touch.js');
+require('./lib/flotcharts/jquery.flot.symbol.js');
+require('./lib/flotcharts/jquery.flot.legend.js');
+require('./lib/flotcharts/jquery.flot.logaxis.js');
+
 
 const marked = require("./lib/marked.min.js"); // Markdown render
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
@@ -20,40 +40,124 @@ if (i != -1){
     base_url = false;
 }
 
-function updateProgressbars(){
-    $.ajax({
-        type: 'GET',
-        url: base_url + '/simulations/status/' + progressbars.join('/'),
-        dataType: 'json',
-        success: function(data) {
-            progressbars = [];
-            data.forEach(function (simulation) {
-                bar = $('#progressbar-' + simulation['pk']);
-                // set label
-                bar.find('.progress-label').text(simulation['progress']); // set label
-                // update progress bar
-                if(simulation['status'] == 'SUCCESS'){
-                    bar.progressbar('value', 100);
-                }else{ // convert into number
-                    progress_number = simulation['progress'].replace('% completed', '');
-                    if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
-                        bar.progressbar('value', parseInt(progress_number));
-                    }
-                }
-                // save key for future update if simulation is still running
-                if(simulation['status'] != 'FAILED' && simulation['status'] != 'SUCCESS'){
-                    progressbars.push(simulation['pk']);
-                }
-            })
-            // schedule next update, if there are still running simulations
-            if (progressbars.length > 0){
-                setTimeout(updateProgressbars, progressBarTimeout);
-            }
+
+var graphData = {};
+var adp90Options = {};
+var qnetOptions = {};
+
+function zoom(ranges, graphId, options, data){
+    zoomOptions = $.extend({}, options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
+                                         yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
+    plot = $.plot(graphId, data, zoomOptions);
+}
+
+function hover(event, pos, item, x_label, x_units, y_label, y_units){
+    if (pos.x && pos.y) {
+        x = pos.x.toFixed(3);
+        y = pos.y.toFixed(3);
+        var hoverData = '<p><label>' + x_label +'</label>' + x + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y + y_units + '</p>';
+        $("#hoverdata").html(hoverData);
+        if (item) {
+            x = item.datapoint[0].toFixed(3);
+            y = item.datapoint[1].toFixed(3);
+            content = '[' + item.series.label + '] : ' + x_label + x + x_units + ' - ' + y_label + y + y_units;
+            $("#tooltip").html(content)
+                         .css({top: item.pageY+5, left: item.pageX+5})
+                         .fadeIn(200);
+        }else{
+            $("#tooltip").fadeOut(200);
         }
+    }
+}
+
+$('#resetqnet').click(function(){
+alert('reset cliecked');
+    if($("#adp90-graph").hasClass("show-graph")){
+        $.plot("#adp90-graph", graphData['adp90'], adp90Options);
+    }else if($("#qnet-graph").hasClass("show-graph")){
+        $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
+    }
+});
+
+function hoverOut (x_label, x_units, y_label, y_units) {
+    $("#tooltip").hide();
+    var hoverData = '<p><label>' + x_label +'</label>' + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y_units + '</p>';
+    $("#hoverdata").html(hoverData);
+}
+
+function renderGraph(pk){
+    $.ajax({type: 'GET',
+            url: `${base_url}/simulations/${pk}/data`,
+            dataType: 'json',
+            success: function(data) {
+                graphData = data;
+                adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
+                                series: {lines: {show: true}, points: {show: true}},
+                                grid: {hoverable: true, clickable: true},
+                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
+                                yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                selection: {mode: "xy"}
+                };
+                qnetOptions = $.extend({}, adp90Options, {legend: {'show': false},
+                                                          yaxis: {axisLabel: 'qNet (C/F)'}});
+
+                $.plot("#adp90-graph", graphData['adp90'], adp90Options);
+                $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, data['adp90']));
+                $("#adp90-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %'));
+                $("#adp90-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %'));
+
+                $.plot("#qnet-graph", data['qnet'], qnetOptions);
+                $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
+                $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
+                $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
+                $('#adp90').click(); // now select adp90 graph
+            }
+    });
+}
+
+function updateProgressbars(){
+    $.ajax({type: 'GET',
+            url: `${base_url}/simulations/status/${progressbars.join('/')}`,
+            dataType: 'json',
+            success: function(data) {
+                progressbars = [];
+                data.forEach(function (simulation) {
+                    bar = $(`#progressbar-${simulation['pk']}`);
+                    // set label
+                    bar.find('.progress-label').text(simulation['progress']); // set label
+                    // update progress bar
+                    if(simulation['status'] == 'SUCCESS'){
+                        bar.progressbar('value', 100);
+                    }else{ // convert into number
+                        progress_number = simulation['progress'].replace('% completed', '');
+                        if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
+                            bar.progressbar('value', parseInt(progress_number));
+                        }
+                    }
+                    //if succesful, and there is a graph to render, make the call fo data
+                    if(simulation['status'] == 'SUCCESS' && $('.graph-column').length > 0){
+                        renderGraph(simulation['pk']);
+                    }else if(simulation['status'] != 'FAILED' && simulation['status'] != 'SUCCESS'){  // save for next progressbar update
+                        progressbars.push(simulation['pk']);
+                    }
+                })
+                // schedule next update, if there are still running simulations
+                if (progressbars.length > 0){
+                    setTimeout(updateProgressbars, progressBarTimeout);
+                }
+            }
     });
 }
 
 $(document).ready(function(){
+    $('#resetqnet').click(function(){  //reset graph button
+        if($("#adp90-graph").hasClass("show-graph")){
+            $.plot("#adp90-graph", graphData['adp90'], adp90Options);
+        }else if($("#qnet-graph").hasClass("show-graph")){
+            $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
+        }
+    });
+
     //init progress bars
     $('.progressbar').each(function(){
         bar = $(this).progressbar();
@@ -85,7 +189,7 @@ $(document).ready(function(){
     $('#id_model').change(function(){
         $('.current-concentration').each(function(){
             id = $(this).attr("id").replace('id_ion-', '').replace('-current', '');
-            models_str = $('#id_ion-' + id + '-models').val();
+            models_str = $(`#id_ion-${id}-models`).val();
             models = [];
             if(models_str.length > 2){
                 models = models_str.split(",");
@@ -132,14 +236,14 @@ $(document).ready(function(){
     $('.current-concentration').change(function(){
         id = $(this).attr("id").replace('id_ion-', '').replace('-current', '');
         disabled =  $(this).val()=='' || $(this).is(':disabled');
-        $('#id_ion-' + id + '-hill_coefficient').attr('disabled',  disabled);
-        $('#id_ion-' + id + '-hill_coefficient').attr('required',  !disabled);
+        $(`#id_ion-${id}-hill_coefficient`).attr('disabled',  disabled);
+        $(`#id_ion-${id}-hill_coefficient`).attr('required',  !disabled);
 
-        $('#id_ion-' + id + '-saturation_level').attr('disabled',  disabled);
-        $('#id_ion--' + id + '-saturation_level').attr('required',  !disabled);
+        $(`#id_ion-${id}-saturation_level`).attr('disabled',  disabled);
+        $(`#id_ion-${id}-saturation_level`).attr('required',  !disabled);
 
-        $('#id_ion-' + id + '-spread_of_uncertainty').attr('disabled',  disabled || !$('#enable_spread_of_uncertainty').is(':checked'));
-        $('#id_ion-' + id + '-spread_of_uncertainty').attr('required',  !disabled && $('#enable_spread_of_uncertainty').is(':checked'));
+        $(`#id_ion-${id}-spread_of_uncertainty`).attr('disabled',  disabled || !$('#enable_spread_of_uncertainty').is(':checked'));
+        $(`#id_ion-${id}-spread_of_uncertainty`).attr('required',  !disabled && $('#enable_spread_of_uncertainty').is(':checked'));
 
     });
 
@@ -149,7 +253,7 @@ $(document).ready(function(){
             // initialise spread values
             $('.spread_of_uncertainty').each(function(){
                 id = $(this).attr("id").replace('-spread_of_uncertainty', '-default_spread_of_uncertainty');
-                $(this).val($('#' + id).val());
+                $(this).val($(`#${id}`).val());
             });
         }else{
             // clear spread values
@@ -169,11 +273,11 @@ $(document).ready(function(){
         $('.pk_or_concs').each(function(){
             id = $(this).attr('id');
             if($(this).is(':checked')){
-                $('#' + id.replace('id_', 'div_')).css('visibility', 'visible');
-                $('#' + id.replace('id_', 'div_')).css('display', 'block');
+                $(`#${id.replace('id_', 'div_')}`).css('visibility', 'visible');
+                $(`#${id.replace('id_', 'div_')}`).css('display', 'block');
             }else{
-                $('#' + id.replace('id_', 'div_')).css('visibility', 'hidden');
-                $('#' + id.replace('id_', 'div_')).css('display', 'none');
+                $(`#${id.replace('id_', 'div_')}`).css('visibility', 'hidden');
+                $(`#${id.replace('id_', 'div_')}`).css('display', 'none');
             }
         });
 
@@ -223,8 +327,8 @@ $(document).ready(function(){
                 new_row.find('.compound-concentration-point-index-text').text((last_index + 1).toString().padStart(2, '0') + '. ');
                 inputBox = new_row.find('.compound-concentration');
                 inputBox.val('');
-                inputBox.attr('name', 'concentration-' + last_index.toString() + '-concentration');
-                inputBox.attr('id', 'id_concentration-' + last_index.toString() + '-concentration');
+                inputBox.attr('name', `concentration-${last_index.toString()}-concentration`);
+                inputBox.attr('id', `id_concentration-${last_index.toString()}-concentration`);
 
                 // update control form
                 $('#id_concentration-TOTAL_FORMS').val(last_index + 1);

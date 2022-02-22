@@ -412,7 +412,8 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
 
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
             qNet.write(row, 0, to_float(v_res['c']))
-            qNet.write(row, 1, to_float(v_res['da90'][0]) if len(v_res['da90']) == 1 else str(v_res['da90']))
+            da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
+            qNet.write(row, 1, to_float(da90))
             qNet.write(row, 2, to_float(qnet['qnet']) if qnet else 'n/a')
             qNet.write(row, 3, to_float(v_res['pv']))
             qNet.write(row, 4, to_float(v_res['uv']))
@@ -579,11 +580,11 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         }
 
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
-            c = to_float(v_res['c'])
-            adp90 = to_float(v_res['da90'][0])
-            data['adp90'][0]['data'].append([c, adp90])
+
+            da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
+            data['adp90'][0]['data'].append([v_res['c'], da90])
             if qnet:
-                data['qnet'][0]['data'].append([c, to_float(qnet['qnet'])])
+                data['qnet'][0]['data'].append([v_res['c'], to_float(qnet['qnet'])])
 
         return JsonResponse(data=data,
                             status=200, safe=False)

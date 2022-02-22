@@ -59,6 +59,12 @@
     opacity: 0.80;
 }
 
+#adp90-graph, #qnet-graph{
+    width:550px;
+    height:300px;
+}
+
+
 </style>
 
 
@@ -138,12 +144,10 @@
     <div class="row">
         <div class="graph-column">
             <fieldset><legend><button type="button" class="graph-button" id="adp90">Δ APD90 vs. Conc</button><button type="button" class="graph-button" id="qnet">qNet vs. Conc</button></legend>
-              <div class="zoom-msg">Zoom in by selecting a region or using your mouse scroll wheel.</div>
-              <div id="adp90-graph" style="width:550px;height:300px">
-              </div>
-              <div id="qnet-graph" style="width:550px;height:300px;">
-                  <div><label>qnet: </label> {{ object.maximum_pacing_time }} (mins)</div>
-              </div>
+              <div class="zoom-msg">Zoom in by selecting a region.</div>
+              <div id="adp90-graph"></div>
+              <div id="qnet-graph"></div>
+
             </fieldset>
         </div>
         <div class="control-column">
@@ -170,7 +174,7 @@
 <div id='tooltip'></div>
 </section>
 
-        <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.canvaswrapper.js"></script>
+<!--        <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.canvaswrapper.js"></script>
         <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.colorhelpers.js"></script>
         <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.flot.js"></script>
         <script language="javascript" type="text/javascript" src="https://www.flotcharts.org/flot/source/jquery.flot.saturated.js"></script>
@@ -289,6 +293,6 @@ $(function() {
         }
     });
 });
-</script>
+</script>-->
 
 {% endblock data %}
