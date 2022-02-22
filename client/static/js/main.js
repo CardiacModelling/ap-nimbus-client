@@ -44,6 +44,7 @@ if (i != -1){
 var graphData = {};
 var adp90Options = {};
 var qnetOptions = {};
+var tracesOptions = {};
 
 function zoom(ranges, graphId, options, data){
     zoomOptions = $.extend({}, options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
@@ -51,12 +52,12 @@ function zoom(ranges, graphId, options, data){
     plot = $.plot(graphId, data, zoomOptions);
 }
 
-function hover(event, pos, item, x_label, x_units, y_label, y_units){
+function hover(event, pos, item, x_label, x_units, y_label, y_units, hoverDataId){
     if (pos.x && pos.y) {
         x = pos.x.toFixed(3);
         y = pos.y.toFixed(3);
         var hoverData = '<p><label>' + x_label +'</label>' + x + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y + y_units + '</p>';
-        $("#hoverdata").html(hoverData);
+        $(hoverDataId).html(hoverData);
         if (item) {
             x = item.datapoint[0].toFixed(3);
             y = item.datapoint[1].toFixed(3);
@@ -70,19 +71,10 @@ function hover(event, pos, item, x_label, x_units, y_label, y_units){
     }
 }
 
-$('#resetqnet').click(function(){
-alert('reset cliecked');
-    if($("#adp90-graph").hasClass("show-graph")){
-        $.plot("#adp90-graph", graphData['adp90'], adp90Options);
-    }else if($("#qnet-graph").hasClass("show-graph")){
-        $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
-    }
-});
-
-function hoverOut (x_label, x_units, y_label, y_units) {
+function hoverOut (x_label, x_units, y_label, y_units, hoverDataId) {
     $("#tooltip").hide();
     var hoverData = '<p><label>' + x_label +'</label>' + x_units + '</p><p>' + '<label>' + y_label +'</label>' + y_units + '</p>';
-    $("#hoverdata").html(hoverData);
+    $(hoverDataId).html(hoverData);
 }
 
 function renderGraph(pk){
@@ -91,32 +83,46 @@ function renderGraph(pk){
             dataType: 'json',
             success: function(data) {
                 graphData = data;
-                adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
+                //make sure the voltage traces have fixed colours
+                for (var i=0; i < graphData['traces'].length; i++) {
+                    graphData['traces'][i].color = i;
+                }
+                baseOptions = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
                                 series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-                qnetOptions = $.extend({}, adp90Options, {legend: {'show': false},
-                                                          yaxis: {axisLabel: 'qNet (C/F)'}});
+                adp90Options = $.extend({}, baseOptions, {xaxis: {mode: "log"}});
+                qnetOptions = $.extend({}, baseOptions, {legend: {'show': false},
+                                                         xaxis: {mode: "log"},
+                                                         yaxis: {axisLabel: 'qNet (C/F)'}});
+                tracesOptions = $.extend({}, baseOptions, {legend: {show: true, container: $('#legendContainerTraces').get(0)},
+                                                           series: {lines: {show: true, lineWidth: 2}, points: {show: false}},
+                                                           xaxis: {axisLabel: 'Time (ms)'},
+                                                           yaxis: {axisLabel: 'Membrane Voltage (mV)'}});
 
-                $.plot("#adp90-graph", graphData['adp90'], adp90Options);
-                $("#adp90-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, data['adp90']));
-                $("#adp90-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %'));
-                $("#adp90-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %'));
+                $.plot('#adp90-graph', graphData['adp90'], adp90Options);
+                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, data['adp90']));
+                $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
+                $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
                 if(graphData['qnet'][0]['data'].length > 0){
-                    $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
-                    $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
-                    $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
-                    $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
+                    $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
+                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
+                    $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
+                    $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#adp90').click(); // now select adp90 graph
                 }else{
                     $('#adp90').click(); // now select adp90 graph
                     // hide qnet button
                     $('#qnet').hide();
                 }
+                $.plot('#traces-graph', graphData['traces'], tracesOptions);
+                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#traces-graph', tracesOptions, data['traces']));
+                $('#traces-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
+                $('#traces-graph').mouseout((event)=>hoverOut('Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
             }
     });
 }
@@ -156,12 +162,15 @@ function updateProgressbars(){
 }
 
 $(document).ready(function(){
-    $('#resetqnet').click(function(){  //reset graph button
-        if($("#adp90-graph").hasClass("show-graph")){
-            $.plot("#adp90-graph", graphData['adp90'], adp90Options);
-        }else if($("#qnet-graph").hasClass("show-graph")){
-            $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
+    $('#resetqnet').click(function(){  //reset adp90 / qnet graph button
+        if($('#adp90-graph').hasClass('show-graph')){
+            $.plot('#adp90-graph', graphData['adp90'], adp90Options);
+        }else if($('#qnet-graph').hasClass('show-graph')){
+            $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
         }
+    });
+    $('#resetTraces').click(function(){ // reset traces graph
+        $.plot("#traces-graph", graphData['traces'], tracesOptions);
     });
 
     //init progress bars

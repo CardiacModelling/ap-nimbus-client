@@ -423,10 +423,10 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
 
     def voltage_traces(self, workbook, bold, sim):
         voltage_traces = workbook.add_worksheet('Voltage Traces (concentration)')
-        voltage_traces.write(1, 0, 'Time (ms)', bold)
         column = 0
         for trace in sim.voltage_traces:
             voltage_traces.write(0, column, 'Conc. %s µM' % trace['name'], bold)
+            voltage_traces.write(1, column, 'Time (ms)', bold)
             voltage_traces.write(1, column + 1, 'Membrane Voltage (mV)', bold)
             for i, series in enumerate(trace['series']):
                 row = i + 2
@@ -576,15 +576,19 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
         data = {'adp90': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}],
-                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}]
+                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}],
+                'traces': []
         }
-
+        # add adp90 and qnet data
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
-
             da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
             data['adp90'][0]['data'].append([v_res['c'], da90])
             if qnet:
                 data['qnet'][0]['data'].append([v_res['c'], to_float(qnet['qnet'])])
+        # add voltage traces data
+        for trace in sim.voltage_traces:
+            data['traces'].append({'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']}",
+                                    'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
                             status=200, safe=False)
