@@ -106,11 +106,17 @@ function renderGraph(pk){
                 $("#adp90-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %'));
                 $("#adp90-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %'));
 
-                $.plot("#qnet-graph", data['qnet'], qnetOptions);
-                $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
-                $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
-                $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
-                $('#adp90').click(); // now select adp90 graph
+                if(graphData['qnet'][0]['data'].length > 0){
+                    $.plot("#qnet-graph", graphData['qnet'], qnetOptions);
+                    $("#qnet-graph").bind("plotselected", (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
+                    $("#qnet-graph").bind("plothover", (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F'));
+                    $("#qnet-graph").mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F'));
+                    $('#adp90').click(); // now select adp90 graph
+                }else{
+                    $('#adp90').click(); // now select adp90 graph
+                    // hide qnet button
+                    $('#qnet').hide();
+                }
             }
     });
 }
@@ -382,14 +388,5 @@ $(document).ready(function(){
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', true);
     });
-
-    // plot the graphs
-////    $.plot($('#adp90', data, option);
-//    var graphGlobal = {};
-//    var prefix='';
-//
-//    var plugins = [
-//        require('./visualizers/displayPlotFlot/displayPlotFlot.js'),
-//    ];
 
 });
