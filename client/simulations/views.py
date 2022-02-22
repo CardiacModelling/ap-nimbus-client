@@ -481,7 +481,7 @@ class StatusSimulationView(View):
     Maes use of asyncio and aoihttp, to speed up making what could be many requests
     """
 
-    COMMANDS = ('messages' 'q_net', 'voltage_traces', 'voltage_results')
+    COMMANDS = ('q_net', 'voltage_traces', 'voltage_results', 'messages')
 
     @classonlymethod
     def as_view(cls, **initkwargs):
@@ -525,8 +525,7 @@ class StatusSimulationView(View):
                             stop_response = await res.json(content_type=None)
                             if 'success' in stop_response and stop_response['success']:
                                 # simulation has stopped, try to save results
-                                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim))
-                                                   for command in self.COMMANDS])
+                                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
                                 # check we have voltage_traces and haven't FAILED one of the save steps
                                 if sim.voltage_traces and not sim.status == Simulation.Status.FAILED:
                                     sim.status = Simulation.Status.SUCCESS
@@ -560,5 +559,31 @@ class StatusSimulationView(View):
         data = await sync_to_async(lambda sims: [{'pk': sim.pk,
                                                   'progress': sim.progress,
                                                   'status': sim.status} for sim in sims])(simulations)
+        return JsonResponse(data=data,
+                            status=200, safe=False)
+
+class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+
+    """
+    Retreives the data for rendering the graphs.
+    """
+    model = Simulation
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+    def get(self, request, *args, **kwargs):
+        sim = self.get_object()
+        data = {'adp90': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}],
+                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}]
+        }
+
+        for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+            c = to_float(v_res['c'])
+            adp90 = to_float(v_res['da90'][0])
+            data['adp90'][0]['data'].append([c, adp90])
+            if qnet:
+                data['qnet'][0]['data'].append([c, to_float(qnet['qnet'])])
+
         return JsonResponse(data=data,
                             status=200, safe=False)

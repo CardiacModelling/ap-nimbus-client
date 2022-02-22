@@ -52,9 +52,15 @@ urlpatterns = [
         name='simulation_status',
     ),
     re_path(
+        r'^(?P<pk>\d+)/data$',
+        views.DataSimulationView.as_view(),
+        name='simulation_data',
+    ),
+    re_path(
         r'^(?P<pk>\d+)/spreadsheet$',
         views.SpreadsheetSimulationView.as_view(),
         name='simulation_spreadsheet',
     ),
+
 ]
 app_name = 'simulations'
