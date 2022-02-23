@@ -365,11 +365,12 @@ div.dt-buttons{
 }
 
 .graph-column{
-    flex: 100%;
+    width: 570px;
 }
 
 .control-column{
-    width: 200px;
+    width: 300px;
+    padding-left:5px;
 }
 
 /* buttons for switching graphs */
@@ -420,4 +421,47 @@ fieldset ul {
 .x1LabelLayer, .y1LabelLayer{
     font-size: small;
     font-weight: bold;
+}
+
+
+.legendLayer .background {
+    fill: rgba(255, 255, 255, 0.85);
+/*    stroke: rgba(0, 0, 0, 0.85);*/
+    stroke-width: 1;
+}
+
+.control-column{
+    font-size: 14px;
+}
+
+.control-items{
+    padding: 100px 0;
+}
+
+#legendContainerQnet{
+    width:9em;
+    height:8em;
+    border-style:solid;
+    border-color:threedface;
+}
+
+#tooltip{
+    position: absolute;
+    display: none;
+    border: 1px solid #fdd;
+    padding: 2px;
+    background-color: #fee;
+    opacity: 0.80;
+}
+
+.data-graph{
+    width:550px;
+    height:300px;
+}
+
+.graph-column fieldset{
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-end: 0px;
+    padding-block-end: 0px;
 }

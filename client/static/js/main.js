@@ -152,7 +152,7 @@ function renderGraph(pk){
                 plotTraces(tracesOptions);
                 // make sure the legend does not get replotted
                 tracesOptions['legend'] = {'show': false};
-                tracesOptionsNoZoom = JSON.parse(JSON.stringify(tracesOptionsNoZoom)); // clone options for zoom reset
+                tracesOptionsNoZoom = JSON.parse(JSON.stringify(tracesOptions)); // clone options for zoom reset
                 $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, tracesOptions, plotTraces));
                 $('#traces-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
                 $('#traces-graph').mouseout((event)=>hoverOut('Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
