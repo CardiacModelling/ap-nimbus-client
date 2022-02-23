@@ -156,6 +156,24 @@ function renderGraph(pk){
                 $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, tracesOptions, plotTraces));
                 $('#traces-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
                 $('#traces-graph').mouseout((event)=>hoverOut('Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
+
+                // allow toggling voltage traces in legend
+                var labelIndex = 0;
+                var checboxesMapObj = {'\u2610': '\u2611', '\u2611': '\u2610'};
+                checboxes_regex_str = /\u2610|\u2611/gi;
+                $('#legendContainerTraces > .legendLayer > g').each(function(){
+                    textElem = $(this).find('text > tspan');
+                    textElem.html(`<a href="" onclick="event.preventDefault();" id='${labelIndex}' class='toggleTrace'>\u2611 ${textElem.html()}</a>`);
+                    link = $(textElem).find('a');
+                    link.click(function(){
+                        text = $(this).html().replace(checboxes_regex_str, (matched) => checboxesMapObj[matched]);
+                        $(this).html(text);
+                        toggleSeries($(this).attr('id'));
+                    });
+                    labelIndex++;
+                });
+
+
                 // add reset actions
                 $('#resetqnet').click(function(){  //reset adp90 / qnet graph button
                     if($('#adp90-graph').hasClass('show-graph')){
