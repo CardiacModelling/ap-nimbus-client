@@ -77,16 +77,22 @@ function hoverOut (x_label, x_units, y_label, y_units, hoverDataId) {
     $(hoverDataId).html(hoverData);
 }
 
+function plotTraces(tracesOptions){
+    var data = [];
+    graphData['traces'].forEach(function (item) {
+      if(item.enabled){
+          data.push(item);
+      }
+    });
+    $.plot("#traces-graph", data, tracesOptions);
+};
+
 function renderGraph(pk){
     $.ajax({type: 'GET',
             url: `${base_url}/simulations/${pk}/data`,
             dataType: 'json',
             success: function(data) {
                 graphData = data;
-                //make sure the voltage traces have fixed colours
-                for (var i=0; i < graphData['traces'].length; i++) {
-                    graphData['traces'][i].color = i;
-                }
                 baseOptions = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
                                 series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                 grid: {hoverable: true, clickable: true},
@@ -104,13 +110,15 @@ function renderGraph(pk){
                                                            yaxis: {axisLabel: 'Membrane Voltage (mV)'}});
 
                 $.plot('#adp90-graph', graphData['adp90'], adp90Options);
-                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, data['adp90']));
+                // make sure the legend does not get replotted
+                adp90Options['legend'] = {'show': false};
+                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, graphData['adp90']));
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
                 if(graphData['qnet'][0]['data'].length > 0){
                     $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
-                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, data['qnet']));
+                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, graphData['qnet']));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#adp90').click(); // now select adp90 graph
@@ -119,8 +127,10 @@ function renderGraph(pk){
                     // hide qnet button
                     $('#qnet').hide();
                 }
-                $.plot('#traces-graph', graphData['traces'], tracesOptions);
-                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#traces-graph', tracesOptions, data['traces']));
+                plotTraces(tracesOptions);
+                // make sure the legend does not get replotted
+                tracesOptions['legend'] = {'show': false};
+                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#traces-graph', tracesOptions, graphData['traces']));
                 $('#traces-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
                 $('#traces-graph').mouseout((event)=>hoverOut('Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
             }

@@ -586,8 +586,9 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
             if qnet:
                 data['qnet'][0]['data'].append([v_res['c'], to_float(qnet['qnet'])])
         # add voltage traces data
-        for trace in sim.voltage_traces:
-            data['traces'].append({'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+        for i, trace in enumerate(sim.voltage_traces):
+            data['traces'].append({'color': i, 'enabled': True,
+                                    'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
                                     'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
