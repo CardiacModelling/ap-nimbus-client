@@ -46,10 +46,16 @@ var adp90Options = {};
 var qnetOptions = {};
 var tracesOptions = {};
 
-function zoom(ranges, graphId, options, data){
-    zoomOptions = $.extend({}, options, {xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to, autoScale: 'none' },
-                                         yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to, autoScale: 'none' }})
-    plot = $.plot(graphId, data, zoomOptions);
+function zoom(ranges, options, plotFunc){
+    // clone options so we can reset later;
+    zoomOptions = JSON.parse(JSON.stringify(options)); //Object.assign({}, options);
+    zoomOptions['xaxis']['autoScale'] = 'none';
+    zoomOptions['xaxis']['min'] = ranges.xaxis.from
+    zoomOptions['xaxis']['max'] = ranges.xaxis.to;
+    zoomOptions['yaxis']['autoScale'] = 'none';
+    zoomOptions['yaxis']['min'] = ranges.yaxis.from;
+    zoomOptions['yaxis']['max'] = ranges.yaxis.to;
+    plotFunc(zoomOptions);
 }
 
 function hover(event, pos, item, x_label, x_units, y_label, y_units, hoverDataId){
@@ -93,32 +99,40 @@ function renderGraph(pk){
             dataType: 'json',
             success: function(data) {
                 graphData = data;
-                baseOptions = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
+                adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
                                 series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-                adp90Options = $.extend({}, baseOptions, {xaxis: {mode: "log"}});
-                qnetOptions = $.extend({}, baseOptions, {legend: {'show': false},
-                                                         xaxis: {mode: "log"},
-                                                         yaxis: {axisLabel: 'qNet (C/F)'}});
-                tracesOptions = $.extend({}, baseOptions, {legend: {show: true, container: $('#legendContainerTraces').get(0)},
-                                                           series: {lines: {show: true, lineWidth: 2}, points: {show: false}},
-                                                           xaxis: {axisLabel: 'Time (ms)'},
-                                                           yaxis: {axisLabel: 'Membrane Voltage (mV)'}});
+
+                qnetOptions = {legend: {show: false},
+                               series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
+                               grid: {hoverable: true, clickable: true},
+                               xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                               yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'qNet (C/F)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                               selection: {mode: "xy"}
+                };
+
+                tracesOptions = {legend: {show: true, container: $('#legendContainerTraces').get(0)},
+                                series: {lines: {show: true, lineWidth: 2}, points: {show: false}},
+                                grid: {hoverable: true, clickable: true},
+                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Time (ms)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Membrane Voltage (mV)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                selection: {mode: "xy"}
+                };
 
                 $.plot('#adp90-graph', graphData['adp90'], adp90Options);
                 // make sure the legend does not get replotted
                 adp90Options['legend'] = {'show': false};
-                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#adp90-graph', adp90Options, graphData['adp90']));
+                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, adp90Options, (opts) => $.plot('#adp90-graph', graphData['adp90'], opts)));
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
                 if(graphData['qnet'][0]['data'].length > 0){
                     $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
-                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#qnet-graph', qnetOptions, graphData['qnet']));
+                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => $.plot('#qnet-graph', graphData['qnet'], opts)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#adp90').click(); // now select adp90 graph
@@ -130,7 +144,8 @@ function renderGraph(pk){
                 plotTraces(tracesOptions);
                 // make sure the legend does not get replotted
                 tracesOptions['legend'] = {'show': false};
-                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#traces-graph', tracesOptions, graphData['traces']));
+//                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, '#traces-graph', tracesOptions, graphData['traces']));
+                $('#traces-graph').bind('plotselected', (event, ranges) => zoom(ranges, tracesOptions, plotTraces));
                 $('#traces-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
                 $('#traces-graph').mouseout((event)=>hoverOut('Time: ', ' ms', 'Membrane Voltage: ', ' mV', '#hoverdataTraces'));
             }
