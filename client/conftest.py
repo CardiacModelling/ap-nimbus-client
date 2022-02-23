@@ -157,6 +157,8 @@ def simulation_range(simulation_recipe, user, o_hara_model):
                'saturation_level': c['default_saturation_level'],
                'spread_of_uncertainty': c['default_spread_of_uncertainty']}
               for v, c in zip(vals, PREDEF_ION_CURRENTS)]
+    # make sure we test scnario where spred of uncertainty is not set
+    del params[0]['spread_of_uncertainty']
     for curr, param in zip(IonCurrent.objects.all(), params):
         SimulationIonCurrentParam.objects.create(simulation=sim, ion_current=curr, **param)
     return sim

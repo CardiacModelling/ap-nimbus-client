@@ -27,7 +27,7 @@ class TestSimulationListView:
 
 
 @pytest.mark.django_db
-class TestSimulationCreateView_andTemplateView:
+class TestSimulationCreateView_and_TemplateView:
     @pytest.fixture
     def new_sim_data(self, simulation_range):
         return {'ion-TOTAL_FORMS': '7',
