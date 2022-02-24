@@ -5,9 +5,8 @@ from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
 import aiohttp
-import requests
 import xlsxwriter
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from braces.views import UserFormKwargsMixin
 from django.conf import settings
 from django.contrib import messages
@@ -48,26 +47,25 @@ def to_float(v):
     except ValueError:
         return v
 
+
 DONE = '..done!'
 AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
-API_EXCEPTIONS = (JSONDecodeError, KeyError, asyncio.TimeoutError,
-                  aiohttp.client_exceptions.ClientError, requests.exceptions.RequestException)
 
 
-async def call_api(session, call, sim):
+async def save_api_error(sim, message):
+    """
+    Set status and progress to Failed and save error message
+    """
+    sim.progress = 'Failed!'
+    sim.status = Simulation.Status.FAILED
+    sim.api_errors = message[:254]
+    await sync_to_async(sim.save)()
+
+
+async def get_from_api(session, call, sim):
     """
     Get the result of an API call
     """
-
-    async def save_api_error(sim, message):
-        """
-        Set status and progress to Failed and save error message
-        """
-        sim.progress = 'Failed!'
-        sim.status = Simulation.Status.FAILED
-        sim.api_errors = message[:254]
-        await sync_to_async(sim.save)()
-
     try:
         async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call)) as res:
             response = await res.json(content_type=None)
@@ -75,31 +73,36 @@ async def call_api(session, call, sim):
                 await save_api_error(sim, f"API error message: {str(response['error'])}")
             return response
     except JSONDecodeError:
-        await save_api_error(sim, f'Simulation failed:\n API call {call} returned invalid JSON.')
+        await save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
     except aiohttp.ClientError as e:
         await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
     except asyncio.TimeoutError:
         await save_api_error(sim, f'API connection timeput for call: {call}')
 
 
-def process_api_exception(e, when, response, sim):
-    sim.progress = 'Failed!'
-    sim.status = Simulation.Status.FAILED
-    sim.api_errors = 'Simulation %s failed:\n' % when
-    if 'error' in response:
-        sim.api_errors += str(response['error']) + '\n'
-    if isinstance(e, JSONDecodeError):
-        sim.api_errors = 'API call %s returned invalid JSON.' % when
-    elif isinstance(e, KeyError):
-        sim.api_errors = 'API call %s returned unexpected JSON: %s' % (when, str(response))
-    elif isinstance(e, ApManagerCallTimeOut):
-        sim.api_errors = ('Progress timeout. Progress not changed for more than %s seconds.'
-                          % settings.AP_PREDICT_STATUS_TIMEOUT)
-    elif isinstance(e, ApManagerCallStopped):
-        sim.api_errors = 'Simulation stopped prematurely.'
-    else:
-        sim.api_errors = 'API connection %s failed: %s' % (when, type(e))
-    sim.api_errors = sim.api_errors[:254]  # truncate to make sure it fits
+async def start_simulation_call(json_data, sim):
+    """
+    Call to start simulation
+    """
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT),
+                                         raise_for_status=True) as session:
+            async with session.post(settings.AP_PREDICT_ENDPOINT, json=json_data) as res:
+                response = await res.json(content_type=None)
+                if 'error' in response:
+                    await save_api_error(sim, f"API error message: {str(response['error'])}")
+                else:
+                    sim.ap_predict_call_id = response['success']['id']
+                    sim.status = Simulation.Status.INITIALISING
+                    await sync_to_async(sim.save)()
+    except KeyError:
+        await save_api_error(sim, "Response to simulation start call diid not contain the key 'success'.")
+    except JSONDecodeError:
+        await save_api_error(sim, 'Simulation failed:\n API call: start simulation returned invalid JSON.')
+    except aiohttp.ClientError as e:
+        await save_api_error(sim, f'API connection failed for call: start simulation: {str(e)}')
+    except asyncio.TimeoutError:
+        await save_api_error(sim, 'API connection timeput for call: start simulation')
 
 
 def start_simulation(sim):
@@ -148,18 +151,7 @@ def start_simulation(sim):
                 {'c50Spread': current_param.spread_of_uncertainty}
 
     # call api
-    response = {}
-    try:
-        response = requests.post(settings.AP_PREDICT_ENDPOINT, timeout=settings.AP_PREDICT_TIMEOUT,
-                                 json=call_data)
-        response.raise_for_status()  # Raise exception if request response doesn't return successful status
-        call_response = response.json()
-        sim.ap_predict_call_id = call_response['success']['id']
-        sim.status = Simulation.Status.INITIALISING
-    except API_EXCEPTIONS as e:
-        process_api_exception(e, 'start', response, sim)
-    finally:  # save
-        sim.save()
+    async_to_sync(start_simulation_call)(call_data, sim)
 
 
 class SimulationListView(LoginRequiredMixin, ListView):
@@ -218,8 +210,11 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
                                                            else curr.default_hill_coefficient),
                                 'saturation_level': to_int(param.saturation_level if param
                                                            else curr.default_saturation_level),
-                                'spread_of_uncertainty': param.spread_of_uncertainty if param and param.spread_of_uncertainty else None,
-                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty if param and param.spread_of_uncertainty
+                                'spread_of_uncertainty': param.spread_of_uncertainty
+                                if param and param.spread_of_uncertainty
+                                else None,
+                                'default_spread_of_uncertainty': to_int(param.spread_of_uncertainty
+                                                                        if param and param.spread_of_uncertainty
                                                                         else curr.default_spread_of_uncertainty),
                                 'channel_protein': curr.channel_protein,
                                 'gene': curr.gene, 'description': curr.description,
@@ -513,12 +508,12 @@ class StatusSimulationView(View):
         return view
 
     async def save_data(self, session, command, sim):
-        response = await call_api(session, command, sim)
+        response = await get_from_api(session, command, sim)
         if response and 'success' in response:
             setattr(sim, command, response['success'])
 
     async def update_sim(self, session, sim):
-        response = await call_api(session, 'progress_status', sim)
+        response = await get_from_api(session, 'progress_status', sim)
         # get progress if there is progress
         progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
         progress_changed = progress_text and progress_text != sim.progress
@@ -531,14 +526,16 @@ class StatusSimulationView(View):
         if not progress_changed and progress_text != DONE and \
                 (timezone.now() -
                  sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
-            sim.api_errors = f'Progress timeout. Progress not changed for more than {settings.AP_PREDICT_STATUS_TIMEOUT} seconds.'
+            sim.api_errors = ('Progress timeout. Progress not changed for more than '
+                              f'{settings.AP_PREDICT_STATUS_TIMEOUT} seconds.')
         elif not progress_changed or progress_text == DONE:
             # If there is no change, or if we are done see if we have stopped and try to save data
             # check if the simulation has stopped
-            stop_response = await call_api(session, 'STOP', sim)
+            stop_response = await get_from_api(session, 'STOP', sim)
             if stop_response and 'success' in stop_response and stop_response['success']:
                 # simulation has stopped, try to save results
-                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim)) for command in self.COMMANDS])
+                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim))
+                                    for command in self.COMMANDS])
                 # check we have voltage_traces and haven't FAILED one of the save steps
                 if sim.voltage_traces and not sim.status == Simulation.Status.FAILED:
                     sim.status = Simulation.Status.SUCCESS
@@ -570,6 +567,7 @@ class StatusSimulationView(View):
         return JsonResponse(data=data,
                             status=200, safe=False)
 
+
 class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
 
     """
@@ -582,10 +580,10 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
 
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
-        data = {'adp90': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}],
-                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data':[]}],
-                'traces': []
-        }
+        data = {'adp90': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': []}],
+                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': []}],
+                'traces': []}
+
         # add adp90 and qnet data
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
             da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
@@ -595,8 +593,8 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         # add voltage traces data
         for i, trace in enumerate(sim.voltage_traces):
             data['traces'].append({'color': i, 'enabled': True,
-                                    'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
-                                    'data': [[series['name'], series['value']] for series in trace['series']]})
+                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+                                   'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
                             status=200, safe=False)
