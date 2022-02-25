@@ -626,21 +626,51 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
 
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
-        data = {'adp90': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': []}],
-                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': []}],
+        data = {'adp90': [], #[{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': [], 'lines': {'show': True, 'lineWidth': 2}, 'points': {'show': True}, 'color': 0}],
+                'qnet': [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': [], 'lines': {'show': True, 'lineWidth': 2}, 'points': {'show': True}, 'color': 0}],
                 'traces': []}
 
-        # add adp90 and qnet data
-        for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
-            da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
-            data['adp90'][0]['data'].append([v_res['c'], da90])
-            if qnet:
-                data['qnet'][0]['data'].append([v_res['c'], to_float(qnet['qnet'])])
-        # add voltage traces data
-        for i, trace in enumerate(sim.voltage_traces):
-            data['traces'].append({'color': i, 'enabled': True,
-                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
-                                   'data': [[series['name'], series['value']] for series in trace['series']]})
+
+        appredict_data = {"dAp95%low": [["0", "0"], ["0.001", "0.00770995"], ["0.00359381", "0.042562"], ["0.0129155", "0.16749"], ["0.0464159", "0.612315"], ["0.16681", "2.15927"], ["0.599484", "7.35177"], ["2.15443", "22.9826"], ["7.74264", "58.7797"], ["27.8256", "118.427"], ["100", "289.79"]],
+                          "dAp86%low": [["0", "0"], ["0.001", "0.0157343"], ["0.00359381", "0.0713579"], ["0.0129155", "0.270435"], ["0.0464159", "0.9754"], ["0.16681", "3.38084"], ["0.599484", "11.3279"], ["2.15443", "33.3663"], ["7.74264", "77.7503"], ["27.8256", "151.197"], ["100", "305.124"]],
+                          "dAp68%low": [["0", "0"], ["0.001", "0.0255675"], ["0.00359381", "0.106618"], ["0.0129155", "0.396152"], ["0.0464159", "1.41462"], ["0.16681", "4.87728"], ["0.599484", "15.8733"], ["2.15443", "44.002"], ["7.74264", "95.2433"], ["27.8256", "286.463"], ["100", "590.076"]],
+                          "dAp38%low": [["0", "0"], ["0.001", "0.0389059"], ["0.00359381", "0.154402"], ["0.0129155", "0.565929"], ["0.0464159", "2.00059"], ["0.16681", "6.83643"], ["0.599484", "21.5258"], ["2.15443", "55.8853"], ["7.74264", "113.92"], ["27.8256", "289.04"], ["100", "590.076"]],
+                          'median_delta_APD90': [["0", "0"], ["0.001", "0.193572"], ["0.00359381", "0.369733"], ["0.0129155", "0.926583"], ["0.0464159", "2.87476"], ["0.16681", "9.38945"], ["0.599484", "28.1848"], ["2.15443", "68.3706"], ["7.74264", "133.729"], ["27.8256", "295.328"], ["100", "738.545"]],
+                          "dAp38%upp": [["0", "0"], ["0.001", "0.0791883"], ["0.00359381", "0.298385"], ["0.0129155", "1.07345"], ["0.0464159", "3.7046"], ["0.16681", "12.3575"], ["0.599484", "35.9032"], ["2.15443", "82.0441"], ["7.74264", "160.77"], ["27.8256", "311.102"], ["100", "590.076"]],
+                          "dAp68%upp": [["0", "0"], ["0.001", "0.120022"], ["0.00359381", "0.443844"], ["0.0129155", "1.58005"], ["0.0464159", "5.43954"], ["0.16681", "17.507"], ["0.599484", "47.5968"], ["2.15443", "100.925"], ["7.74264", "288.729"], ["27.8256", "590.076"], ["100", "590.076"]],
+                          "dAp86%upp": [["0", "0"], ["0.001", "0.193089"], ["0.00359381", "0.702892"], ["0.0129155", "2.46739"], ["0.0464159", "8.35349"], ["0.16681", "25.737"], ["0.599484", "64.0622"], ["2.15443", "126.826"], ["7.74264", "297.717"], ["27.8256", "590.076"], ["100", "590.076"]],
+                          "dAp95%upp": [["0", "0"], ["0.001", "0.282334"], ["0.00359381", "1.01717"], ["0.0129155", "3.51908"], ["0.0464159", "11.7705"], ["0.16681", "34.4422"], ["0.599484", "79.6112"], ["2.15443", "155.163"], ["7.74264", "307.66"], ["27.8256", "590.076"], ["100", "590.076"]]}
+
+        dataset2 = [{'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': appredict_data["median_delta_APD90"], 'lines': { 'show': True }, 'points': {'show': True}, 'color': "#edc240" },
+                    {'id': "dAp95%low", 'data': appredict_data["dAp95%low"], 'lines': {'show': True, 'lineWidth': 0, 'fill': False }, 'color': "#edc240"},
+                    {'id': "dAp86%low", 'data': appredict_data["dAp86%low"], 'lines': {'show': True, 'lineWidth': 0, 'fill': False }, 'color': "#edc240"},
+                    {'id': "dAp68%low", 'data': appredict_data["dAp68%low"], 'lines': {'show': True, 'lineWidth': 0, 'fill': False }, 'color': "#edc240"},
+                    {'id': "dAp38%low", 'data': appredict_data["dAp38%low"], 'lines': {'show': True, 'lineWidth': 0, 'fill': False }, 'color': "#edc240"},
+                    {'id': "dAp38%upp", 'data': appredict_data["dAp38%upp"], 'lines': {'show': True, 'lineWidth': 0, 'fill': 0.4 }, 'color': "#edc240", 'fillBetween': "dAp38%low"},
+                    {'id': "dAp68%upp", 'data': appredict_data["dAp68%upp"], 'lines': {'show': True, 'lineWidth': 0, 'fill': 0.3 }, 'color': "#edc240", 'fillBetween': "dAp68%low"},
+                    {'label': 'test label', 'id': "dAp86%upp", 'data': appredict_data["dAp86%upp"], 'lines': {'show': True, 'lineWidth': 0, 'fill': 0.2 }, 'color': "#edc240", 'fillBetween': "dAp86%low"},
+                    {'label': 'test label', 'id': "dAp95%upp", 'data': appredict_data["dAp95%upp"], 'lines': {'show': True, 'lineWidth': 0, 'fill': 0.1 }, 'color': "#edc240", 'fillBetween': "dAp95%low"}];
+        data['adp90'] = dataset2
+#        if len(sim.voltage_results) > 1:
+#            for i, percentile in enumerate(sim.voltage_results[0]['da90']):
+#                if percentile == 'median_delta_APD90' or len(sim.voltage_results[0]['da90']) == 1:
+#                    data['adp90'].append({'label': f'Simulation @ {sim.pacing_frequency} Hz', 'data': [], 'lines': {'show': True, 'lineWidth': 2}, 'points': {'show': True}, 'color': 0})
+#                    upper_fill_offset = 0.2
+#        # add adp90 and qnet data
+#        for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+#            for i, da90 in enumerate(v_res['da90']):
+#                data['adp90'][i]['data'].append([v_res['c'], da90])
+
+#            da90 = v_res['da90'][median_index]
+#            data['adp90'][0]['data'].append([v_res['c'], da90])
+#            if qnet:
+#                data['qnet'][0]['data'].append([v_res['c'], to_float(qnet['qnet'])])
+#
+#        # add voltage traces data
+#        for i, trace in enumerate(sim.voltage_traces):
+#            data['traces'].append({'color': i, 'enabled': True,
+#                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+#                                   'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
                             status=200, safe=False)

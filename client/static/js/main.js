@@ -23,6 +23,7 @@ require('./lib/flotcharts/jquery.flot.touch.js');
 require('./lib/flotcharts/jquery.flot.symbol.js');
 require('./lib/flotcharts/jquery.flot.legend.js');
 require('./lib/flotcharts/jquery.flot.logaxis.js');
+require('./lib/flotcharts/jquery.flot.fillbetween.js');
 
 
 const marked = require("./lib/marked.min.js"); // Markdown render
@@ -107,7 +108,7 @@ function renderGraph(pk){
             success: function(data) {
                 graphData = data;
                 adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
-                                series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
+//                                series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
