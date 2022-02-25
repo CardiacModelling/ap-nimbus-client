@@ -21,6 +21,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
+import jsonschema
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -29,6 +30,40 @@ from .forms import (
     SimulationForm,
 )
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
+
+
+DONE = '..done!'
+AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
+JSON_SCHEMAS = {
+    'q_net': {'type': 'array',
+              'items': {'type': 'object',
+                        'properties': {'c': {'type': 'string'}, 'qnet': {'type': 'string'}},
+                        'required': ['c', 'qnet'],
+                        'additionalProperties': False}},
+
+    'voltage_traces': {'type': 'array',
+                       'items': {'type': 'object',
+                                 'properties': {'name': {'type': 'string'},
+                                                'series': {'type': 'array',
+                                                           'items': {'type': 'object',
+                                                                     'properties': {'name': {'type': 'number'},
+                                                                                    'value': {'type': 'number'}},
+                                                                     'required': ['name', 'value'],
+                                                                     'additionalProperties': False}}},
+                                 'required': ['name', 'series'],
+                                 'additionalProperties': False}},
+
+    'voltage_results': {'type': 'array',
+                        'items': {'type': 'object',
+                                  'properties': {'c': {'type': 'string'},
+                                                 'pv': {'type': 'string'},
+                                                 'uv': {'type': 'string'},
+                                                 'a50': {'type': 'string'},
+                                                 'a90': {'type': 'string'},
+                                                 'da90': {'type': 'array',
+                                                          'items': {'type': 'string'}}},
+                                  'additionalProperties': False}}
+}
 
 
 def to_int(v: str):
@@ -48,10 +83,6 @@ def to_float(v):
         return v
 
 
-DONE = '..done!'
-AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
-
-
 async def save_api_error(sim, message):
     """
     Set status and progress to Failed and save error message
@@ -61,23 +92,32 @@ async def save_api_error(sim, message):
     sim.api_errors = message[:254]
     await sync_to_async(sim.save)()
 
-
 async def get_from_api(session, call, sim):
     """
     Get the result of an API call
     """
+    response = {}
     try:
         async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call)) as res:
             response = await res.json(content_type=None)
             if 'error' in response:
                 await save_api_error(sim, f"API error message: {str(response['error'])}")
-            return response
     except JSONDecodeError:
         await save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
     except aiohttp.ClientError as e:
         await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
     except asyncio.TimeoutError:
         await save_api_error(sim, f'API connection timeput for call: {call}')
+    except AssertionError as e:
+        await save_api_error(sim, f'Something went wrong with API call {AP_MANAGER_URL % (sim.ap_predict_call_id, call)} check the URL is valid.')
+    finally:
+        try:  # validate a succesful result if we have a schema for it
+            if 'success' in response and call in JSON_SCHEMAS:
+                jsonschema.validate(instance=response['success'], schema=JSON_SCHEMAS[call])
+        except jsonschema.exceptions.ValidationError as e:
+            await save_api_error(sim, f'Result to call {call} failed JSON validation: {e.message}')
+        finally:
+            return response
 
 
 async def start_simulation_call(json_data, sim):
@@ -96,14 +136,15 @@ async def start_simulation_call(json_data, sim):
                     sim.status = Simulation.Status.INITIALISING
                     await sync_to_async(sim.save)()
     except KeyError:
-        await save_api_error(sim, "Response to simulation start call diid not contain the key 'success'.")
+        await save_api_error(sim, 'Response to simulation start call diid not contain the simulation id.')
     except JSONDecodeError:
         await save_api_error(sim, 'Simulation failed:\n API call: start simulation returned invalid JSON.')
     except aiohttp.ClientError as e:
         await save_api_error(sim, f'API connection failed for call: start simulation: {str(e)}')
     except asyncio.TimeoutError:
         await save_api_error(sim, 'API connection timeput for call: start simulation')
-
+    except AssertionError:
+        await save_api_error(sim, f'Something went wrong with API call for {settings.AP_PREDICT_ENDPOINT} check the URL is valid.')
 
 def start_simulation(sim):
     """
@@ -426,10 +467,13 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         qNet.write(row, 5, 'APD50(ms)', bold)
         qNet.write(row, 6, 'APD90(ms)', bold)
         row += 1
+        if len(sim.voltage_results) > 0 and len(sim.voltage_results[0]['da90']) > 1:
+            qNet.write(row, 1, ", ".join(sim.voltage_results[0]['da90']), bold)
+            row += 1
 
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
             qNet.write(row, 0, to_float(v_res['c']))
-            da90 = v_res['da90'][0] if len(v_res['da90']) == 1 else str(v_res['da90'])
+            da90 = to_float(v_res['da90'][0]) if len(v_res['da90']) == 1 else ", ".join(v_res['da90'])
             qNet.write(row, 1, to_float(da90))
             qNet.write(row, 2, to_float(qnet['qnet']) if qnet else 'n/a')
             qNet.write(row, 3, to_float(v_res['pv']))
@@ -536,12 +580,14 @@ class StatusSimulationView(View):
                 # simulation has stopped, try to save results
                 await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim))
                                     for command in self.COMMANDS])
-                # check we have voltage_traces and haven't FAILED one of the save steps
-                if sim.voltage_traces and not sim.status == Simulation.Status.FAILED:
-                    sim.status = Simulation.Status.SUCCESS
-                    sim.progress = 'Completed'
-                else:  # saving results failed we must have stopped prematurely
-                    sim.api_errors = 'Simulation stopped prematurely.'
+
+                if sim.status != Simulation.Status.FAILED:  # if we didn't fail saving
+                    # check we have voltage_traces
+                    if sim.voltage_traces and sim.status != Simulation.Status.FAILED:
+                        sim.status = Simulation.Status.SUCCESS
+                        sim.progress = 'Completed'
+                    else:  # we didn't get any data after stopping, we must have stopped prematurely
+                        await save_api_error(sim, 'Simulation stopped prematurely. (No data available after simulation stopped).')
         await sync_to_async(sim.save)()
 
     async def get(self, request, *args, **kwargs):
