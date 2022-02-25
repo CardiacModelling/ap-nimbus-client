@@ -131,7 +131,7 @@ function renderGraph(pk){
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
-                if(graphData['qnet'][0]['data'].length > 0){
+                if(graphData['qnet'].length > 0){
                     qnetOptions = {legend: {show: false},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
