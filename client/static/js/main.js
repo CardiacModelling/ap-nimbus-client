@@ -107,6 +107,11 @@ function renderGraph(pk){
             dataType: 'json',
             success: function(data) {
                 graphData = data;
+                // show messages if there are any
+                if(data['messages']){
+                    $('#messages').html(data['messages'].join('<br/>'));
+                    $("#messages-container").removeClass("hide-messages");
+                }
                 adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
@@ -121,7 +126,6 @@ function renderGraph(pk){
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Membrane Voltage (mV)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-
                 $.plot('#adp90-graph', graphData['adp90'], adp90Options);
                 // make sure the legend does not get replotted
                 adp90Options['legend'] = {'show': false}; // clone options for zoom reset

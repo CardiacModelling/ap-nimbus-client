@@ -69,8 +69,8 @@
     <fieldset>
       <legend>Status</legend>
       <div id="progressbar-{{object.pk}}" class="progressbar progressbar-wide"><div class="progress-label"></div></div>
-      {% if object.api_errors %}<div><label>API errors: </label> {{ object.api_errors }}</div>{% endif %}
-      {% if object.messages %}<div><label>AP Predict messages: </label> {{ object.messages }}</div>{% endif %}
+      {% if object.api_errors %}<br/><div><label>API errors: </label></div><div> {{ object.api_errors }}</div>{% endif %}
+       <div id="messages-container" class="hide-messages"><div><br/><label>AP Predict messages: </label></div><div id="messages"></div></div>
     </fieldset>
     <fieldset>
       <legend>Actions</legend>
