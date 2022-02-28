@@ -629,7 +629,8 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         sim = self.get_object()
         data = {'adp90': [],
                 'qnet': [],
-                'traces': []}
+                'traces': [],
+                'messages': sim.messages}
 
         # headers
         num_percentiles = 0  # count number of percentiles, we assume we'll see the low ones first
@@ -653,7 +654,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
             for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
                 for i, da90 in enumerate(v_res['da90']):
                     data['adp90'][i]['data'].append([v_res['c'], da90])
-                if sim.q_net:
+                if qnet:
                     for i, qnet in enumerate(qnet['qnet'].split(',')):
                         data['qnet'][i]['data'].append([v_res['c'], to_float(qnet)])
 

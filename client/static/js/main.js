@@ -108,7 +108,6 @@ function renderGraph(pk){
             success: function(data) {
                 graphData = data;
                 adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
-//                                series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
@@ -337,6 +336,8 @@ $(document).ready(function(){
 
     });
     // initialise ion current enabledness
+    // the spread checkbox should be checked if there is any box with a value in it (hence the # of boxes without value != total number of spread input boxes
+    $('#enable_spread_of_uncertainty').attr('checked', $('.spread_of_uncertainty:not([value])').length!= $('.spread_of_uncertainty').length );
     $('#id_model').change();
 
     // display relevant compound parems based on seletcted type
