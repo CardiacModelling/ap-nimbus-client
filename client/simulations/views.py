@@ -638,9 +638,11 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         if len(sim.voltage_results) > 1:
             for percentile in sim.voltage_results[0]['da90']:
                 pct_label = f'Simulation @ {sim.pacing_frequency}Hz'
+                linewidth = 2
                 if '%' in percentile:
-                    pct_label += percentile.replace('%upp', '% upper').replace('%low', '% lower').replace('dAp',' ')
-                series_dict = {'label': pct_label, 'id': percentile, 'data': [], 'lines': {'show': True, 'lineWidth': 0 if len(sim.voltage_results[0]['da90']) > 1 else 2, 'fill': False}, 'points': {'show': percentile == 'median_delta_APD90' or  len(sim.voltage_results[0]['da90']) == 1}, 'color': "#edc240"}
+                    pct_label += percentile.replace('%upp', '% upper').replace('%low', '% lower').replace('dAp',' ').replace('delta_APD90(%)', '')
+                    linewidth = 0 if len(sim.voltage_results[0]['da90']) > 1 else 2
+                series_dict = {'enabled': True, 'label': pct_label, 'id': percentile, 'data': [], 'lines': {'show': True, 'lineWidth': linewidth, 'fill': False}, 'points': {'show': percentile == 'median_delta_APD90' or  len(sim.voltage_results[0]['da90']) == 1}, 'color': "#edc240"}
                 if 'upp' in percentile:
                     series_dict['lines']['fill'] = fill_alpha
                     series_dict['fillBetween'] = percentile.replace('upp', 'low')

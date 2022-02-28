@@ -49,6 +49,8 @@ var tracesOptions = {};
 var adp90OptionsNoZoom = {};
 var qnetOptionsNoZoom = {};
 var tracesOptionsNoZoom = {};
+var confidencePercentages = {};
+
 
 function zoom(ranges, options, plotFunc){
     // clone options so we can reset later;
@@ -86,6 +88,30 @@ function hoverOut (x_label, x_units, y_label, y_units, hoverDataId) {
     $(hoverDataId).html(hoverData);
 }
 
+function resetQnet(resetZoom){
+    if($('#adp90-graph').hasClass('show-graph')){
+        if(resetZoom){
+            adp90Options = JSON.parse(JSON.stringify(adp90OptionsNoZoom));
+        }
+        plotQnet('#adp90-graph', 'adp90', adp90Options);
+    }else if($('#qnet-graph').hasClass('show-graph')){
+        if(resetZoom){
+            qnetOptions = JSON.parse(JSON.stringify(qnetOptionsNoZoom))
+        }
+        plotQnet('#qnet-graph', 'qnet', qnetOptions);
+    }
+}
+
+function plotQnet(divId, type, options){
+    var data = [];
+    for(let i=0; i< graphData[type].length; i++){
+        if(graphData[type][i]['enabled']){
+            data.push(graphData[type][i]);
+        }
+    }
+    $.plot(divId, data, options);
+}
+
 function plotTraces(tracesOptions){
     var data = [];
     graphData['traces'].forEach(function (item) {
@@ -112,7 +138,40 @@ function renderGraph(pk){
                     $('#messages').html(data['messages'].join('<br/>'));
                     $("#messages-container").removeClass("hide-messages");
                 }
-                adp90Options = {legend: {show: true, container: $('#legendContaineradp90').get(0)},
+                // set qnet series label and gather confidence intervals
+                for(let i=0; i< graphData['adp90'].length; i++){
+                    label = graphData['adp90'][i]['label'];
+                    const percentageMatch = label.match(/.+Hz (.+%).+/);
+                    if(percentageMatch == null){  // this is the main series set the label
+                        $('#qnet-series-name').html(label);
+                    }else{
+                        percentage = percentageMatch[1];
+                        if(confidencePercentages[percentage] == undefined){
+                            confidencePercentages[percentage] = [i];
+                        }else{
+                            confidencePercentages[percentage].push(i);
+                        }
+                    }
+                }
+                if (!$.isEmptyObject(confidencePercentages)){
+                    $('#confidence-percentages').removeClass('hide-messages');
+                    for (const [pct, series] of Object.entries(confidencePercentages)) {
+                        $('#confidence-percentages').append(`<input type="checkbox" id="${pct}" class="confidence-checkbox" checked> ${pct}<br/>`);
+                    }
+                }
+                // assign click action for confidence checkboxes
+                $('.confidence-checkbox').click(function(){
+                    for (const i of confidencePercentages[$(this).attr('id')]) {
+                        if(i < graphData['adp90'].length){
+                            graphData['adp90'][i]['enabled'] = !graphData['adp90'][i]['enabled'];
+                        }
+                        if(i < graphData['qnet'].length){
+                            graphData['qnet'][i]['enabled'] = !graphData['qnet'][i]['enabled'];
+                        }
+                    }
+                    resetQnet(false);
+                })
+                adp90Options = {legend: {show: false},
                                 grid: {hoverable: true, clickable: true},
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
@@ -126,11 +185,10 @@ function renderGraph(pk){
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Membrane Voltage (mV)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-                $.plot('#adp90-graph', graphData['adp90'], adp90Options);
-                // make sure the legend does not get replotted
-                adp90Options['legend'] = {'show': false}; // clone options for zoom reset
+                plotQnet('#adp90-graph', 'adp90', adp90Options);
+                // clone options for zoom reset
                 adp90OptionsNoZoom = JSON.parse(JSON.stringify(adp90Options));
-                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, adp90Options, (opts) => $.plot('#adp90-graph', graphData['adp90'], opts)));
+                $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, adp90Options, (opts) => plotQnet('#adp90-graph', 'adp90', adp90Options)));
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
@@ -143,8 +201,8 @@ function renderGraph(pk){
                                    selection: {mode: "xy"}
                     };
                     qnetOptionsNoZoom = JSON.parse(JSON.stringify(qnetOptions)); // clone options for zoom reset
-                    $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
-                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => $.plot('#qnet-graph', graphData['qnet'], opts)));
+                    plotQnet('#qnet-graph', 'qnet', qnetOptions);
+                    $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#adp90').click(); // now select adp90 graph
@@ -179,15 +237,7 @@ function renderGraph(pk){
 
 
                 // add reset actions
-                $('#resetqnet').click(function(){  //reset adp90 / qnet graph button
-                    if($('#adp90-graph').hasClass('show-graph')){
-                        adp90Options = JSON.parse(JSON.stringify(adp90OptionsNoZoom));
-                        $.plot('#adp90-graph', graphData['adp90'], adp90Options);
-                    }else if($('#qnet-graph').hasClass('show-graph')){
-                        qnetOptions = JSON.parse(JSON.stringify(qnetOptionsNoZoom))
-                        $.plot('#qnet-graph', graphData['qnet'], qnetOptions);
-                    }
-                });
+                $('#resetqnet').click(() => resetQnet(true));
                 $('#resetTraces').click(function(){ // reset traces graph
                     tracesOptions = JSON.parse(JSON.stringify(tracesOptionsNoZoom));
                     plotTraces(tracesOptions);
@@ -448,6 +498,7 @@ $(document).ready(function(){
         $('#qnet-graph').addClass('hide-graph');
         $('#adp90').attr('disabled', true);
         $('#qnet').attr('disabled', false);
+        resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
     $('#qnet').click(function(){
@@ -457,6 +508,7 @@ $(document).ready(function(){
         $('#qnet-graph').addClass('show-graph');
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', true);
+        resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
 });
