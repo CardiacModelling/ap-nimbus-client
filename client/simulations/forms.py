@@ -4,7 +4,6 @@ import magic
 from braces.forms import UserKwargModelFormMixin
 from django import forms
 from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
-from django.forms import inlineformset_factory
 from files.models import CellmlModel
 
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
@@ -54,7 +53,7 @@ class IonCurrentForm(forms.ModelForm):
 
 
 #  Set of forms for Ion current parameters.
-IonCurrentFormSet = inlineformset_factory(
+IonCurrentFormSet = forms.inlineformset_factory(
     parent_model=Simulation,
     model=SimulationIonCurrentParam,
     form=IonCurrentForm,
@@ -79,11 +78,20 @@ class CompoundConcentrationPointForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+        self.forms = []
         self.fields['concentration'].required = False
         self.fields['concentration'].widget.attrs = {'class': 'compound-concentration', 'required': False,
                                                      'min': 0, 'step': 'any'}
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
+
+    def clean(self):
+        super().clean()
+        # check if this value is a duplicate (it appears in previously processed forms)
+        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None) for frm in self.forms if frm is not self]
+        if self.cleaned_data.get('concentration') in other_concentrations_so_far:
+            raise forms.ValidationError('Duplicate concentration point value!')
+        return self.cleaned_data
 
     def save(self, simulation=None, **kwargs):
         # concentration not set, don't try to save
@@ -91,16 +99,26 @@ class CompoundConcentrationPointForm(forms.ModelForm):
             return None
         concentration = super().save(commit=False)
         concentration.simulation = simulation
-        assert concentration.concentration
         concentration.save()
         return concentration
 
 
-CompoundConcentrationPointFormSet = inlineformset_factory(
+class CompoundConcentrationPointNoDuplicatesSet(BaseSaveFormSet):
+    """
+    Set of forms with a save method that does not allow duplicate concentrations.
+    """
+    def is_valid(self):
+        # save link to other forms to check for duplicates
+        for concentration in self.forms:
+            concentration.forms = self.forms
+        return super().is_valid()
+
+
+CompoundConcentrationPointFormSet = forms.inlineformset_factory(
     parent_model=Simulation,
     model=CompoundConcentrationPoint,
     form=CompoundConcentrationPointForm,
-    formset=BaseSaveFormSet,
+    formset=CompoundConcentrationPointNoDuplicatesSet,
     exclude=('simulation', ),
     can_delete=False,
     can_order=False,
@@ -117,8 +135,8 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean_title(self):
         title = self.cleaned_data['title']
-        if self._meta.model.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
-                                                                                          if self.instance else None]):
+        if Simulation.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
+                                                                                    if self.instance else None]).exists():
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
 

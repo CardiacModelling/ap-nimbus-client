@@ -23,6 +23,7 @@ from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
 import jsonschema
 import copy
+from django.db import IntegrityError
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -170,7 +171,7 @@ def start_simulation(sim):
     if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
         assert False, "PK data not yet implemented" # pkdata
     elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-        call_data['plasmaPoints'] = [c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]
+        call_data['plasmaPoints'] = sorted(set([c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
     else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
         call_data['plasmaMaximum'] = sim.maximum_concentration
         call_data['plasmaMinimum'] = sim.minimum_concentration

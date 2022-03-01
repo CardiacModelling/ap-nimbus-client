@@ -39,6 +39,7 @@
                      <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
         {% endwith %}
         <tbody>
+{{ion_formset.non_field_errors}}
           {% for ion_form in ion_formset %}
             {{ion_form.non_field_errors}}
             <tr><td id="currentname"><input type="hidden" name="ion-{{ forloop.counter0 }}-models" value="{% for ion in ion_form.initial.models %}{{ion}},{% endfor %}" class="used-in-models" title="" id="id_ion-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
@@ -63,6 +64,7 @@
            </div>
            <div id="div_pk_or_concs_1">
                    <div id="compound-concentration-points">
+{{concentration_formset.non_field_errors}}
                    {% for concentration_form in concentration_formset %}
                        <div class="compound-concentration-point">
                            <input type="hidden"  class="compound-concentration-point-index" value="{{forloop.counter}}">
