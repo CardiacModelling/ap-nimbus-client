@@ -44,13 +44,12 @@ class IonCurrentForm(forms.ModelForm):
 
     def save(self, simulation, **kwargs):
         # current not set, don't try to save
-        if not self.cleaned_data.get('current', None):
+        if self.cleaned_data.get('current', None) is None:
             return None
         param = super().save(commit=False)
         param.simulation = simulation
         param.save()
         return param
-
 
 #  Set of forms for Ion current parameters.
 IonCurrentFormSet = forms.inlineformset_factory(
@@ -88,20 +87,19 @@ class CompoundConcentrationPointForm(forms.ModelForm):
     def clean(self):
         super().clean()
         # check if this value is a duplicate (it appears in previously processed forms)
-        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None) for frm in self.forms if frm is not self]
+        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None) for frm in self.forms if frm not in (self, None)]
         if self.cleaned_data.get('concentration') in other_concentrations_so_far:
             raise forms.ValidationError('Duplicate concentration point value!')
         return self.cleaned_data
 
     def save(self, simulation=None, **kwargs):
         # concentration not set, don't try to save
-        if not self.cleaned_data.get('concentration', None):
+        if self.cleaned_data.get('concentration', None) is None:
             return None
         concentration = super().save(commit=False)
         concentration.simulation = simulation
         concentration.save()
         return concentration
-
 
 class CompoundConcentrationPointNoDuplicatesSet(BaseSaveFormSet):
     """
