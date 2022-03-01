@@ -1,10 +1,12 @@
 import asyncio
+import copy
 import io
 from itertools import zip_longest
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
 import aiohttp
+import jsonschema
 import xlsxwriter
 from asgiref.sync import async_to_sync, sync_to_async
 from braces.views import UserFormKwargsMixin
@@ -21,9 +23,6 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 from files.models import CellmlModel, IonCurrent
-import jsonschema
-import copy
-from django.db import IntegrityError
 
 from .forms import (
     CompoundConcentrationPointFormSet,
@@ -94,6 +93,7 @@ async def save_api_error(sim, message):
     sim.api_errors = message[:254]
     await sync_to_async(sim.save)()
 
+
 async def get_from_api(session, call, sim):
     """
     Get the result of an API call
@@ -110,8 +110,9 @@ async def get_from_api(session, call, sim):
         await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
     except asyncio.TimeoutError:
         await save_api_error(sim, f'API connection timeput for call: {call}')
-    except AssertionError as e:
-        await save_api_error(sim, f'Something went wrong with API call {AP_MANAGER_URL % (sim.ap_predict_call_id, call)} check the URL is valid.')
+    except AssertionError:
+        await save_api_error(sim, ('Something went wrong with API call '
+                                   f'{AP_MANAGER_URL % (sim.ap_predict_call_id, call)} check the URL is valid.'))
     finally:
         try:  # validate a succesful result if we have a schema for it
             if 'success' in response and call in JSON_SCHEMAS:
@@ -146,7 +147,9 @@ async def start_simulation_call(json_data, sim):
     except asyncio.TimeoutError:
         await save_api_error(sim, 'API connection timeput for call: start simulation')
     except AssertionError:
-        await save_api_error(sim, f'Something went wrong with API call for {settings.AP_PREDICT_ENDPOINT} check the URL is valid.')
+        await save_api_error(sim, (f'Something went wrong with API call for {settings.AP_PREDICT_ENDPOINT}'
+                                   ' check the URL is valid.'))
+
 
 def start_simulation(sim):
     """
@@ -171,7 +174,8 @@ def start_simulation(sim):
     if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
         assert False, "PK data not yet implemented" # pkdata
     elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-        call_data['plasmaPoints'] = sorted(set([c.concentration for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
+        call_data['plasmaPoints'] = sorted(set([c.concentration
+                                                for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
     else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
         call_data['plasmaMaximum'] = sim.maximum_concentration
         call_data['plasmaMinimum'] = sim.minimum_concentration
@@ -589,7 +593,8 @@ class StatusSimulationView(View):
                         sim.status = Simulation.Status.SUCCESS
                         sim.progress = 'Completed'
                     else:  # we didn't get any data after stopping, we must have stopped prematurely
-                        await save_api_error(sim, 'Simulation stopped prematurely. (No data available after simulation stopped).')
+                        await save_api_error(sim, ('Simulation stopped prematurely. '
+                                                   '(No data available after simulation stopped).'))
         await sync_to_async(sim.save)()
 
     async def get(self, request, *args, **kwargs):
@@ -641,9 +646,13 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 pct_label = f'Simulation @ {sim.pacing_frequency}Hz'
                 linewidth = 2
                 if '%' in percentile:
-                    pct_label += percentile.replace('%upp', '% upper').replace('%low', '% lower').replace('dAp',' ').replace('delta_APD90(%)', '')
+                    pct_label += percentile.replace('%upp', '% upper').replace('%low', '% lower').replace('dAp', ' ')\
+                        .replace('delta_APD90(%)', '')
                     linewidth = 0 if len(sim.voltage_results[0]['da90']) > 1 else 2
-                series_dict = {'enabled': True, 'label': pct_label, 'id': percentile, 'data': [], 'lines': {'show': True, 'lineWidth': linewidth, 'fill': False}, 'points': {'show': percentile == 'median_delta_APD90' or  len(sim.voltage_results[0]['da90']) == 1}, 'color': "#edc240"}
+                series_dict = {'enabled': True, 'label': pct_label, 'id': percentile, 'data': [], 'color': "#edc240",
+                               'lines': {'show': True, 'lineWidth': linewidth, 'fill': False},
+                               'points': {'show': percentile == 'median_delta_APD90'
+                                          or len(sim.voltage_results[0]['da90']) == 1}}
                 if 'upp' in percentile:
                     series_dict['lines']['fill'] = fill_alpha
                     series_dict['fillBetween'] = percentile.replace('upp', 'low')

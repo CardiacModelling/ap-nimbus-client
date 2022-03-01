@@ -51,6 +51,7 @@ class IonCurrentForm(forms.ModelForm):
         param.save()
         return param
 
+
 #  Set of forms for Ion current parameters.
 IonCurrentFormSet = forms.inlineformset_factory(
     parent_model=Simulation,
@@ -87,7 +88,8 @@ class CompoundConcentrationPointForm(forms.ModelForm):
     def clean(self):
         super().clean()
         # check if this value is a duplicate (it appears in previously processed forms)
-        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None) for frm in self.forms if frm not in (self, None)]
+        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None)
+                                       for frm in self.forms if frm not in (self, None)]
         if self.cleaned_data.get('concentration') in other_concentrations_so_far:
             raise forms.ValidationError('Duplicate concentration point value!')
         return self.cleaned_data
@@ -100,6 +102,7 @@ class CompoundConcentrationPointForm(forms.ModelForm):
         concentration.simulation = simulation
         concentration.save()
         return concentration
+
 
 class CompoundConcentrationPointNoDuplicatesSet(BaseSaveFormSet):
     """
@@ -133,8 +136,8 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean_title(self):
         title = self.cleaned_data['title']
-        if Simulation.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
-                                                                                    if self.instance else None]).exists():
+        if Simulation.objects.filter(title=title, author=self.user)\
+                .exclude(pk__in=[self.instance.pk if self.instance else None]).exists():
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
 
