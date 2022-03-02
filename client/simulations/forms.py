@@ -88,10 +88,13 @@ class CompoundConcentrationPointForm(forms.ModelForm):
     def clean(self):
         super().clean()
         # check if this value is a duplicate (it appears in previously processed forms)
-        other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None)
-                                       for frm in self.forms if frm not in (self, None)]
-        if self.cleaned_data.get('concentration') in other_concentrations_so_far:
-            raise forms.ValidationError('Duplicate concentration point value!')
+        concentration = self.cleaned_data.get('concentration', None)
+        if concentration is not None:
+            other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None)
+                                           for frm in self.forms if frm is not self]
+
+            if concentration in other_concentrations_so_far:
+                raise forms.ValidationError('Duplicate concentration point value!')
         return self.cleaned_data
 
     def save(self, simulation=None, **kwargs):

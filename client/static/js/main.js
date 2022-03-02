@@ -418,6 +418,10 @@ $(document).ready(function(){
             $('#id_minimum_concentration').removeAttr('min');
             $('#id_maximum_concentration').removeAttr('min');
         }
+        // ensabled for input of concentration points, to disable checking duplicate when we're not using it
+        div_1_vis = $('#div_pk_or_concs_1').css('visibility') == 'visible'
+        $('.compound-concentration').attr('disabled', !div_1_vis);
+
         // update required for Pharmacokinetics
         div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
         $('#id_PK_data').attr('required', div_2_vis);

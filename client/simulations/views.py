@@ -128,6 +128,9 @@ async def start_simulation_call(json_data, sim):
     Call to start simulation
     """
     try:
+        form = aiohttp.FormData()
+        for key, value in json_data.items():
+            form.add_field(key, value)
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT),
                                          raise_for_status=True) as session:
             async with session.post(settings.AP_PREDICT_ENDPOINT, json=json_data) as res:
@@ -167,12 +170,14 @@ def start_simulation(sim):
     sim.voltage_results = ''
 
     # build json data for api call
-    #todo: pk_data, cellml_file
+    #todo: pk_data
     call_data = {'pacingFrequency': sim.pacing_frequency,
                  'pacingMaxTime': sim.maximum_pacing_time}
 
     if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
-        assert False, "PK data not yet implemented" # pkdata
+        with open(sim.PK_data.path, 'rb') as PK_data_file:
+            call_data['PK_data_file'] = PK_data_file.read().decode('unicode-escape')
+        #assert False, "PK data not yet implemented" # pkdata
     elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
         call_data['plasmaPoints'] = sorted(set([c.concentration
                                                 for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
@@ -185,7 +190,8 @@ def start_simulation(sim):
     if sim.model.ap_predict_model_call:
         call_data['modelId'] = sim.model.ap_predict_model_call
     else:
-        assert False, "uploaded cellml not yet implemented" #call_data['modelId'] = sim.model.cellml_file.url
+        with open(sim.model.cellml_file.path, 'rb') as cellml_file:
+            call_data['cellml_file'] = cellml_file.read().decode('unicode-escape')
 
     for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
         call_data[current_param.ion_current.name] = {
