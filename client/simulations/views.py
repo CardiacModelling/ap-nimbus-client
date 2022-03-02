@@ -647,6 +647,10 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         # headers
         num_percentiles = 0  # count number of percentiles, we assume we'll see the low ones first
         fill_alpha = 0.3
+        requested_concentrations = None
+        if sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+            requested_concentrations = tuple(to_float(c.concentration) for c in CompoundConcentrationPoint.objects.filter(simulation=sim))
+
         if len(sim.voltage_results) > 1:
             for percentile in sim.voltage_results[0]['da90']:
                 pct_label = f'Simulation @ {sim.pacing_frequency}Hz'
@@ -670,7 +674,11 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                     data['qnet'].append(copy.deepcopy(series_dict))
 
             for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+                # cut off data for concentrations we haven't asked fro from qnet/adp90 graphs
+                if requested_concentrations and to_float(v_res['c']) not in requested_concentrations:
+                    continue
                 for i, da90 in enumerate(v_res['da90']):
+                    assert len(data['adp90']) > i, str(len(data['adp90'])) + " \n\n"+ str(v_res['c']) + "\n\n" + str(to_float(v_res['c'])) + "\n\n" + str(requested_concentrations)
                     data['adp90'][i]['data'].append([v_res['c'], da90])
                 if qnet:
                     for i, qnet in enumerate(qnet['qnet'].split(',')):
