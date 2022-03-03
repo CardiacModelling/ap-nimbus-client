@@ -4,6 +4,6 @@ django-braces==1.15.0
 python-magic==0.4.24
 uWSGI==2.0.20
 cellmlmanip==0.3.3
-aiohttp==3.8.1
+httpx==0.22.0
 xlsxwriter==3.0.2
 jsonschema==4.4.0

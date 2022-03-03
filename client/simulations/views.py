@@ -1,3 +1,4 @@
+import httpx
 import asyncio
 import copy
 import io
@@ -5,7 +6,6 @@ from itertools import zip_longest
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
-import aiohttp
 import jsonschema
 import xlsxwriter
 from asgiref.sync import async_to_sync, sync_to_async
@@ -84,74 +84,41 @@ def to_float(v):
         return v
 
 
-async def save_api_error(sim, message):
+def save_api_error(sim, message):
     """
     Set status and progress to Failed and save error message
     """
     sim.progress = 'Failed!'
     sim.status = Simulation.Status.FAILED
     sim.api_errors = message[:254]
-    await sync_to_async(sim.save)()
+    sim.save()
 
 
-async def get_from_api(session, call, sim):
+async def get_from_api(client, call, sim):
     """
     Get the result of an API call
     """
     response = {}
+    text = ''
     try:
-        async with session.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call)) as res:
-            response = await res.json(content_type=None)
-            if 'error' in response:
-                await save_api_error(sim, f"API error message: {str(response['error'])}")
+        res = await client.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call), timeout=settings.AP_PREDICT_TIMEOUT)
+        response = res.json()
+        if 'error' in response:
+            await sync_to_async(save_api_error)(sim, f"API error message: {str(response['error'])}")
     except JSONDecodeError:
-        await save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
-    except aiohttp.ClientError as e:
-        await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
-    except asyncio.TimeoutError:
-        await save_api_error(sim, f'API connection timeput for call: {call}')
-    except AssertionError:
-        await save_api_error(sim, ('Something went wrong with API call '
-                                   f'{AP_MANAGER_URL % (sim.ap_predict_call_id, call)} check the URL is valid.'))
+        await sync_to_async(save_api_error)(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
+    except httpx.HTTPError:
+        await sync_to_async(save_api_error)(sim, f'API connection failed for call: {call}: {type(e)} - {str(e)}')
+    except httpx.InvalidURL:
+        await sync_to_async(save_api_error)(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
     finally:
         try:  # validate a succesful result if we have a schema for it
             if 'success' in response and call in JSON_SCHEMAS:
                 jsonschema.validate(instance=response['success'], schema=JSON_SCHEMAS[call])
         except jsonschema.exceptions.ValidationError as e:
-            await save_api_error(sim, f'Result to call {call} failed JSON validation: {e.message}')
+            await sync_to_async(save_api_error)(sim, f'Result to call {call} failed JSON validation: {e.message}')
         finally:
             return response
-
-
-async def start_simulation_call(json_data, sim):
-    """
-    Call to start simulation
-    """
-    try:
-        form = aiohttp.FormData()
-        for key, value in json_data.items():
-            form.add_field(key, value)
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT),
-                                         raise_for_status=True) as session:
-            async with session.post(settings.AP_PREDICT_ENDPOINT, json=json_data) as res:
-                response = await res.json(content_type=None)
-                if 'error' in response:
-                    await save_api_error(sim, f"API error message: {str(response['error'])}")
-                else:
-                    sim.ap_predict_call_id = response['success']['id']
-                    sim.status = Simulation.Status.INITIALISING
-                    await sync_to_async(sim.save)()
-    except KeyError:
-        await save_api_error(sim, 'Response to simulation start call diid not contain the simulation id.')
-    except JSONDecodeError:
-        await save_api_error(sim, 'Simulation failed:\n API call: start simulation returned invalid JSON.')
-    except aiohttp.ClientError as e:
-        await save_api_error(sim, f'API connection failed for call: start simulation: {str(e)}')
-    except asyncio.TimeoutError:
-        await save_api_error(sim, 'API connection timeput for call: start simulation')
-    except AssertionError:
-        await save_api_error(sim, (f'Something went wrong with API call for {settings.AP_PREDICT_ENDPOINT}'
-                                   ' check the URL is valid.'))
 
 
 def start_simulation(sim):
@@ -170,14 +137,11 @@ def start_simulation(sim):
     sim.voltage_results = ''
 
     # build json data for api call
-    #todo: pk_data
     call_data = {'pacingFrequency': sim.pacing_frequency,
                  'pacingMaxTime': sim.maximum_pacing_time}
-
-    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:
+    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:  # pk data file
         with open(sim.PK_data.path, 'rb') as PK_data_file:
             call_data['PK_data_file'] = PK_data_file.read().decode('unicode-escape')
-        #assert False, "PK data not yet implemented" # pkdata
     elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
         call_data['plasmaPoints'] = sorted(set([c.concentration
                                                 for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
@@ -203,8 +167,21 @@ def start_simulation(sim):
             call_data[current_param.ion_current.name]['spreads'] = \
                 {'c50Spread': current_param.spread_of_uncertainty}
 
-    # call api
-    async_to_sync(start_simulation_call)(call_data, sim)
+    # call api to start simulation
+    try:
+        response = httpx.post(settings.AP_PREDICT_ENDPOINT, json=call_data).json()
+        if 'error' in response:
+            save_api_error(sim, f"API error message: {response['error']}")
+        else:
+            sim.ap_predict_call_id = response['success']['id']
+            sim.status = Simulation.Status.INITIALISING
+            sim.save()
+    except JSONDecodeError:
+        save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
+    except httpx.HTTPError:
+        save_api_error(sim, f'API connection failed for call: {call}: {type(e)} - {str(e)}')
+    except httpx.InvalidURL:
+        save_api_error(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
 
 
 class SimulationListView(LoginRequiredMixin, ListView):
@@ -563,13 +540,13 @@ class StatusSimulationView(View):
         view._is_coroutine = asyncio.coroutines._is_coroutine
         return view
 
-    async def save_data(self, session, command, sim):
-        response = await get_from_api(session, command, sim)
+    async def save_data(self, client, command, sim):
+        response = await get_from_api(client, command, sim)
         if response and 'success' in response:
             setattr(sim, command, response['success'])
 
-    async def update_sim(self, session, sim):
-        response = await get_from_api(session, 'progress_status', sim)
+    async def update_sim(self, client, sim):
+        response = await get_from_api(client, 'progress_status', sim)
         # get progress if there is progress
         progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
         progress_changed = progress_text and progress_text != sim.progress
@@ -587,10 +564,10 @@ class StatusSimulationView(View):
         elif not progress_changed or progress_text == DONE:
             # If there is no change, or if we are done see if we have stopped and try to save data
             # check if the simulation has stopped
-            stop_response = await get_from_api(session, 'STOP', sim)
+            stop_response = await get_from_api(client, 'STOP', sim)
             if stop_response and 'success' in stop_response and stop_response['success']:
                 # simulation has stopped, try to save results
-                await asyncio.wait([asyncio.ensure_future(self.save_data(session, command, sim))
+                await asyncio.wait([asyncio.ensure_future(self.save_data(client, command, sim))
                                     for command in self.COMMANDS])
 
                 if sim.status != Simulation.Status.FAILED:  # if we didn't fail saving
@@ -615,9 +592,8 @@ class StatusSimulationView(View):
                                                                                    Simulation.Status.SUCCESS)))
 
         if sims_to_update:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=settings.AP_PREDICT_TIMEOUT),
-                                             raise_for_status=True) as session:
-                await asyncio.wait([asyncio.ensure_future(self.update_sim(session, sim)) for sim in sims_to_update])
+            async with httpx.AsyncClient(timeout=settings.AP_PREDICT_TIMEOUT) as client:
+                await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
 
         # gather data for status responses
         data = await sync_to_async(lambda sims: [{'pk': sim.pk,
