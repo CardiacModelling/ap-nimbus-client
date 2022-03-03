@@ -98,7 +98,6 @@ function resetQnet(resetZoom){
         if(resetZoom){
             qnetOptions = JSON.parse(JSON.stringify(qnetOptionsNoZoom))
         }
-alert(JSON.stringify(qnetOptions)) ;
         plotQnet('#qnet-graph', 'qnet', qnetOptions);
     }
 }

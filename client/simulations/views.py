@@ -1,14 +1,16 @@
-import httpx
 import asyncio
 import copy
 import io
+import math
+import sys
 from itertools import zip_longest
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
+import httpx
 import jsonschema
 import xlsxwriter
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from braces.views import UserFormKwargsMixin
 from django.conf import settings
 from django.contrib import messages
@@ -99,7 +101,6 @@ async def get_from_api(client, call, sim):
     Get the result of an API call
     """
     response = {}
-    text = ''
     try:
         res = await client.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call), timeout=settings.AP_PREDICT_TIMEOUT)
         response = res.json()
@@ -146,8 +147,8 @@ def start_simulation(sim):
         call_data['plasmaPoints'] = sorted(set([c.concentration
                                                 for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
     else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
-        call_data['plasmaMaximum'] = sim.maximum_concentration
         call_data['plasmaMinimum'] = sim.minimum_concentration
+        call_data['plasmaMaximum'] = sim.maximum_concentration
         call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
         call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
 
@@ -177,7 +178,7 @@ def start_simulation(sim):
             sim.status = Simulation.Status.INITIALISING
             sim.save()
     except JSONDecodeError:
-        save_api_error(sim, f'Starting simulation failed: returned invalid JSON.')
+        save_api_error(sim, 'Starting simulation failed: returned invalid JSON.')
     except httpx.HTTPError as e:
         save_api_error(sim, f'API connection failed: {str(e)}')
     except httpx.InvalidURL:
@@ -614,6 +615,18 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         return self.get_object().author == self.request.user
 
     def get(self, request, *args, **kwargs):
+        def update_unassigned(unasgn, val):
+            if math.isclose(val, -sys.float_info.max, rel_tol=1e-01):
+                unasgn['unassigned'], unasgn['min_scale'] = True, 2.0
+            elif math.isclose(val, sys.float_info.max, rel_tol=1e-01):
+                unasgn['unassigned'], unasgn['max_scale'] = True, 2.0
+            else:
+                unasgn['max'], unasgn['min'] = max(unasgn['max'], val), min(unasgn['min'], val)
+        adp90_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
+                        'min_scale': 1.1, 'max_scale': 1.1}
+        qnet_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
+                       'min_scale': 1.1, 'max_scale': 1.1}
+
         sim = self.get_object()
         data = {'adp90': [],
                 'qnet': [],
@@ -625,7 +638,8 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         fill_alpha = 0.3
         requested_concentrations = None
         if sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-            requested_concentrations = tuple(to_float(c.concentration) for c in CompoundConcentrationPoint.objects.filter(simulation=sim))
+            requested_concentrations = tuple(to_float(c.concentration)
+                                             for c in CompoundConcentrationPoint.objects.filter(simulation=sim))
 
         if len(sim.voltage_results) > 1:
             for percentile in sim.voltage_results[0]['da90']:
@@ -654,11 +668,27 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 if requested_concentrations and to_float(v_res['c']) not in requested_concentrations:
                     continue
                 for i, da90 in enumerate(v_res['da90']):
-                    assert len(data['adp90']) > i, str(len(data['adp90'])) + " \n\n"+ str(v_res['c']) + "\n\n" + str(to_float(v_res['c'])) + "\n\n" + str(requested_concentrations)
-                    data['adp90'][i]['data'].append([v_res['c'], da90])
+                    val = to_float(da90)
+                    data['adp90'][i]['data'].append([v_res['c'], val])
+                    update_unassigned(adp90_unasgn, val)
                 if qnet:
                     for i, qnet in enumerate(qnet['qnet'].split(',')):
-                        data['qnet'][i]['data'].append([v_res['c'], to_float(qnet)])
+                        val = to_float(qnet)
+                        data['qnet'][i]['data'].append([v_res['c'], val])
+                        update_unassigned(qnet_unasgn, val)
+
+        # add voltage traces data
+        for i, trace in enumerate(sim.voltage_traces):
+            data['traces'].append({'color': i, 'enabled': True,
+                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+                                   'data': [[series['name'], series['value']] for series in trace['series']]})
+        # scale y axis if there are unassigned values for qnet
+        if adp90_unasgn['unassigned']:
+            data['adp90_y_scale'] = {'min': adp90_unasgn['min_scale'] * adp90_unasgn['min'],
+                                     'max': adp90_unasgn['max_scale'] * adp90_unasgn['max'], 'autoScale': 'none'}
+        if qnet_unasgn['unassigned']:
+            data['qnet_y_scale'] = {'min': qnet_unasgn['min_scale'] * qnet_unasgn['min'],
+                                    'max': qnet_unasgn['max_scale'] * qnet_unasgn['max'], 'autoScale': 'none'}
 
         # add voltage traces data
         for i, trace in enumerate(sim.voltage_traces):
@@ -666,6 +696,6 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                                    'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
                                    'data': [[series['name'], series['value']] for series in trace['series']]})
 
-        data['qnet_y_scale'] = {'autoScale': 'none', 'min': -0.1, 'max': 0.1}
         return JsonResponse(data=data,
                             status=200, safe=False)
+
