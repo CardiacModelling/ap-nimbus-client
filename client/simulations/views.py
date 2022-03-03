@@ -666,5 +666,6 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                                    'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
                                    'data': [[series['name'], series['value']] for series in trace['series']]})
 
+        data['qnet_y_scale'] = {'autoScale': 'none', 'min': -0.1, 'max': 0.1}
         return JsonResponse(data=data,
                             status=200, safe=False)

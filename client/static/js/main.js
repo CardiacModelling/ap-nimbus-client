@@ -98,6 +98,7 @@ function resetQnet(resetZoom){
         if(resetZoom){
             qnetOptions = JSON.parse(JSON.stringify(qnetOptionsNoZoom))
         }
+alert(JSON.stringify(qnetOptions)) ;
         plotQnet('#qnet-graph', 'qnet', qnetOptions);
     }
 }
@@ -177,7 +178,9 @@ function renderGraph(pk){
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-
+                if('adp90_y_scale' in graphData){  // if we are given a scale, apply it
+                    $.extend(adp90Options['yaxis'], adp90Options['yaxis'], graphData['adp90_y_scale'] );
+                }
                 tracesOptions = {legend: {show: true, container: $('#legendContainerTraces').get(0)},
                                 series: {lines: {show: true, lineWidth: 2}, points: {show: false}},
                                 grid: {hoverable: true, clickable: true},
@@ -200,6 +203,9 @@ function renderGraph(pk){
                                    yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'qNet (C/F)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    selection: {mode: "xy"}
                     };
+                    if('qnet_y_scale' in graphData){  // if we are given a scale, apply it
+                        $.extend(qnetOptions['yaxis'], qnetOptions['yaxis'], graphData['qnet_y_scale'] );
+                    }
                     qnetOptionsNoZoom = JSON.parse(JSON.stringify(qnetOptions)); // clone options for zoom reset
                     plotQnet('#qnet-graph', 'qnet', qnetOptions);
                     $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
