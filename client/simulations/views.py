@@ -690,12 +690,6 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
             data['qnet_y_scale'] = {'min': qnet_unasgn['min_scale'] * qnet_unasgn['min'],
                                     'max': qnet_unasgn['max_scale'] * qnet_unasgn['max'], 'autoScale': 'none'}
 
-        # add voltage traces data
-        for i, trace in enumerate(sim.voltage_traces):
-            data['traces'].append({'color': i, 'enabled': True,
-                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
-                                   'data': [[series['name'], series['value']] for series in trace['series']]})
-
         return JsonResponse(data=data,
                             status=200, safe=False)
 
