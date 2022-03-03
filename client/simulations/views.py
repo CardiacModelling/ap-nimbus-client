@@ -107,8 +107,8 @@ async def get_from_api(client, call, sim):
             await sync_to_async(save_api_error)(sim, f"API error message: {str(response['error'])}")
     except JSONDecodeError:
         await sync_to_async(save_api_error)(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
-    except httpx.HTTPError:
-        await sync_to_async(save_api_error)(sim, f'API connection failed for call: {call}: {type(e)} - {str(e)}')
+    except httpx.HTTPError as e:
+        await sync_to_async(save_api_error)(sim, f'API connection failed for call: {call}: {str(e)}')
     except httpx.InvalidURL:
         await sync_to_async(save_api_error)(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
     finally:
@@ -127,7 +127,7 @@ def start_simulation(sim):
     """
     # (re)set status and result
     sim.status = Simulation.Status.NOT_STARTED
-    sim.progress = 'Initialising..'
+    sim.progress = 'Initialising..' if sim.model.ap_predict_model_call else 'Converting CellML...'
     sim.ap_predict_last_update = timezone.now()
     sim.ap_predict_call_id = ''
     sim.api_errors = ''
@@ -177,11 +177,11 @@ def start_simulation(sim):
             sim.status = Simulation.Status.INITIALISING
             sim.save()
     except JSONDecodeError:
-        save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
-    except httpx.HTTPError:
-        save_api_error(sim, f'API connection failed for call: {call}: {type(e)} - {str(e)}')
+        save_api_error(sim, f'Starting simulation failed: returned invalid JSON.')
+    except httpx.HTTPError as e:
+        save_api_error(sim, f'API connection failed: {str(e)}')
     except httpx.InvalidURL:
-        save_api_error(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
+        save_api_error(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
 
 
 class SimulationListView(LoginRequiredMixin, ListView):
