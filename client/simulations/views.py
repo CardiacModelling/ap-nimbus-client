@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import httpx
 import jsonschema
 import xlsxwriter
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from braces.views import UserFormKwargsMixin
 from django.conf import settings
 from django.contrib import messages
@@ -35,6 +35,8 @@ from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrent
 
 
 DONE = '..done!'
+INITIALISING = 'Initialising..'
+COMPILING_CELLML = 'Converting CellML...'
 AP_MANAGER_URL = urljoin(settings.AP_PREDICT_ENDPOINT, 'api/collection/%s/%s')
 JSON_SCHEMAS = {
     'q_net': {'type': 'array',
@@ -104,14 +106,14 @@ def listify(val):
     return val
 
 
-def save_api_error(sim, message):
-    """
-    Set status and progress to Failed and save error message
-    """
+async def save_api_error(sim, message):
     sim.progress = 'Failed!'
     sim.status = Simulation.Status.FAILED
     sim.api_errors = message[:254]
-    sim.save()
+    await sync_to_async(sim.save)()
+
+
+save_api_error_sync = async_to_sync(save_api_error)
 
 
 async def get_from_api(client, call, sim):
@@ -123,19 +125,19 @@ async def get_from_api(client, call, sim):
         res = await client.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call), timeout=None)
         response = res.json()
         if 'error' in response:
-            await sync_to_async(save_api_error)(sim, f"API error message: {str(response['error'])}")
+            await save_api_error(sim, f"API error message: {str(response['error'])}")
     except JSONDecodeError:
-        await sync_to_async(save_api_error)(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
+        await save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
     except httpx.HTTPError as e:
-        await sync_to_async(save_api_error)(sim, f'API connection failed for call: {call}: {str(e)}')
+        await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
     except httpx.InvalidURL:
-        await sync_to_async(save_api_error)(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
+        await save_api_error(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
     finally:
         try:  # validate a succesful result if we have a schema for it
             if 'success' in response and call in JSON_SCHEMAS:
                 jsonschema.validate(instance=response['success'], schema=JSON_SCHEMAS[call])
         except jsonschema.exceptions.ValidationError as e:
-            await sync_to_async(save_api_error)(sim, f'Result to call {call} failed JSON validation: {e.message}')
+            await save_api_error(sim, f'Result to call {call} failed JSON validation: {e.message}')
         finally:
             return response
 
@@ -146,7 +148,7 @@ def start_simulation(sim):
     """
     # (re)set status and result
     sim.status = Simulation.Status.NOT_STARTED
-    sim.progress = 'Initialising..' if sim.model.ap_predict_model_call else 'Converting CellML...'
+    sim.progress = INITIALISING if sim.model.ap_predict_model_call else COMPILING_CELLML
     sim.ap_predict_last_update = timezone.now()
     sim.ap_predict_call_id = ''
     sim.api_errors = ''
@@ -191,17 +193,17 @@ def start_simulation(sim):
     try:
         response = httpx.post(settings.AP_PREDICT_ENDPOINT, json=call_data).json()
         if 'error' in response:
-            save_api_error(sim, f"API error message: {response['error']}")
+            save_api_error_sync(sim, f"API error message: {response['error']}")
         else:
             sim.ap_predict_call_id = response['success']['id']
             sim.status = Simulation.Status.INITIALISING
             sim.save()
     except JSONDecodeError:
-        save_api_error(sim, 'Starting simulation failed: returned invalid JSON.')
+        save_api_error_sync(sim, 'Starting simulation failed: returned invalid JSON.')
     except httpx.HTTPError as e:
-        save_api_error(sim, f'API connection failed: {str(e)}')
+        save_api_error_sync(sim, f'API connection failed: {str(e)}')
     except httpx.InvalidURL:
-        save_api_error(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
+        save_api_error_sync(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
 
 
 class SimulationListView(LoginRequiredMixin, ListView):
@@ -592,8 +594,8 @@ class StatusSimulationView(View):
         if not progress_changed and progress_text != DONE and \
                 (timezone.now() -
                  sim.ap_predict_last_update).total_seconds() > settings.AP_PREDICT_STATUS_TIMEOUT:
-            sim.api_errors = ('Progress timeout. Progress not changed for more than '
-                              f'{settings.AP_PREDICT_STATUS_TIMEOUT} seconds.')
+            await save_api_error(sim, ('Progress timeout. Progress not changed for more than '
+                                       f'{settings.AP_PREDICT_STATUS_TIMEOUT} seconds.'))
         elif not progress_changed or progress_text == DONE:
             # If there is no change, or if we are done see if we have stopped and try to save data
             # check if the simulation has stopped
@@ -623,7 +625,6 @@ class StatusSimulationView(View):
         simulations = Simulation.objects.filter(author__pk=user_pk, pk__in=pks)
         sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED,
                                                                                    Simulation.Status.SUCCESS)))
-
         if sims_to_update:
             async with httpx.AsyncClient(timeout=None) as client:
                 await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])

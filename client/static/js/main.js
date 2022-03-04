@@ -32,7 +32,7 @@ const notifications = require('./lib/notifications.js');
 
 // set progressbar timeout, progressbars to update and get base url
 var progressBarTimeout = 3000;
-var progressbars = [];
+//var progressbars = [];
 var base_url = $(location).attr('href');
 var i = base_url.lastIndexOf('/simulations/');
 if (i != -1){
@@ -42,6 +42,7 @@ if (i != -1){
 }
 
 
+var progressBarTimeout = null;
 var graphData = {};
 var adp90Options = {};
 var qnetOptions = {};
@@ -285,49 +286,51 @@ function renderGraph(pk){
 }
 
 function updateProgressbars(){
-    $.ajax({type: 'GET',
-            url: `${base_url}/simulations/status/${progressbars.join('/')}`,
-            dataType: 'json',
-            success: function(data) {
-                progressbars = [];
-                data.forEach(function (simulation) {
-                    bar = $(`#progressbar-${simulation['pk']}`);
-                    // set label
-                    bar.find('.progress-label').text(simulation['progress']); // set label
-                    // update progress bar
-                    if(simulation['status'] == 'SUCCESS'){
-                        bar.progressbar('value', 100);
-                    }else{ // convert into number
-                        progress_number = simulation['progress'].replace('% completed', '');
-                        if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
-                            bar.progressbar('value', parseInt(progress_number));
-                        }
-                    }
-                    //if succesful, and there is a graph to render, make the call fo data
-                    if(simulation['status'] == 'SUCCESS' && $('.graph-column').length > 0){
-                        renderGraph(simulation['pk']);
-                    }else if(simulation['status'] != 'FAILED' && simulation['status'] != 'SUCCESS'){  // save for next progressbar update
-                        progressbars.push(simulation['pk']);
-                    }
-                })
-                // schedule next update, if there are still running simulations
-                if (progressbars.length > 0){
-                    setTimeout(updateProgressbars, progressBarTimeout);
-                }
-            }
+    progressbars = [];
+    $('.progressbar').each(function(){
+        if($(this).text!='Completed' && $(this).text!='Failed!'){
+            pk = $(this).attr('id').replace('progressbar-', '');
+            progressbars.push(pk);
+        }
     });
+    if(progressbars.length > 0){
+        $.ajax({type: 'GET',
+                url: `${base_url}/simulations/status/${progressbars.join('/')}`,
+                dataType: 'json',
+                success: function(data) {
+                    progressbars = [];
+                    data.forEach(function (simulation) {
+                        bar = $(`#progressbar-${simulation['pk']}`);
+                        // set label
+                        bar.find('.progress-label').text(simulation['progress']); // set label
+                        // update progress bar
+                        if(simulation['status'] == 'SUCCESS'){
+                            bar.progressbar('value', 100);
+                        }else{ // convert into number
+                            progress_number = simulation['progress'].replace('% completed', '');
+                            if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
+                                bar.progressbar('value', parseInt(progress_number));
+                            }
+                        }
+                    })
+                      setTimeout(updateProgressbars, progressBarTimeout);
+                }
+        });
+    }
 }
 
 $(document).ready(function(){
     //init progress bars
     $('.progressbar').each(function(){
         bar = $(this).progressbar();
-        progressbars.push($(bar).attr('id').replace('progressbar-',''));
     });
     //update progress bar now
-    if (base_url && progressbars.length > 0){
-        updateProgressbars();
-    }
+    updateProgressbars();
+    // when we paginate to a different set of simulations, stop waiting & ask for status right away
+    $('.paginate_button').click(function(){
+        clearTimeout(progressBarTimeout);
+        updateProgressbars()
+    });
 
 
     // add dismiss action to notifications
