@@ -97,6 +97,7 @@ class Simulation(models.Model):
     q_net = models.JSONField(blank=True, null=True)
     voltage_traces = models.JSONField(blank=True, null=True)
     voltage_results = models.JSONField(blank=True, null=True)
+    pkpd_results = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = ('title', 'author')
