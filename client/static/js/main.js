@@ -203,7 +203,7 @@ function renderGraph(pk){
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
                 if(graphData['pkpd_results'].length > 0){
-                    pkpd_resultsOptions = {legend: {show: false},
+                    pkpd_resultsOptions = {legend: {show: true, container: $('#legendContainerpkpd_results').get(0)},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
                                    xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Timepoint (h)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
@@ -213,13 +213,16 @@ function renderGraph(pk){
                     if('pkpd_results_y_scale' in graphData){  // if we are given a scale, apply it
                         $.extend(pkpd_resultsOptions['yaxis'], pkpd_resultsOptions['yaxis'], graphData['pkpd_results_y_scale'] );
                     }
-                    pkpd_resultsOptionsNoZoom = JSON.parse(JSON.stringify(pkpd_resultsOptions)); // clone options for zoom reset
                     plotQnet('#pkpd_results-graph', 'pkpd_results', pkpd_resultsOptions);
+                    // make sure the legend does not get replotted
+                    pkpd_resultsOptions['legend'] = {'show': false};
+                    pkpd_resultsOptionsNoZoom = JSON.parse(JSON.stringify(pkpd_resultsOptions)); // clone options for zoom reset
+
                     $('#pkpd_results-graph').bind('plotselected', (event, ranges) => zoom(ranges, pkpd_resultsOptions, (opts) => plotQnet('#pkpd_results-graph', 'pkpd_results', pkpd_resultsOptions)));
                     $('#pkpd_results-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
                     $('#pkpd_results-graph').mouseout((event)=>hoverOut('Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
                 }else{
-//                    // hide qnet button
+                    // hide qnet button
                     $('#pkpd_results').hide();
                 }
 
@@ -539,6 +542,8 @@ $(document).ready(function(){
         $('#pkpd_results').attr('disabled', true);
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', false);
+        $('#legendContainerpkpd_results').show();
+        $('#legendContainerQnet').hide();
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
@@ -552,6 +557,8 @@ $(document).ready(function(){
         $('#pkpd_results').attr('disabled', false);
         $('#adp90').attr('disabled', true);
         $('#qnet').attr('disabled', false);
+        $('#legendContainerpkpd_results').hide();
+        $('#legendContainerQnet').show();
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
@@ -565,6 +572,8 @@ $(document).ready(function(){
         $('#pkpd_results').attr('disabled', false);
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', true);
+        $('#legendContainerpkpd_results').hide();
+        $('#legendContainerQnet').show();
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 

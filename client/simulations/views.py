@@ -68,11 +68,13 @@ JSON_SCHEMAS = {
 
 
     'pkpd_results': {'type': 'array',
-              'items': {'type': 'object',
-                        'properties': {'apd90': {'type': 'string'}, 'timepoint': {'type': ['string', {'type': 'array', 'items': {'type': 'string'}}]  }},
-                        'required': ['apd90', 'timepoint'],
-                        'additionalProperties': False}},
-
+                     'items': {'type': 'object',
+                               'properties': {'timepoint': {'type': 'string'},
+                                              'apd90': {"anyOf": [{'type': 'string'},
+                                                                  {'type': 'array',
+                                                                   'items': {'type': 'string'}}]}},
+                               'required': ['apd90', 'timepoint'],
+                               'additionalProperties': False}},
 }
 
 
@@ -91,6 +93,7 @@ def to_float(v):
         return float(v)
     except ValueError:
         return v
+
 
 def listify(val):
     """
@@ -117,7 +120,7 @@ async def get_from_api(client, call, sim):
     """
     response = {}
     try:
-        res = await client.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call), timeout=settings.AP_PREDICT_TIMEOUT)
+        res = await client.get(AP_MANAGER_URL % (sim.ap_predict_call_id, call), timeout=None)
         response = res.json()
         if 'error' in response:
             await sync_to_async(save_api_error)(sim, f"API error message: {str(response['error'])}")
@@ -622,7 +625,7 @@ class StatusSimulationView(View):
                                                                                    Simulation.Status.SUCCESS)))
 
         if sims_to_update:
-            async with httpx.AsyncClient(timeout=settings.AP_PREDICT_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=None) as client:
                 await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
 
         # gather data for status responses
@@ -700,7 +703,6 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 if sim.pkpd_results:
                     data['qnet'].append(copy.deepcopy(series_dict))
 
-
             for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
                 # cut off data for concentrations we haven't asked fro from qnet/adp90 graphs
                 if requested_concentrations and to_float(v_res['c']) not in requested_concentrations:
@@ -736,7 +738,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                                     'max': qnet_unasgn['max_scale'] * qnet_unasgn['max'], 'autoScale': 'none'}
         if pkpd_unasgn['unassigned']:
             data['pkpd_results_y_scale'] = {'min': pkpd_unasgn['min_scale'] * pkpd_unasgn['min'],
-                                    'max': pkpd_unasgn['max_scale'] * pkpd_unasgn['max'], 'autoScale': 'none'}
+                                            'max': pkpd_unasgn['max_scale'] * pkpd_unasgn['max'], 'autoScale': 'none'}
 
         # add voltage traces data
         for i, trace in enumerate(sim.voltage_traces):
