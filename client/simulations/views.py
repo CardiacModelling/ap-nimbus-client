@@ -607,7 +607,7 @@ class StatusSimulationView(View):
 class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
 
     """
-    Retreives the data for rendering the graphs.
+    Retrieves the data (in json format) for rendering the graphs.
     """
     model = Simulation
 
@@ -616,6 +616,11 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
 
     def get(self, request, *args, **kwargs):
         def update_unassigned(unasgn, val):
+            """
+            Updates whether we have seen unassigned qnet values.
+            If so we'll have to set a manual scale for the graph.
+            """
+            
             if math.isclose(val, -sys.float_info.max, rel_tol=1e-01):
                 unasgn['unassigned'], unasgn['min_scale'] = True, 2.0
             elif math.isclose(val, sys.float_info.max, rel_tol=1e-01):
@@ -677,18 +682,19 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                         data['qnet'][i]['data'].append([v_res['c'], val])
                         update_unassigned(qnet_unasgn, val)
 
-        # add voltage traces data
-        for i, trace in enumerate(sim.voltage_traces):
-            data['traces'].append({'color': i, 'enabled': True,
-                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
-                                   'data': [[series['name'], series['value']] for series in trace['series']]})
-        # scale y axis if there are unassigned values for qnet
+        # scale y axis if there are unassigned values for qnet / adp90
         if adp90_unasgn['unassigned']:
             data['adp90_y_scale'] = {'min': adp90_unasgn['min_scale'] * adp90_unasgn['min'],
                                      'max': adp90_unasgn['max_scale'] * adp90_unasgn['max'], 'autoScale': 'none'}
         if qnet_unasgn['unassigned']:
             data['qnet_y_scale'] = {'min': qnet_unasgn['min_scale'] * qnet_unasgn['min'],
                                     'max': qnet_unasgn['max_scale'] * qnet_unasgn['max'], 'autoScale': 'none'}
+
+        # add voltage traces data
+        for i, trace in enumerate(sim.voltage_traces):
+            data['traces'].append({'color': i, 'enabled': True,
+                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+                                   'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
                             status=200, safe=False)
