@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import io
-import math
 import sys
 from itertools import zip_longest
 from json.decoder import JSONDecodeError
@@ -92,6 +91,14 @@ def to_float(v):
         return float(v)
     except ValueError:
         return v
+
+def listify(val):
+    """
+    Return the list given or a single element list if given a string
+    """
+    if isinstance(val, str):
+        return [val]
+    return val
 
 
 def save_api_error(sim, message):
@@ -502,9 +509,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         worksheet.write(0, 1, 'APD90 (ms)', bold)
         for row, pkpd in enumerate(sim.pkpd_results):
             worksheet.write(row + 1, 0, to_float(pkpd['timepoint']))
-            apd90_lst = pkpd['apd90']
-            if isinstance(pkpd['apd90'], str):
-                apd90_lst = [apd90_lst]
+            apd90_lst = listify(pkpd['apd90'])
             for column, adp90 in enumerate(apd90_lst):
                 worksheet.write(row + 1, column + 1, to_float(adp90))
 
@@ -645,9 +650,9 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
             If so we'll have to set a manual scale for the graph.
             """
 
-            if math.isclose(val, -sys.float_info.max, rel_tol=1e-01):
+            if val <= -1.0e+200:
                 unasgn['unassigned'], unasgn['min_scale'] = True, 2.0
-            elif math.isclose(val, sys.float_info.max, rel_tol=1e-01):
+            elif val >= 1.0e+200:
                 unasgn['unassigned'], unasgn['max_scale'] = True, 2.0
             else:
                 unasgn['max'], unasgn['min'] = max(unasgn['max'], val), min(unasgn['min'], val)
@@ -655,12 +660,14 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                         'min_scale': 1.1, 'max_scale': 1.1}
         qnet_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
                        'min_scale': 1.1, 'max_scale': 1.1}
+        pkpd_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
+                       'min_scale': 1.1, 'max_scale': 1.1}
 
         sim = self.get_object()
         data = {'adp90': [],
                 'qnet': [],
                 'traces': [],
-                'timepoint': [],
+                'pkpd_results': [],
                 'messages': sim.messages}
 
         # headers
@@ -690,8 +697,9 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 else:
                     num_percentiles += 1
                 data['adp90'].append(series_dict)
-                if sim.q_net:
+                if sim.pkpd_results:
                     data['qnet'].append(copy.deepcopy(series_dict))
+
 
             for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
                 # cut off data for concentrations we haven't asked fro from qnet/adp90 graphs
@@ -707,7 +715,17 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                         data['qnet'][i]['data'].append([v_res['c'], val])
                         update_unassigned(qnet_unasgn, val)
 
-#        for pkpd in sim.pkpd_results:
+        # add pkd_results data
+        if len(sim.pkpd_results) > 1:
+            for i, _ in enumerate(listify(sim.pkpd_results[0]['apd90'])):
+                data['pkpd_results'].append({'label': f'Concentration {i + 1}', 'id': i, 'data': [],
+                                             'lines': {'show': True, 'lineWidth': 2, 'fill': False},
+                                             'points': {'show': False}, 'enabled': True})
+            for res in listify(sim.pkpd_results):
+                for i, conc in enumerate(listify(res['apd90'])):
+                    val = to_float(conc)
+                    data['pkpd_results'][i]['data'].append([res['timepoint'], val])
+                    update_unassigned(pkpd_unasgn, val)
 
         # scale y axis if there are unassigned values for qnet / adp90
         if adp90_unasgn['unassigned']:
@@ -716,6 +734,9 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         if qnet_unasgn['unassigned']:
             data['qnet_y_scale'] = {'min': qnet_unasgn['min_scale'] * qnet_unasgn['min'],
                                     'max': qnet_unasgn['max_scale'] * qnet_unasgn['max'], 'autoScale': 'none'}
+        if pkpd_unasgn['unassigned']:
+            data['pkpd_results_y_scale'] = {'min': pkpd_unasgn['min_scale'] * pkpd_unasgn['min'],
+                                    'max': pkpd_unasgn['max_scale'] * pkpd_unasgn['max'], 'autoScale': 'none'}
 
         # add voltage traces data
         for i, trace in enumerate(sim.voltage_traces):
