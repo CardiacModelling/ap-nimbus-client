@@ -218,9 +218,7 @@ function renderGraph(pk){
                     $('#pkpd_results-graph').bind('plotselected', (event, ranges) => zoom(ranges, pkpd_resultsOptions, (opts) => plotQnet('#pkpd_results-graph', 'pkpd_results', pkpd_resultsOptions)));
                     $('#pkpd_results-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
                     $('#pkpd_results-graph').mouseout((event)=>hoverOut('Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
-//                    $('#adp90').click(); // now select adp90 graph
                 }else{
-////                    $('#adp90').click(); // now select adp90 graph
 //                    // hide qnet button
                     $('#pkpd_results').hide();
                 }
@@ -241,9 +239,7 @@ function renderGraph(pk){
                     $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
-//                    $('#adp90').click(); // now select adp90 graph
                 }else{
-//                    $('#adp90').click(); // now select adp90 graph
                     // hide qnet button
                     $('#qnet').hide();
                 }
@@ -278,8 +274,9 @@ function renderGraph(pk){
                     tracesOptions = JSON.parse(JSON.stringify(tracesOptionsNoZoom));
                     plotTraces(tracesOptions);
                 });
-                $('#adp90').click(); // now select adp90 graph
 
+                // now select adp90 graph
+                $('#adp90').click();
             }
     });
 }
