@@ -89,7 +89,12 @@ function hoverOut (x_label, x_units, y_label, y_units, hoverDataId) {
 }
 
 function resetQnet(resetZoom){
-    if($('#adp90-graph').hasClass('show-graph')){
+    if($('#timepoint-graph').hasClass('show-graph')){
+        if(resetZoom){
+            timepointOptions = JSON.parse(JSON.stringify(timepointOptionsNoZoom));
+        }
+        plotQnet('#timepoint-graph', 'timepoint', timepointOptions);
+    }else if($('#adp90-graph').hasClass('show-graph')){
         if(resetZoom){
             adp90Options = JSON.parse(JSON.stringify(adp90OptionsNoZoom));
         }
@@ -193,6 +198,26 @@ function renderGraph(pk){
                 $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, adp90Options, (opts) => plotQnet('#adp90-graph', 'adp90', adp90Options)));
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
+
+                if(graphData['timepoint'].length > 0){
+                    timepointOptions = {legend: {show: false},
+                                   series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
+                                   grid: {hoverable: true, clickable: true},
+                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Timepoint (h)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                   yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'ADP90 (ms)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                   selection: {mode: "xy"}
+                    };
+                    timepointOptionsNoZoom = JSON.parse(JSON.stringify(timepointOptions)); // clone options for zoom reset
+                    plotQnet('#timepoint-graph', 'timepoint', timepointOptions);
+                    $('#timepoint-graph').bind('plotselected', (event, ranges) => zoom(ranges, timepointOptions, (opts) => plotQnet('#timepoint-graph', 'timepoint', timepointOptions)));
+                    $('#timepoint-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
+                    $('#timepoint-graph').mouseout((event)=>hoverOut('Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
+                    $('#adp90').click(); // now select adp90 graph
+                }else{
+                    $('#adp90').click(); // now select adp90 graph
+                    // hide qnet button
+                    $('#timepoint').hide();
+                }
 
                 if(graphData['qnet'].length > 0){
                     qnetOptions = {legend: {show: false},
@@ -500,21 +525,40 @@ $(document).ready(function(){
       });
 
     //buttons for switching between graphs
+    $('#timepoint').click(function(){
+        $('#timepoint-graph').removeClass('hide-graph');
+        $('#adp90-graph').removeClass('show-graph');
+        $('#qnet-graph').removeClass('show-graph');
+        $('#timepoint-graph').addClass('show-graph');
+        $('#adp90-graph').addClass('hide-graph');
+        $('#qnet-graph').addClass('hide-graph');
+        $('#timepoint').attr('disabled', true);
+        $('#adp90').attr('disabled', false);
+        $('#qnet').attr('disabled', false);
+        resetQnet(false);  // reset the graph so that selected intervals are drawn
+    });
+    
     $('#adp90').click(function(){
+        $('#timepoint-graph').removeClass('show-graph');
         $('#adp90-graph').removeClass('hide-graph');
         $('#qnet-graph').removeClass('show-graph');
+        $('#timepoint-graph').addClass('hide-graph');
         $('#adp90-graph').addClass('show-graph');
         $('#qnet-graph').addClass('hide-graph');
+        $('#timepoint').attr('disabled', false);
         $('#adp90').attr('disabled', true);
         $('#qnet').attr('disabled', false);
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
     $('#qnet').click(function(){
+        $('#timepoint-graph').removeClass('show-graph');
         $('#adp90-graph').removeClass('show-graph');
         $('#qnet-graph').removeClass('hide-graph');
+        $('#timepoint-graph').addClass('hide-graph');
         $('#adp90-graph').addClass('hide-graph');
         $('#qnet-graph').addClass('show-graph');
+        $('#timepoint').attr('disabled', false);
         $('#adp90').attr('disabled', false);
         $('#qnet').attr('disabled', true);
         resetQnet(false);  // reset the graph so that selected intervals are drawn
