@@ -472,25 +472,38 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         row = 0
         worksheet.write(row, 0, 'Concentration (µM)', bold)
         worksheet.write(row, 1, 'Δ APD90 (%)', bold)
-        worksheet.write(row, 2, 'qNet (C/F)', bold)
-        worksheet.write(row, 3, 'PeakVm(mV)', bold)
-        worksheet.write(row, 4, 'UpstrokeVelocity(mV/ms)', bold)
-        worksheet.write(row, 5, 'APD50(ms)', bold)
-        worksheet.write(row, 6, 'APD90(ms)', bold)
+        col = 2 + (len(sim.voltage_results[0]['da90']) - 1) if len(sim.voltage_results[0]) > 0 else 2
+        worksheet.write(row, col, 'qNet (C/F)', bold)
+        col += (len(sim.voltage_results[0]['da90'])) if len(sim.voltage_results[0]) > 0 else 1
+        worksheet.write(row, col, 'PeakVm(mV)', bold)
+        worksheet.write(row, col + 1, 'UpstrokeVelocity(mV/ms)', bold)
+        worksheet.write(row, col + 2, 'APD50(ms)', bold)
+        worksheet.write(row, col + 3, 'APD90(ms)', bold)
         row += 1
-        if len(sim.voltage_results) > 0 and len(sim.voltage_results[0]['da90']) > 1:
-            worksheet.write(row, 1, ", ".join(sim.voltage_results[0]['da90']), bold)
+
+        if len(sim.voltage_results) > 0:
+            for da_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
+                worksheet.write(row, da_col + 1, da90_head, bold)
+            if len(sim.voltage_results[0]['da90']) > 1:
+                for qnet_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
+                    worksheet.write(row, da_col + qnet_col + 2, da90_head, bold)
             row += 1
 
         for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
             worksheet.write(row, 0, to_float(v_res['c']))
-            da90 = to_float(v_res['da90'][0]) if len(v_res['da90']) == 1 else ", ".join(v_res['da90'])
-            worksheet.write(row, 1, to_float(da90))
-            worksheet.write(row, 2, to_float(qnet['qnet']) if qnet else 'n/a')
-            worksheet.write(row, 3, to_float(v_res['pv']))
-            worksheet.write(row, 4, to_float(v_res['uv']))
-            worksheet.write(row, 5, to_float(v_res['a50']))
-            worksheet.write(row, 6, to_float(v_res['a90']))
+            for da_col, da90 in enumerate(v_res['da90']):
+                worksheet.write(row, da_col + 1, to_float(da90))
+            if not qnet:
+                qnet_col = 0
+                worksheet.write(row, da_col + 2, 'n/a')
+            else:
+                for qnet_col, qnet_val in enumerate(qnet['qnet'].split(',')):
+                    worksheet.write(row, da_col + qnet_col + 2, to_float(qnet_val) if qnet else 'n/a')
+
+            worksheet.write(row, da_col + qnet_col + 3, to_float(v_res['pv']))
+            worksheet.write(row, da_col + qnet_col + 4, to_float(v_res['uv']))
+            worksheet.write(row, da_col + qnet_col + 5, to_float(v_res['a50']))
+            worksheet.write(row, da_col + qnet_col + 6, to_float(v_res['a90']))
             row += 1
 
     def voltage_traces(self, workbook, bold, sim):
