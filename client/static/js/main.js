@@ -445,24 +445,27 @@ $(document).ready(function(){
             }
         });
 
-        // update required and min for Compound Concentration Range
+        // update required and disabled for Compound Concentration Range
         div_0_vis = $('#div_pk_or_concs_0').css('visibility') == 'visible'
         $('#id_minimum_concentration').attr('required', div_0_vis);
         $('#id_maximum_concentration').attr('required', div_0_vis);
-        if(div_0_vis){
-            $('#id_minimum_concentration').attr('min', 0);
-            $('#id_minimum_concentration').change();
-        }else{
-            $('#id_minimum_concentration').removeAttr('min');
-            $('#id_maximum_concentration').removeAttr('min');
-        }
-        // ensabled for input of concentration points, to disable checking duplicate when we're not using it
+        $('#id_intermediate_point_count').attr('required', div_0_vis);
+        $('#id_intermediate_point_log_scale').attr('required', div_0_vis);
+
+        $('#id_minimum_concentration').attr('disabled', !div_0_vis);
+        $('#id_maximum_concentration').attr('disabled', !div_0_vis);
+        $('#id_intermediate_point_count').attr('disabled', !div_0_vis);
+        $('#id_intermediate_point_log_scale').attr('disabled', !div_0_vis);
+
+        // ensabled for input of concentration points, to disable checking duplicate when we're not using it and set required on 1st
         div_1_vis = $('#div_pk_or_concs_1').css('visibility') == 'visible'
         $('.compound-concentration').attr('disabled', !div_1_vis);
+        $('#id_concentration-0-concentration').attr('required', div_1_vis);
 
         // update required for Pharmacokinetics
         div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
         $('#id_PK_data').attr('required', div_2_vis);
+        $('#id_PK_data').attr('disabled', !div_2_vis);
 
     })
     //initialise compound parems isplay

@@ -83,10 +83,10 @@ class Simulation(models.Model):
                                               help_text="(in µM) > minimum_concentration.",
                                               validators=[MinValueValidator(0)])
     intermediate_point_count = models.CharField(
-        max_length=255, choices=[(str(i), str(i)) for i in range(11)], default='4',
+        max_length=255, choices=[(str(i), str(i)) for i in range(11)], default='4', blank=True,
         help_text='Count of plasma concentrations between the minimum and maximum (between 0 and 10).'
     )
-    intermediate_point_log_scale = models.BooleanField(default=True, help_text='Use log scale for intermediate points.')
+    intermediate_point_log_scale = models.BooleanField(default=True, blank=True, help_text='Use log scale for intermediate points.')
     PK_data = models.FileField(blank=True, help_text="File format: tab-seperated values (TSV). Encoding: UTF-8\n"
                                                      "Column 1 : Time (hours)\nColumns 2-31 : Concentrations (µM).")
     progress = models.CharField(max_length=255, blank=True, default='Initialising..')
