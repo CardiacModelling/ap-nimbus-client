@@ -179,6 +179,14 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def save(self, **kwargs):
         simulation = super().save(commit=False)
+        if simulation.pk_or_concs != Simulation.PkOptions.compound_concentration_range:
+            simulation.minimum_concentration = 0.0
+            simulation.maximum_concentration = 100.0
+            simulation.intermediate_point_count = 4.0
+            simulation.intermediate_point_log_scale = True
+        if simulation.pk_or_concs != Simulation.PkOptions.pharmacokinetics:
+            simulation.PK_data=None
+
         if not hasattr(simulation, 'author') or simulation.author is None:
             simulation.author = self.user
         simulation.save()

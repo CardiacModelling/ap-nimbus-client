@@ -610,6 +610,7 @@ class StatusSimulationView(View):
                     if sim.voltage_traces and sim.status != Simulation.Status.FAILED:
                         sim.status = Simulation.Status.SUCCESS
                         sim.progress = 'Completed'
+                        sim.api_errors = ''
                     else:  # we didn't get any data after stopping, we must have stopped prematurely
                         await save_api_error(sim, ('Simulation stopped prematurely. '
                                                    '(No data available after simulation stopped).'))
@@ -623,11 +624,11 @@ class StatusSimulationView(View):
         pks = set(map(int, self.kwargs['pks'].strip('/').split('/')))
         # get simulations to get status for and the ones that need updating
         simulations = Simulation.objects.filter(author__pk=user_pk, pk__in=pks)
-        sims_to_update = await sync_to_async(list)(simulations.exclude(status__in=(Simulation.Status.FAILED,
-                                                                                   Simulation.Status.SUCCESS)))
-        if sims_to_update:
-            async with httpx.AsyncClient(timeout=None) as client:
-                await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
+        if self.kwargs['update'].lower() == 'false':
+            sims_to_update = await sync_to_async(list)(simulations.exclude(status=Simulation.Status.SUCCESS))
+            if sims_to_update:
+                async with httpx.AsyncClient(timeout=None) as client:
+                    await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
 
         # gather data for status responses
         data = await sync_to_async(lambda sims: [{'pk': sim.pk,
@@ -701,7 +702,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 else:
                     num_percentiles += 1
                 data['adp90'].append(series_dict)
-                if sim.pkpd_results:
+                if sim.q_net:
                     data['qnet'].append(copy.deepcopy(series_dict))
 
             for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):

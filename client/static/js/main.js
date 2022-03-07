@@ -32,7 +32,6 @@ const notifications = require('./lib/notifications.js');
 
 // set progressbar timeout, progressbars to update and get base url
 var progressBarTimeout = 3000;
-//var progressbars = [];
 var base_url = $(location).attr('href');
 var i = base_url.lastIndexOf('/simulations/');
 if (i != -1){
@@ -42,7 +41,7 @@ if (i != -1){
 }
 
 
-var progressBarTimeout = null;
+var updateProgressBarTimeout = null;
 var graphData = {};
 var adp90Options = {};
 var qnetOptions = {};
@@ -285,17 +284,18 @@ function renderGraph(pk){
     });
 }
 
-function updateProgressbars(){
+function updateProgressbars(skipUpdate=false){
     progressbars = [];
     $('.progressbar').each(function(){
-        if($(this).text!='Completed' && $(this).text!='Failed!'){
+        if($(this).text() != 'Completed'){
             pk = $(this).attr('id').replace('progressbar-', '');
             progressbars.push(pk);
         }
     });
+
     if(progressbars.length > 0){
         $.ajax({type: 'GET',
-                url: `${base_url}/simulations/status/${progressbars.join('/')}`,
+                url: `${base_url}/simulations/status/${skipUpdate}/${progressbars.join('/')}`,
                 dataType: 'json',
                 success: function(data) {
                     progressbars = [];
@@ -306,6 +306,9 @@ function updateProgressbars(){
                         // update progress bar
                         if(simulation['status'] == 'SUCCESS'){
                             bar.progressbar('value', 100);
+                            if($('#traces-graph').length > 0){
+                                renderGraph(simulation['pk']);
+                            }
                         }else{ // convert into number
                             progress_number = simulation['progress'].replace('% completed', '');
                             if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
@@ -313,7 +316,7 @@ function updateProgressbars(){
                             }
                         }
                     })
-                      setTimeout(updateProgressbars, progressBarTimeout);
+                    updateProgressBarTimeout = setTimeout(updateProgressbars, progressBarTimeout);
                 }
         });
     }
@@ -325,12 +328,7 @@ $(document).ready(function(){
         bar = $(this).progressbar();
     });
     //update progress bar now
-    updateProgressbars();
-    // when we paginate to a different set of simulations, stop waiting & ask for status right away
-    $('.paginate_button').click(function(){
-        clearTimeout(progressBarTimeout);
-        updateProgressbars()
-    });
+    updateProgressbars(true, false);
 
 
     // add dismiss action to notifications
@@ -519,6 +517,11 @@ $(document).ready(function(){
         order: [],
         dom: 'lBfrtip',
         stateSave: true,
+    });
+    // when we paginate to a different set of simulations, stop waiting & ask for status right away
+    $('.paginate_button').click(function(){
+        clearTimeout(updateProgressBarTimeout);
+        updateProgressbars(true, true)
     });
 
     //Render markdown editor

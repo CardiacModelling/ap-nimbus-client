@@ -47,7 +47,7 @@ urlpatterns = [
         name='simulation_restart',
     ),
     re_path(
-        r'^status(?P<pks>(/\d+){1,})(?:/)?$',
+        r'^status/(?P<update>(\w+))(?P<pks>(/\d+){1,})(?:/)?$',
         views.StatusSimulationView.as_view(),
         name='simulation_status',
     ),
