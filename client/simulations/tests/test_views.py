@@ -91,16 +91,18 @@ class TestSimulationCreateView_and_TemplateView:
         response = client.get('/simulations/%s/template' % simulation_range.pk)
         assert response.status_code == 302
 
-    def test_can_create(self, logged_in_user, client, new_sim_data):
+    def test_can_create(self, logged_in_user, client, new_sim_data, httpx_mock):
         assert IonCurrent.objects.count() == 7
         assert Simulation.objects.count() == 1
+        httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
         response = client.post('/simulations/new', new_sim_data)
         assert response.status_code == 302
         assert Simulation.objects.count() == 2
 
-    def test_template_can_create(self, logged_in_user, client, new_sim_data, simulation_range):
+    def test_template_can_create(self, logged_in_user, client, new_sim_data, simulation_range, httpx_mock):
         assert IonCurrent.objects.count() == 7
         assert Simulation.objects.count() == 1
+        httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
         response = client.post('/simulations/%s/template' % simulation_range.pk, new_sim_data)
         assert response.status_code == 302
         assert Simulation.objects.count() == 2

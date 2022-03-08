@@ -130,7 +130,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
         year=2017,
         cellml_link='https://models.cellml.org/e/4e8/',
         paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
-        cellml_file='OHara-Rudy-CiPA-v1.0.cellml',
+        ap_predict_model_call='6'
     )
     model.ion_currents.set(IonCurrent.objects.all())
     model.save()
