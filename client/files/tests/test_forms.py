@@ -79,6 +79,7 @@ class TestCellmlModelForm:
 
     def test_update(self, o_hara_model, data, admin_user):
         data['version'] = 'v2'
+        data['ap_predict_model_call'] = 6
         form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
         form.is_valid()
         form.save()
