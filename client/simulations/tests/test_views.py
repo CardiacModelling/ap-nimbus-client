@@ -3,6 +3,7 @@ import asyncio
 import httpx
 import pytest
 import pytest_asyncio
+from django.conf import settings
 from asgiref.sync import async_to_sync, sync_to_async
 from files.models import IonCurrent
 from simulations.models import Simulation
@@ -13,6 +14,7 @@ from simulations.views import (
     save_api_error_sync,
     to_float,
     to_int,
+    start_simulation
 )
 
 
@@ -120,7 +122,7 @@ async def test_get_from_api_connection_error(httpx_mock):
 @pytest.mark.django_db
 @pytest.mark.asyncio
 async def test_get_from_api_invalid_url(httpx_mock):
-    call= 'messages'
+    call = 'messages'
     sim = await sync_to_async(Simulation)()
     httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
     async with httpx.AsyncClient(timeout=None) as client:
@@ -129,6 +131,44 @@ async def test_get_from_api_invalid_url(httpx_mock):
         assert sim.status == Simulation.Status.FAILED
         assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
 
+@pytest.mark.django_db
+def test_start_simulation(httpx_mock, simulation_range):
+    pass
+    # test start, compound_concentration_range, ap_predict_model_call
+
+
+@pytest.mark.django_db
+def test_re_start_simulation(httpx_mock, simulation_range):
+    pass
+    # test re_start
+
+
+@pytest.mark.django_db
+def test_start_simulation_with_ion_currents(httpx_mock, simulation_range):
+    pass
+    #test start, with SimulationIonCurrentParams, with spread
+
+
+@pytest.mark.django_db
+def test_start_simulation_with_ion_params_and_spread(httpx_mock, simulation_range):
+    pass
+    #test start, with SimulationIonCurrentParams, without spread
+
+
+@pytest.mark.django_db
+def test_start_concentration_points(httpx_mock, simulation_range):
+    pass
+    #compound_concentration_points
+
+@pytest.mark.django_db
+def test_start_simulation_pharmacokinetics(httpx_mock, simulation_range):
+    pass
+    #pharmacokinetics
+
+@pytest.mark.django_db
+def test_start_simulation_cellml_file(httpx_mock, simulation_range):
+    pass
+    # test cellml_file
 
 #def start_simulation(sim):
 #    """
@@ -178,20 +218,29 @@ async def test_get_from_api_invalid_url(httpx_mock):
 #                {'c50Spread': current_param.spread_of_uncertainty}
 #
 #    # call api to start simulation
-#    try:
-#        response = httpx.post(settings.AP_PREDICT_ENDPOINT, json=call_data).json()
-#        if 'error' in response:
-#            save_api_error_sync(sim, f"API error message: {response['error']}")
-#        else:
-#            sim.ap_predict_call_id = response['success']['id']
-#            sim.status = Simulation.Status.INITIALISING
-#            sim.save()
-#    except JSONDecodeError:
-#        save_api_error_sync(sim, 'Starting simulation failed: returned invalid JSON.')
-#    except httpx.HTTPError as e:
-#        save_api_error_sync(sim, f'API connection failed: {str(e)}')
-#    except httpx.InvalidURL:
-#        save_api_error_sync(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
+
+@pytest.mark.django_db
+def test_start_simulation_json_err(httpx_mock, simulation_range):
+    httpx_mock.add_response(text="This is my UTF-8 content")
+    start_simulation(simulation_range)
+    assert simulation_range.status == Simulation.Status.FAILED
+    assert str(simulation_range.api_errors) == 'Starting simulation failed: returned invalid JSON.'
+
+
+@pytest.mark.django_db
+def test_start_simulation_connection_err(httpx_mock, simulation_range):
+    httpx_mock.add_exception(httpx.ConnectError('Connection error'))
+    start_simulation(simulation_range)
+    assert simulation_range.status == Simulation.Status.FAILED
+    assert str(simulation_range.api_errors) == 'API connection failed: Connection error.'
+
+
+@pytest.mark.django_db
+def test_start_simulation_invalid_url(httpx_mock, simulation_range):
+    httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
+    start_simulation(simulation_range)
+    assert simulation_range.status == Simulation.Status.FAILED
+    assert str(simulation_range.api_errors) == f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}.'
 
 
 @pytest.mark.django_db

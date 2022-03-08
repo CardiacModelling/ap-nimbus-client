@@ -203,9 +203,9 @@ def start_simulation(sim):
     except JSONDecodeError:
         save_api_error_sync(sim, 'Starting simulation failed: returned invalid JSON.')
     except httpx.HTTPError as e:
-        save_api_error_sync(sim, f'API connection failed: {str(e)}')
+        save_api_error_sync(sim, f'API connection failed: {str(e)}.')
     except httpx.InvalidURL:
-        save_api_error_sync(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
+        save_api_error_sync(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}.')
 
 
 class SimulationListView(LoginRequiredMixin, ListView):
