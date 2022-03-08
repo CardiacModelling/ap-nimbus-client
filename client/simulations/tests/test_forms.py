@@ -89,6 +89,16 @@ class TestCompoundConcentrationPointFormSet:
         assert [c.concentration for c in CompoundConcentrationPoint.objects.all()] == sorted_values
 
     @pytest.mark.django_db
+    def test_CompoundConcentrationPointFormSetDuplicates(self, user, simulation, values, sorted_values):
+        values = [values[3]] + values
+        assert CompoundConcentrationPoint.objects.count() == 0
+        data = {'concentration-%s-concentration' % i: c for i, c in enumerate(values)}
+        data['concentration-TOTAL_FORMS'] = len(values)
+        data['concentration-INITIAL_FORMS'] = 5
+        formset = CompoundConcentrationPointFormSet(data, prefix='concentration', form_kwargs={'user': user})
+        assert not formset.is_valid()
+
+    @pytest.mark.django_db
     def test_CompoundConcentrationPointForm(self, user, simulation, values, sorted_values):
         assert CompoundConcentrationPoint.objects.count() == 0
         for val in values:
