@@ -96,7 +96,7 @@ class TestCellmlModelForm:
             paper_link='',
             ap_predict_model_call='1'
         )
-        data['name']='Shannon et al.'
+        data['name'] = 'Shannon et al.'
         form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
         assert not form.is_valid()
         # duplicate name not allowed

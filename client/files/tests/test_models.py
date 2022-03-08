@@ -33,6 +33,7 @@ def test_CellmlModel_uploaded(o_hara_model, user, other_user, admin_user):
     o_hara_model.delete()
     assert not CellmlModel.objects.filter(name=o_hara_model.name).exists()
 
+
 @pytest.mark.django_db
 def test_CellmlModel_uploaded2(o_hara_model, user, other_user, admin_user):
     o_hara_model.predefined = False
@@ -44,9 +45,10 @@ def test_CellmlModel_uploaded2(o_hara_model, user, other_user, admin_user):
     o_hara_model.delete()
     assert not CellmlModel.objects.filter(name=o_hara_model.name).exists()
 
+
 @pytest.mark.django_db
 def test_CellmlModel_uploaded3(o_hara_model, user, other_user, admin_user):
-    o_hara_model.author=user
+    o_hara_model.author = user
     o_hara_model.predefined = False
     o_hara_model.cellml_file = 'cellml_file_name.cellml'
     o_hara_model.save()
