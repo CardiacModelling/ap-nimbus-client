@@ -1,7 +1,19 @@
+import asyncio
+
+import httpx
 import pytest
+import pytest_asyncio
+from asgiref.sync import async_to_sync, sync_to_async
 from files.models import IonCurrent
 from simulations.models import Simulation
-from simulations.views import to_int
+from simulations.views import (
+    AP_MANAGER_URL,
+    get_from_api,
+    listify,
+    save_api_error_sync,
+    to_float,
+    to_int,
+)
 
 
 @pytest.mark.django_db
@@ -9,6 +21,177 @@ def test_to_int():
     assert to_int(12.4) == 12.4
     assert to_int(5.0) == 5
     assert str(to_int(5.0)) == '5'
+
+
+@pytest.mark.django_db
+def test_to_float():
+    assert to_float(12) == to_float(12.0) == to_float('12.0') == 12.0
+    assert to_float('bla') == 'bla'
+
+
+@pytest.mark.django_db
+def test_listify():
+    assert listify('bla') == ['bla']
+    assert listify(['1', '2', '3']) == ['1', '2', '3']
+
+
+@pytest.mark.django_db
+def test_save_api_error_sync(simulation_range):
+    assert simulation_range.status == Simulation.Status.NOT_STARTED 
+    message = 'something went wrong' * 15
+    save_api_error_sync(simulation_range, message)
+    assert simulation_range.progress == 'Failed!'
+    assert simulation_range.status == Simulation.Status.FAILED
+    assert simulation_range.api_errors == message[:254]
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_new_test_method(httpx_mock, simulation_range):
+    json_data = {'success': {'test_method': 'bla'}}
+    httpx_mock.add_response(json=json_data)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'test_method', simulation_range)
+        assert response == json_data
+        assert simulation_range.status == Simulation.Status.NOT_STARTED
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_random_response(httpx_mock, simulation_range):
+    json_data = {'some other': 'some other response'}
+    httpx_mock.add_response(json=json_data)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'messages', simulation_range)
+        assert response == json_data
+        assert simulation_range.status == Simulation.Status.NOT_STARTED
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_returns_error_msg(httpx_mock):
+    sim = await sync_to_async(Simulation)()
+    json_data = {'error': 'some error message'}
+    httpx_mock.add_response(json=json_data)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'messages', sim)
+        assert response == json_data
+        assert sim.status == Simulation.Status.FAILED
+        assert str(sim.api_errors) == 'API error message: some error message'
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_invalid_json_for_existing_method(httpx_mock):
+    sim = await sync_to_async(Simulation)()
+    json_data = {'success': 'some other response'}
+    httpx_mock.add_response(json=json_data)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'messages', sim)
+        assert response == json_data
+        assert sim.status == Simulation.Status.FAILED
+        assert str(sim.api_errors) == "Result to call messages failed JSON validation: 'some other response' is not of type 'array'"
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_invalid_json_decode_error(httpx_mock):
+    sim = await sync_to_async(Simulation)()
+    httpx_mock.add_response(text="This is my UTF-8 content")
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'messages', sim)
+        assert response == {}
+        assert sim.status == Simulation.Status.FAILED
+        assert str(sim.api_errors) == 'API call: messages returned invalid JSON.'
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_connection_error(httpx_mock):
+    sim = await sync_to_async(Simulation)()
+    httpx_mock.add_exception(httpx.ConnectError('Connection error'))
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, 'messages', sim)
+        assert response == {}
+        assert sim.status == Simulation.Status.FAILED
+        assert str(sim.api_errors) == 'API connection failed for call: messages: Connection error.'
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_from_api_invalid_url(httpx_mock):
+    call= 'messages'
+    sim = await sync_to_async(Simulation)()
+    httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await get_from_api(client, call, sim)
+        assert response == {}
+        assert sim.status == Simulation.Status.FAILED
+        assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
+
+
+#def start_simulation(sim):
+#    """
+#    Makes the request to start the simulation.
+#    """
+#    # (re)set status and result
+#    sim.status = Simulation.Status.NOT_STARTED
+#    sim.progress = INITIALISING if sim.model.ap_predict_model_call else COMPILING_CELLML
+#    sim.ap_predict_last_update = timezone.now()
+#    sim.ap_predict_call_id = ''
+#    sim.api_errors = ''
+#    sim.messages = ''
+#    sim.q_net = ''
+#    sim.voltage_traces = ''
+#    sim.voltage_results = ''
+#    sim.pkpd_results = ''
+#
+#    # build json data for api call
+#    call_data = {'pacingFrequency': sim.pacing_frequency,
+#                 'pacingMaxTime': sim.maximum_pacing_time}
+#    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:  # pk data file
+#        with open(sim.PK_data.path, 'rb') as PK_data_file:
+#            call_data['PK_data_file'] = PK_data_file.read().decode('unicode-escape')
+#    elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
+#        call_data['plasmaPoints'] = sorted(set([c.concentration
+#                                                for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
+#    else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
+#        call_data['plasmaMinimum'] = sim.minimum_concentration
+#        call_data['plasmaMaximum'] = sim.maximum_concentration
+#        call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
+#        call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
+#
+#    if sim.model.ap_predict_model_call:
+#        call_data['modelId'] = sim.model.ap_predict_model_call
+#    else:
+#        with open(sim.model.cellml_file.path, 'rb') as cellml_file:
+#            call_data['cellml_file'] = cellml_file.read().decode('unicode-escape')
+#
+#    for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
+#        call_data[current_param.ion_current.name] = {
+#            'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
+#                                'hill': current_param.hill_coefficient,
+#                                'saturation': current_param.saturation_level}]
+#        }
+#        if current_param.spread_of_uncertainty:
+#            call_data[current_param.ion_current.name]['spreads'] = \
+#                {'c50Spread': current_param.spread_of_uncertainty}
+#
+#    # call api to start simulation
+#    try:
+#        response = httpx.post(settings.AP_PREDICT_ENDPOINT, json=call_data).json()
+#        if 'error' in response:
+#            save_api_error_sync(sim, f"API error message: {response['error']}")
+#        else:
+#            sim.ap_predict_call_id = response['success']['id']
+#            sim.status = Simulation.Status.INITIALISING
+#            sim.save()
+#    except JSONDecodeError:
+#        save_api_error_sync(sim, 'Starting simulation failed: returned invalid JSON.')
+#    except httpx.HTTPError as e:
+#        save_api_error_sync(sim, f'API connection failed: {str(e)}')
+#    except httpx.InvalidURL:
+#        save_api_error_sync(sim, f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}')
 
 
 @pytest.mark.django_db

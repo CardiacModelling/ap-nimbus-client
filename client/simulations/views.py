@@ -77,6 +77,8 @@ JSON_SCHEMAS = {
                                                                    'items': {'type': 'string'}}]}},
                                'required': ['apd90', 'timepoint'],
                                'additionalProperties': False}},
+    'messages': {'type': 'array',
+                 'items': {'type': 'string'}},
 }
 
 
@@ -127,11 +129,11 @@ async def get_from_api(client, call, sim):
         if 'error' in response:
             await save_api_error(sim, f"API error message: {str(response['error'])}")
     except JSONDecodeError:
-        await save_api_error(sim, f'Simulation failed:\n API call: {call} returned invalid JSON.')
+        await save_api_error(sim, f'API call: {call} returned invalid JSON.')
     except httpx.HTTPError as e:
-        await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}')
+        await save_api_error(sim, f'API connection failed for call: {call}: {str(e)}.')
     except httpx.InvalidURL:
-        await save_api_error(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}')
+        await save_api_error(sim, f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.')
     finally:
         try:  # validate a succesful result if we have a schema for it
             if 'success' in response and call in JSON_SCHEMAS:

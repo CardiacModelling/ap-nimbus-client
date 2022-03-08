@@ -1,5 +1,6 @@
-import pytest
 import math
+
+import pytest
 from files.models import IonCurrent
 from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
