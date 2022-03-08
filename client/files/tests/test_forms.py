@@ -12,8 +12,8 @@ from files.models import CellmlModel, IonCurrent
 @pytest.mark.django_db
 class TestCellmlModelForm:
     def upload_file(self, tmp_path, file_name):
-        test_file = os.path.join(settings.BASE_DIR, 'files', 'tests', file_name + ".cellml")
-        cellml_file = file_name + str(uuid.uuid4()) + '.cellml.temp'
+        test_file = os.path.join(settings.BASE_DIR, 'files', 'tests', f'{file_name}.cellml')
+        cellml_file = f'{file_name}{uuid.uuid4()}.cellml.temp'
         temp_file = os.path.join(tmp_path, cellml_file)
         assert os.path.isfile(test_file)
         copyfile(test_file, temp_file)

@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from accounts.models import User
 from files.models import IonCurrent
 from model_bakery.recipe import Recipe, seq
@@ -190,4 +191,4 @@ def simulation_pkdata(simulation_recipe, user, o_hara_model):
                                   ion_current_type=Simulation.IonCurrentType.IC50,
                                   ion_units=Simulation.IonCurrentUnits.M,
                                   pk_or_concs=Simulation.PkOptions.pharmacokinetics,
-                                  PK_data='pk_data.tsv')
+                                  PK_data=f'{uuid.uuid4()}_pk_data.tsv')

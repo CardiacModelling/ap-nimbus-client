@@ -1,20 +1,27 @@
+import os
+import json
+import shutil
 import asyncio
+import datetime
 
 import httpx
 import pytest
 import pytest_asyncio
-from django.conf import settings
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
+from django.utils import timezone
 from files.models import IonCurrent
 from simulations.models import Simulation
 from simulations.views import (
     AP_MANAGER_URL,
+    COMPILING_CELLML,
+    INITIALISING,
     get_from_api,
     listify,
     save_api_error_sync,
+    start_simulation,
     to_float,
     to_int,
-    start_simulation
 )
 
 
@@ -132,41 +139,110 @@ async def test_get_from_api_invalid_url(httpx_mock):
         assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
 
 @pytest.mark.django_db
-def test_start_simulation(httpx_mock, simulation_range):
-    pass
-    # test start, compound_concentration_range, ap_predict_model_call
-
-
-@pytest.mark.django_db
 def test_re_start_simulation(httpx_mock, simulation_range):
-    pass
-    # test re_start
+    time_in_past = datetime.datetime(1900, 1, 1)
+    simulation_range.status = Simulation.Status.SUCCESS
+    simulation_range.progress = '100% Completed'
+    simulation_range.ap_predict_last_update = datetime.datetime(2020, 12, 25, 17, 5, 55)
+    simulation_range.ap_predict_call_id = '1234567a-9ecc-11ec-b909-0242ac120002'
+    simulation_range.api_errors = 'No errors'
+    simulation_range.messages = ['no messages']
+    simulation_range.q_net = '{}'
+    simulation_range.voltage_traces = '{}'
+    simulation_range.voltage_results = '{}'
+    simulation_range.pkpd_results = '{}'
+    simulation_range.save()
+    simulation_range.refresh_from_db()
+
+    def check_request(request: httpx.Request):
+        # check call data and return mock response
+        call_data = json.loads(request.content)
+        assert call_data ==  {'pacingFrequency': 0.05,
+                              'pacingMaxTime': 5.0,
+                              'plasmaMinimum': 0.0,
+                              'plasmaMaximum': 100.0,
+                              'plasmaIntermediatePointCount': '4',
+                              'plasmaIntermediatePointLogScale': True,
+                              'modelId': '6',
+                              'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
+                              'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
+                              'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                              'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
+                              'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
+                              'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                              'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
+        return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+
+    httpx_mock.add_callback(check_request)
+    start_simulation(simulation_range)
+    assert simulation_range.status == Simulation.Status.INITIALISING
+    assert simulation_range.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+    assert simulation_range.progress == INITIALISING
+    assert time_in_past < simulation_range.ap_predict_last_update < timezone.now()
+    assert simulation_range.api_errors == ''
+    assert simulation_range.messages == ''
+    assert simulation_range.q_net == ''
+    assert simulation_range.voltage_traces == ''
+    assert simulation_range.voltage_results == ''
+    assert simulation_range.pkpd_results == ''
+
+@pytest.mark.django_db
+def test_start_simulation_with_ion_currents(httpx_mock, simulation_points):
+    assert simulation_points.status == Simulation.Status.NOT_STARTED
+    assert simulation_points.ap_predict_call_id == ''
+    def check_request(request: httpx.Request):
+        # check call data and return mock response
+        call_data = json.loads(request.content)
+        assert call_data == {'pacingFrequency': 0.05,
+                             'pacingMaxTime': 5,
+                             'plasmaPoints': [24.9197,
+                                              25.85,
+                                              27.73,
+                                              35.8,
+                                              41.032,
+                                              42.949,
+                                              56.2,
+                                              62.0,
+                                              67.31,
+                                              72.27],
+                             'modelId': '6'}
+        return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+
+    httpx_mock.add_callback(check_request)
+    start_simulation(simulation_points)
+    assert simulation_points.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+    assert simulation_points.status == Simulation.Status.INITIALISING
 
 
 @pytest.mark.django_db
-def test_start_simulation_with_ion_currents(httpx_mock, simulation_range):
-    pass
-    #test start, with SimulationIonCurrentParams, with spread
+def test_start_simulation_pharmacokinetics(httpx_mock, simulation_pkdata):
+#check call json
+    assert simulation_pkdata.status == Simulation.Status.NOT_STARTED
+    assert simulation_pkdata.ap_predict_call_id == ''
+    # the pk data file doesn't exist
+    with pytest.raises(FileNotFoundError):
+        start_simulation(simulation_pkdata)
 
+    # copy pk file
+    pkd_test_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'small_sample.tsv')
+    pkd_test_dest_file = os.path.join(settings.MEDIA_ROOT, str(simulation_pkdata.PK_data))
+    shutil.copy(pkd_test_source_file, pkd_test_dest_file)
+    assert os.path.isfile(pkd_test_dest_file)
 
-@pytest.mark.django_db
-def test_start_simulation_with_ion_params_and_spread(httpx_mock, simulation_range):
-    pass
-    #test start, with SimulationIonCurrentParams, without spread
+    # test start simulation call
+    httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+    start_simulation(simulation_pkdata)
+    assert simulation_pkdata.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+    assert simulation_pkdata.status == Simulation.Status.INITIALISING
 
+    # cleanup file (via signal)
+    simulation_pkdata.delete()
+    assert not os.path.isfile(pkd_test_dest_file)
 
-@pytest.mark.django_db
-def test_start_concentration_points(httpx_mock, simulation_range):
-    pass
-    #compound_concentration_points
-
-@pytest.mark.django_db
-def test_start_simulation_pharmacokinetics(httpx_mock, simulation_range):
-    pass
-    #pharmacokinetics
 
 @pytest.mark.django_db
 def test_start_simulation_cellml_file(httpx_mock, simulation_range):
+#    httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
     pass
     # test cellml_file
 
