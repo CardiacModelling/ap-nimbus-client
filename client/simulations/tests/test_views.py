@@ -568,6 +568,19 @@ class TestRestartSimulationView:
 @pytest.mark.django_db
 class TestSpreadsheetSimulationView:
     @pytest.fixture
+    def sim_no_confidence(self, simulation_range):
+        simulation_range.status = Simulation.Status.SUCCESS
+#        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net_no_confidence.txt'), 'r') as file:
+#            simulation_range.q_net = json.loads(file.read())
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_no_confidence.txt'), 'r') as file:
+            simulation_range.voltage_results = json.loads(file.read())
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_no_confidence.txt'), 'r') as file:
+            simulation_range.voltage_traces = json.loads(file.read())
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+        return simulation_range
+
+    @pytest.fixture
     def sim(self, simulation_range):
         simulation_range.status = Simulation.Status.SUCCESS
         with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
@@ -583,6 +596,8 @@ class TestSpreadsheetSimulationView:
         return simulation_range
 
     def check_xlsx_files(self, response, tmp_path, check_file):
+        assert response.status_code == 200
+
         response_file_path = os.path.join(tmp_path, 'response.xlsx')
         check_file_path = os.path.join(settings.BASE_DIR, 'simulations', 'tests', check_file)
 
@@ -593,8 +608,8 @@ class TestSpreadsheetSimulationView:
         assert os.path.isfile(check_file_path)
 
         sheets = list(range(5))
-        response_df = pandas.read_excel(response_file_path, sheet_name=sheets)
-        check_df = pandas.read_excel(check_file_path, sheet_name=sheets)
+        response_df = pandas.read_excel(response_file_path, sheet_name=sheets, engine='openpyxl')
+        check_df = pandas.read_excel(check_file_path, sheet_name=sheets, engine='openpyxl')
         for sheet in sheets:
             assert str(response_df[sheet]) == str(check_df[sheet])
 
@@ -616,38 +631,36 @@ class TestSpreadsheetSimulationView:
 
     def test_range(self, logged_in_user, client, simulation_range, tmp_path):
         response = client.get(f'/simulations/{simulation_range.pk}/spreadsheet')
-        assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'range_no_data.xlsx')
 
     def test_points(self, logged_in_user, client, simulation_points, tmp_path):
         response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
-        assert response.status_code == 200
-        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'points_no_data.xlsx')
-        response_xlsx = b''.join(response.streaming_content)
-        with open(response_file, 'wb') as file:
-            file.write(response_xlsx)
-        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')        
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
     def test_pkdata(self, logged_in_user, client, simulation_pkdata, tmp_path):
         response = client.get(f'/simulations/{simulation_pkdata.pk}/spreadsheet')
-        assert response.status_code == 200
-        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkdata_no_data.xlsx')
-        response_xlsx = b''.join(response.streaming_content)
-        with open(response_file, 'wb') as file:
-            file.write(response_xlsx)
-        self.check_xlsx_files(response, tmp_path, 'pkdata_no_data.xlsx')        
+        self.check_xlsx_files(response, tmp_path, 'pkdata_no_data.xlsx')
+
+    def test_data_no_confidence(self, logged_in_user, client, sim_no_confidence, tmp_path):
+        response = client.get(f'/simulations/{sim_no_confidence.pk}/spreadsheet')
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'data_no_confidence.xlsx')
+#        response_xlsx = b''.join(response.streaming_content)
+#        with open(response_file, 'wb') as file:
+#            file.write(response_xlsx)
+        self.check_xlsx_files(response, tmp_path, 'data_no_confidence.xlsx')
+
 
     def test_all_data(self, logged_in_user, client, sim, tmp_path):
         response = client.get(f'/simulations/{sim.pk}/spreadsheet')
         assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
-        
-#    def test_save(self, logged_in_user, client, sim, tmp_path):
-#        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
-#        assert response.status_code == 200
-#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
-#        response_xlsx = b''.join(response.streaming_content)
-#        with open(response_file, 'wb') as file:
-#            file.write(response_xlsx)
+
+##    def test_save(self, logged_in_user, client, sim, tmp_path):
+##        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+##        assert response.status_code == 200
+##        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
+##        response_xlsx = b''.join(response.streaming_content)
+##        with open(response_file, 'wb') as file:
+##            file.write(response_xlsx)
 
 

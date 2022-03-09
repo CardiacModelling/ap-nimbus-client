@@ -471,11 +471,10 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
 
     def qNet(self, workbook, bold, sim):
         def len_vr():
-            if not sim.voltage_results:
+            if not sim.voltage_results or not 'da90' in sim.voltage_results[0]:
                 return 0
             if len(sim.voltage_results[0]) > 0:
                 return (len(sim.voltage_results[0]['da90'])) -1
-            return 2
 
         worksheet = workbook.add_worksheet('% Change and qNet')
         row = 0
@@ -495,15 +494,14 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         if not sim.voltage_results:
             return
 
-        if len(sim.voltage_results) > 0:
-            for da_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
-                worksheet.write(row, da_col + 1, da90_head, bold)
-            if len(sim.voltage_results[0]['da90']) > 1:
-                for qnet_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
-                    worksheet.write(row, da_col + qnet_col + 2, da90_head, bold)
-            row += 1
+        for da_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
+            worksheet.write(row, da_col + 1, da90_head, bold)
+        if len(sim.voltage_results[0]['da90']) > 1:
+            for qnet_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
+                worksheet.write(row, da_col + qnet_col + 2, da90_head, bold)
+        row += 1
 
-        for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+        for v_res, qnet in zip_longest(sim.voltage_results[1:], (sim.q_net if sim.q_net else [])):
             worksheet.write(row, 0, to_float(v_res['c']))
             for da_col, da90 in enumerate(v_res['da90']):
                 worksheet.write(row, da_col + 1, to_float(da90))
