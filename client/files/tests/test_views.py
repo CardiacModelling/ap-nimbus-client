@@ -66,7 +66,7 @@ def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
         'ap_predict_model_call': model.ap_predict_model_call,
     }
     assert CellmlModel.objects.count() == 1
-    response = client.post('/files/models/%d/edit' % model.pk, data=data)
+    response = client.post(f'/files/models/{model.pk}/edit', data=data)
     assert response.status_code == 302
     model.refresh_from_db()
     assert CellmlModel.objects.count() == 1
@@ -76,17 +76,17 @@ def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
 @pytest.mark.django_db
 class TestCellmlModelDetailView:
     def test_non_loged_in_cannot_see(self, user, client, o_hara_model):
-        response = client.get('/files/models/%d' % o_hara_model.pk)
+        response = client.get(f'/files/models/{o_hara_model.pk}')
         assert response.status_code == 302
 
     def test_non_owner_cannot_see_non_predef(self, logged_in_user, other_user, client, cellml_model_recipe):
         model = cellml_model_recipe.make(author=other_user, predefined=False)
-        response = client.get('/files/models/%d' % model.pk)
+        response = client.get(f'/files/models/{model.pk}')
         assert response.status_code == 403
 
     def test_non_owner_can_see_predef(self, logged_in_user, other_user, client, cellml_model_recipe):
         model = cellml_model_recipe.make(author=other_user, predefined=True)
-        response = client.get('/files/models/%d' % model.pk)
+        response = client.get(f'/files/models/{model.pk}')
         assert response.status_code == 200
 
 
@@ -94,7 +94,7 @@ class TestCellmlModelDetailView:
 class TestCellmlModelDeleteView:
     def test_owner_can_delete(self, logged_in_user, client, o_hara_model):
         assert CellmlModel.objects.count() == 1
-        response = client.post('/files/models/%d/delete' % o_hara_model.pk)
+        response = client.post(f'/files/models/{o_hara_model.pk}/delete')
         assert response.status_code == 302
         assert CellmlModel.objects.count() == 0
 
@@ -102,18 +102,18 @@ class TestCellmlModelDeleteView:
         o_hara_model.predefined = True
         o_hara_model.save()
         assert CellmlModel.objects.count() == 1
-        response = client.post('/files/models/%d/delete' % o_hara_model.pk)
+        response = client.post(f'/files/models/{o_hara_model.pk}/delete')
         assert response.status_code == 302
         assert CellmlModel.objects.count() == 0
 
     def test_non_owner_cannot_delete(self, logged_in_user, other_user, client, cellml_model_recipe):
         model = cellml_model_recipe.make(author=other_user)
         assert CellmlModel.objects.count() == 1
-        response = client.post('/files/models/%d/delete' % model.pk)
+        response = client.post(f'/files/models/{model.pk}/delete')
         assert response.status_code == 403
 
     def test_non_logged_in_owner_cannot_delete(self, user, client, o_hara_model):
         assert CellmlModel.objects.count() == 1
-        response = client.post('/files/models/%d/delete' % o_hara_model.pk)
+        response = client.post(f'/files/models/{o_hara_model.pk}/delete')
         assert response.status_code == 403
 

@@ -1,8 +1,9 @@
-import os
-import json
-import shutil
 import asyncio
 import datetime
+import json
+import os
+import shutil
+import uuid
 
 import httpx
 import pytest
@@ -56,267 +57,262 @@ def test_save_api_error_sync(simulation_range):
 
 @pytest.mark.django_db
 @pytest.mark.asyncio
-async def test_get_from_api_new_test_method(httpx_mock, simulation_range):
-    json_data = {'success': {'test_method': 'bla'}}
-    httpx_mock.add_response(json=json_data)
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'test_method', simulation_range)
-        assert response == json_data
-        assert simulation_range.status == Simulation.Status.NOT_STARTED
+class TestGetFromApi:
+    async def test_test_method(self, httpx_mock, simulation_range):
+        json_data = {'success': {'test_method': 'bla'}}
+        httpx_mock.add_response(json=json_data)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'test_method', simulation_range)
+            assert response == json_data
+            assert simulation_range.status == Simulation.Status.NOT_STARTED
 
+    async def test_random_response(self, httpx_mock, simulation_range):
+        json_data = {'some other': 'some other response'}
+        httpx_mock.add_response(json=json_data)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'messages', simulation_range)
+            assert response == json_data
+            assert simulation_range.status == Simulation.Status.NOT_STARTED
 
-@pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_random_response(httpx_mock, simulation_range):
-    json_data = {'some other': 'some other response'}
-    httpx_mock.add_response(json=json_data)
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'messages', simulation_range)
-        assert response == json_data
-        assert simulation_range.status == Simulation.Status.NOT_STARTED
+    async def test_returns_error_msg(self, httpx_mock):
+        sim = await sync_to_async(Simulation)()
+        json_data = {'error': 'some error message'}
+        httpx_mock.add_response(json=json_data)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'messages', sim)
+            assert response == json_data
+            assert sim.status == Simulation.Status.FAILED
+            assert str(sim.api_errors) == 'API error message: some error message'
 
+    async def test_invalid_json_for_existing_method(self, httpx_mock):
+        sim = await sync_to_async(Simulation)()
+        json_data = {'success': 'some other response'}
+        httpx_mock.add_response(json=json_data)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'messages', sim)
+            assert response == json_data
+            assert sim.status == Simulation.Status.FAILED
+            assert str(sim.api_errors) == "Result to call messages failed JSON validation: 'some other response' is not of type 'array'"
 
-@pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_returns_error_msg(httpx_mock):
-    sim = await sync_to_async(Simulation)()
-    json_data = {'error': 'some error message'}
-    httpx_mock.add_response(json=json_data)
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'messages', sim)
-        assert response == json_data
-        assert sim.status == Simulation.Status.FAILED
-        assert str(sim.api_errors) == 'API error message: some error message'
+    async def test_json_decode_error(self, httpx_mock):
+        sim = await sync_to_async(Simulation)()
+        httpx_mock.add_response(text="This is my UTF-8 content")
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'messages', sim)
+            assert response == {}
+            assert sim.status == Simulation.Status.FAILED
+            assert str(sim.api_errors) == 'API call: messages returned invalid JSON.'
 
+    async def test_connection_error(self, httpx_mock):
+        sim = await sync_to_async(Simulation)()
+        httpx_mock.add_exception(httpx.ConnectError('Connection error'))
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, 'messages', sim)
+            assert response == {}
+            assert sim.status == Simulation.Status.FAILED
+            assert str(sim.api_errors) == 'API connection failed for call: messages: Connection error.'
 
-@pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_invalid_json_for_existing_method(httpx_mock):
-    sim = await sync_to_async(Simulation)()
-    json_data = {'success': 'some other response'}
-    httpx_mock.add_response(json=json_data)
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'messages', sim)
-        assert response == json_data
-        assert sim.status == Simulation.Status.FAILED
-        assert str(sim.api_errors) == "Result to call messages failed JSON validation: 'some other response' is not of type 'array'"
-
-
-@pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_invalid_json_decode_error(httpx_mock):
-    sim = await sync_to_async(Simulation)()
-    httpx_mock.add_response(text="This is my UTF-8 content")
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'messages', sim)
-        assert response == {}
-        assert sim.status == Simulation.Status.FAILED
-        assert str(sim.api_errors) == 'API call: messages returned invalid JSON.'
-
-
-@pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_connection_error(httpx_mock):
-    sim = await sync_to_async(Simulation)()
-    httpx_mock.add_exception(httpx.ConnectError('Connection error'))
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, 'messages', sim)
-        assert response == {}
-        assert sim.status == Simulation.Status.FAILED
-        assert str(sim.api_errors) == 'API connection failed for call: messages: Connection error.'
-
+    async def test_invalid_url(self, httpx_mock):
+        call = 'messages'
+        sim = await sync_to_async(Simulation)()
+        httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await get_from_api(client, call, sim)
+            assert response == {}
+            assert sim.status == Simulation.Status.FAILED
+            assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
 
 @pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_get_from_api_invalid_url(httpx_mock):
-    call = 'messages'
-    sim = await sync_to_async(Simulation)()
-    httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
-    async with httpx.AsyncClient(timeout=None) as client:
-        response = await get_from_api(client, call, sim)
-        assert response == {}
-        assert sim.status == Simulation.Status.FAILED
-        assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
+class TestReStartSimulation:
+    def test_re_start(self, httpx_mock, simulation_range):
+        time_in_past = datetime.datetime(1900, 1, 1)
+        simulation_range.status = Simulation.Status.SUCCESS
+        simulation_range.progress = '100% Completed'
+        simulation_range.ap_predict_last_update = datetime.datetime(2020, 12, 25, 17, 5, 55)
+        simulation_range.ap_predict_call_id = '1234567a-9ecc-11ec-b909-0242ac120002'
+        simulation_range.api_errors = 'No errors'
+        simulation_range.messages = ['no messages']
+        simulation_range.q_net = '{}'
+        simulation_range.voltage_traces = '{}'
+        simulation_range.voltage_results = '{}'
+        simulation_range.pkpd_results = '{}'
+        simulation_range.save()
+        simulation_range.refresh_from_db()
 
-@pytest.mark.django_db
-def test_re_start_simulation(httpx_mock, simulation_range):
-    time_in_past = datetime.datetime(1900, 1, 1)
-    simulation_range.status = Simulation.Status.SUCCESS
-    simulation_range.progress = '100% Completed'
-    simulation_range.ap_predict_last_update = datetime.datetime(2020, 12, 25, 17, 5, 55)
-    simulation_range.ap_predict_call_id = '1234567a-9ecc-11ec-b909-0242ac120002'
-    simulation_range.api_errors = 'No errors'
-    simulation_range.messages = ['no messages']
-    simulation_range.q_net = '{}'
-    simulation_range.voltage_traces = '{}'
-    simulation_range.voltage_results = '{}'
-    simulation_range.pkpd_results = '{}'
-    simulation_range.save()
-    simulation_range.refresh_from_db()
+        def check_request(request: httpx.Request):
+            # check call data and return mock response
+            call_data = json.loads(request.content)
+            assert call_data ==  {'pacingFrequency': 0.05,
+                                  'pacingMaxTime': 5.0,
+                                  'plasmaMinimum': 0.0,
+                                  'plasmaMaximum': 100.0,
+                                  'plasmaIntermediatePointCount': '4',
+                                  'plasmaIntermediatePointLogScale': True,
+                                  'modelId': '6',
+                                  'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
+                                  'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
+                                  'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                                  'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
+                                  'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
+                                  'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                                  'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
 
-    def check_request(request: httpx.Request):
-        # check call data and return mock response
-        call_data = json.loads(request.content)
-        assert call_data ==  {'pacingFrequency': 0.05,
-                              'pacingMaxTime': 5.0,
-                              'plasmaMinimum': 0.0,
-                              'plasmaMaximum': 100.0,
-                              'plasmaIntermediatePointCount': '4',
-                              'plasmaIntermediatePointLogScale': True,
-                              'modelId': '6',
-                              'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
-                              'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
-                              'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                              'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
-                              'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
-                              'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                              'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
-        return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+            return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
-    httpx_mock.add_callback(check_request)
-    start_simulation(simulation_range)
-    assert simulation_range.status == Simulation.Status.INITIALISING
-    assert simulation_range.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
-    assert simulation_range.progress == INITIALISING
-    assert time_in_past < simulation_range.ap_predict_last_update < timezone.now()
-    assert simulation_range.api_errors == ''
-    assert simulation_range.messages == ''
-    assert simulation_range.q_net == ''
-    assert simulation_range.voltage_traces == ''
-    assert simulation_range.voltage_results == ''
-    assert simulation_range.pkpd_results == ''
+        httpx_mock.add_callback(check_request)
+        start_simulation(simulation_range)
+        assert simulation_range.status == Simulation.Status.INITIALISING
+        assert simulation_range.progress == INITIALISING
+        assert simulation_range.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+        assert simulation_range.progress == INITIALISING
+        assert time_in_past < simulation_range.ap_predict_last_update < timezone.now()
+        assert simulation_range.api_errors == ''
+        assert simulation_range.messages == ''
+        assert simulation_range.q_net == ''
+        assert simulation_range.voltage_traces == ''
+        assert simulation_range.voltage_results == ''
+        assert simulation_range.pkpd_results == ''
 
-@pytest.mark.django_db
-def test_start_simulation_with_ion_currents(httpx_mock, simulation_points):
-    assert simulation_points.status == Simulation.Status.NOT_STARTED
-    assert simulation_points.ap_predict_call_id == ''
-    def check_request(request: httpx.Request):
-        # check call data and return mock response
-        call_data = json.loads(request.content)
-        assert call_data == {'pacingFrequency': 0.05,
-                             'pacingMaxTime': 5,
-                             'plasmaPoints': [24.9197,
-                                              25.85,
-                                              27.73,
-                                              35.8,
-                                              41.032,
-                                              42.949,
-                                              56.2,
-                                              62.0,
-                                              67.31,
-                                              72.27],
-                             'modelId': '6'}
-        return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+    def test_currents(self, httpx_mock, simulation_points):
+        assert simulation_points.status == Simulation.Status.NOT_STARTED
+        assert simulation_points.ap_predict_call_id == ''
+        def check_request(request: httpx.Request):
+            # check call data and return mock response
+            call_data = json.loads(request.content)
+            assert call_data == {'pacingFrequency': 0.05,
+                                 'pacingMaxTime': 5,
+                                 'plasmaPoints': [24.9197,
+                                                  25.85,
+                                                  27.73,
+                                                  35.8,
+                                                  41.032,
+                                                  42.949,
+                                                  56.2,
+                                                  62.0,
+                                                  67.31,
+                                                  72.27],
+                                 'modelId': '6'}
+            return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
-    httpx_mock.add_callback(check_request)
-    start_simulation(simulation_points)
-    assert simulation_points.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
-    assert simulation_points.status == Simulation.Status.INITIALISING
+        httpx_mock.add_callback(check_request)
+        start_simulation(simulation_points)
+        assert simulation_points.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+        assert simulation_points.status == Simulation.Status.INITIALISING
+        assert simulation_points.progress == INITIALISING
 
+    def test_pharmacokinetics(self, httpx_mock, simulation_pkdata):
+        assert simulation_pkdata.status == Simulation.Status.NOT_STARTED
+        assert simulation_pkdata.ap_predict_call_id == ''
+        # the pk data file doesn't exist
+        with pytest.raises(FileNotFoundError):
+            start_simulation(simulation_pkdata)
 
-@pytest.mark.django_db
-def test_start_simulation_pharmacokinetics(httpx_mock, simulation_pkdata):
-#check call json
-    assert simulation_pkdata.status == Simulation.Status.NOT_STARTED
-    assert simulation_pkdata.ap_predict_call_id == ''
-    # the pk data file doesn't exist
-    with pytest.raises(FileNotFoundError):
+        # copy pk file
+        pkd_test_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'small_sample.tsv')
+        pkd_test_dest_file = os.path.join(settings.MEDIA_ROOT, str(simulation_pkdata.PK_data))
+        shutil.copy(pkd_test_source_file, pkd_test_dest_file)
+        assert os.path.isfile(pkd_test_dest_file)
+
+        # test start simulation call
+        def check_request(request: httpx.Request):
+            # check call data and return mock response
+            call_data = json.loads(request.content)
+            assert call_data ==  {'pacingFrequency': 0.05,
+                                  'pacingMaxTime': 5,
+                                  'PK_data_file': '0.1\t1\t1.1\n0.2\t2\t2.1\n',
+                                  'modelId': '6'}
+            return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+
+        httpx_mock.add_callback(check_request)
         start_simulation(simulation_pkdata)
+        assert simulation_pkdata.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+        assert simulation_pkdata.status == Simulation.Status.INITIALISING
+        assert simulation_pkdata.progress == INITIALISING
 
-    # copy pk file
-    pkd_test_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'small_sample.tsv')
-    pkd_test_dest_file = os.path.join(settings.MEDIA_ROOT, str(simulation_pkdata.PK_data))
-    shutil.copy(pkd_test_source_file, pkd_test_dest_file)
-    assert os.path.isfile(pkd_test_dest_file)
+        # cleanup file (via signal)
+        simulation_pkdata.delete()
+        assert not os.path.isfile(pkd_test_dest_file)
 
-    # test start simulation call
-    httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
-    start_simulation(simulation_pkdata)
-    assert simulation_pkdata.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
-    assert simulation_pkdata.status == Simulation.Status.INITIALISING
+    def test_cellml_file(self, httpx_mock, user, cellml_model_recipe, simulation_range):
+        assert simulation_range.status == Simulation.Status.NOT_STARTED
+        assert simulation_range.ap_predict_call_id == ''
 
-    # cleanup file (via signal)
-    simulation_pkdata.delete()
-    assert not os.path.isfile(pkd_test_dest_file)
+        uploaded_model = cellml_model_recipe.make(
+            author=user,
+            predefined=True,
+            name="uploaded O'Hara-Rudy-CiPA",
+            description='human ventricular cell model (endocardial)',
+            version='v1.0',
+            year=2017,
+            cellml_link='https://models.cellml.org/e/4e8/',
+            paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
+            cellml_file=f'{uuid.uuid4()}ohara_rudy_cipa_v1_2017.cellml'
+        )
+        # copy file for use
+        source_cellml = os.path.join(settings.BASE_DIR, 'files', 'tests', 'ohara_rudy_cipa_v1_2017.cellml')
+        dest_cellml = os.path.join(settings.MEDIA_ROOT, str(uploaded_model.cellml_file))
+        shutil.copy(source_cellml, dest_cellml)
+        assert os.path.isfile(dest_cellml)
 
+        simulation_range.model = uploaded_model
+        simulation_range.save()
+        simulation_range.refresh_from_db()
 
-@pytest.mark.django_db
-def test_start_simulation_cellml_file(httpx_mock, simulation_range):
-#    httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
-    pass
-    # test cellml_file
+        def check_request(request: httpx.Request):
+            # check call data and return mock response
+            call_data = json.loads(request.content)
+            with open(uploaded_model.cellml_file.path, 'rb') as cellml_file:
+                assert call_data ==  {'cellml_file': cellml_file.read().decode('unicode-escape'),
+                                      'pacingFrequency': 0.05,
+                                      'pacingMaxTime': 5.0,
+                                      'plasmaMinimum': 0.0,
+                                      'plasmaMaximum': 100.0,
+                                      'plasmaIntermediatePointCount': '4',
+                                      'plasmaIntermediatePointLogScale': True,
+                                      'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
+                                      'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
+                                      'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                                      'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
+                                      'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
+                                      'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
+                                      'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
 
-#def start_simulation(sim):
-#    """
-#    Makes the request to start the simulation.
-#    """
-#    # (re)set status and result
-#    sim.status = Simulation.Status.NOT_STARTED
-#    sim.progress = INITIALISING if sim.model.ap_predict_model_call else COMPILING_CELLML
-#    sim.ap_predict_last_update = timezone.now()
-#    sim.ap_predict_call_id = ''
-#    sim.api_errors = ''
-#    sim.messages = ''
-#    sim.q_net = ''
-#    sim.voltage_traces = ''
-#    sim.voltage_results = ''
-#    sim.pkpd_results = ''
-#
-#    # build json data for api call
-#    call_data = {'pacingFrequency': sim.pacing_frequency,
-#                 'pacingMaxTime': sim.maximum_pacing_time}
-#    if sim.pk_or_concs == Simulation.PkOptions.pharmacokinetics:  # pk data file
-#        with open(sim.PK_data.path, 'rb') as PK_data_file:
-#            call_data['PK_data_file'] = PK_data_file.read().decode('unicode-escape')
-#    elif sim.pk_or_concs == Simulation.PkOptions.compound_concentration_points:
-#        call_data['plasmaPoints'] = sorted(set([c.concentration
-#                                                for c in CompoundConcentrationPoint.objects.filter(simulation=sim)]))
-#    else:  # sim.pk_or_concs == Simulation.PkOptions.compound_concentration_range:
-#        call_data['plasmaMinimum'] = sim.minimum_concentration
-#        call_data['plasmaMaximum'] = sim.maximum_concentration
-#        call_data['plasmaIntermediatePointCount'] = sim.intermediate_point_count
-#        call_data['plasmaIntermediatePointLogScale'] = sim.intermediate_point_log_scale
-#
-#    if sim.model.ap_predict_model_call:
-#        call_data['modelId'] = sim.model.ap_predict_model_call
-#    else:
-#        with open(sim.model.cellml_file.path, 'rb') as cellml_file:
-#            call_data['cellml_file'] = cellml_file.read().decode('unicode-escape')
-#
-#    for current_param in SimulationIonCurrentParam.objects.filter(simulation=sim):
-#        call_data[current_param.ion_current.name] = {
-#            'associatedData': [{'pIC50': Simulation.conversion(sim.ion_units)(current_param.current),
-#                                'hill': current_param.hill_coefficient,
-#                                'saturation': current_param.saturation_level}]
-#        }
-#        if current_param.spread_of_uncertainty:
-#            call_data[current_param.ion_current.name]['spreads'] = \
-#                {'c50Spread': current_param.spread_of_uncertainty}
-#
-#    # call api to start simulation
+            return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
-@pytest.mark.django_db
-def test_start_simulation_json_err(httpx_mock, simulation_range):
-    httpx_mock.add_response(text="This is my UTF-8 content")
-    start_simulation(simulation_range)
-    assert simulation_range.status == Simulation.Status.FAILED
-    assert str(simulation_range.api_errors) == 'Starting simulation failed: returned invalid JSON.'
+        httpx_mock.add_callback(check_request)
+        start_simulation(simulation_range)
+        assert simulation_range.ap_predict_call_id == '828b142a-9ecc-11ec-b909-0242ac120002'
+        assert simulation_range.status == Simulation.Status.INITIALISING
+        assert simulation_range.progress == COMPILING_CELLML
 
+        # cleanup via signal
+        uploaded_model.delete()
+        assert not os.path.isfile(dest_cellml)
 
-@pytest.mark.django_db
-def test_start_simulation_connection_err(httpx_mock, simulation_range):
-    httpx_mock.add_exception(httpx.ConnectError('Connection error'))
-    start_simulation(simulation_range)
-    assert simulation_range.status == Simulation.Status.FAILED
-    assert str(simulation_range.api_errors) == 'API connection failed: Connection error.'
+    def test_error_msg(self, httpx_mock, simulation_range):
+        json_data = {'error': 'some error message'}
+        httpx_mock.add_response(json={'error': 'some error message'})
+        start_simulation(simulation_range)
+        assert simulation_range.status == Simulation.Status.FAILED
+        assert str(simulation_range.api_errors) == 'API error message: some error message'
 
+    def test_json_err(self, httpx_mock, simulation_range):
+        httpx_mock.add_response(text="This is my UTF-8 content")
+        start_simulation(simulation_range)
+        assert simulation_range.status == Simulation.Status.FAILED
+        assert str(simulation_range.api_errors) == 'Starting simulation failed: returned invalid JSON.'
 
-@pytest.mark.django_db
-def test_start_simulation_invalid_url(httpx_mock, simulation_range):
-    httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
-    start_simulation(simulation_range)
-    assert simulation_range.status == Simulation.Status.FAILED
-    assert str(simulation_range.api_errors) == f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}.'
+    def test_connection_err(self, httpx_mock, simulation_range):
+        httpx_mock.add_exception(httpx.ConnectError('Connection error'))
+        start_simulation(simulation_range)
+        assert simulation_range.status == Simulation.Status.FAILED
+        assert str(simulation_range.api_errors) == 'API connection failed: Connection error.'
+
+    def test_invalid_url(self, httpx_mock, simulation_range):
+        httpx_mock.add_exception(httpx.InvalidURL('Invalid url'))
+        start_simulation(simulation_range)
+        assert simulation_range.status == Simulation.Status.FAILED
+        assert str(simulation_range.api_errors) == f'Inavlid URL {settings.AP_PREDICT_ENDPOINT}.'
 
 
 @pytest.mark.django_db
@@ -396,7 +392,7 @@ class TestSimulationCreateView_and_TemplateView:
         assert response.status_code == 302
 
     def test_template_page_not_logged_in(self, user, client, simulation_range):
-        response = client.get('/simulations/%s/template' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/template')
         assert response.status_code == 302
 
     def test_can_create(self, logged_in_user, client, new_sim_data, httpx_mock):
@@ -411,7 +407,7 @@ class TestSimulationCreateView_and_TemplateView:
         assert IonCurrent.objects.count() == 7
         assert Simulation.objects.count() == 1
         httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
-        response = client.post('/simulations/%s/template' % simulation_range.pk, new_sim_data)
+        response = client.post(f'/simulations/{simulation_range.pk}/template', new_sim_data)
         assert response.status_code == 302
         assert Simulation.objects.count() == 2
 
@@ -427,14 +423,14 @@ class TestSimulationCreateView_and_TemplateView:
     def test_template_cannot_duplicate_title(self, logged_in_user, client, new_sim_data, simulation_range):
         assert Simulation.objects.count() == 1
         new_sim_data['title'] = simulation_range.title
-        response = client.post('/simulations/%s/template' % simulation_range.pk, data=new_sim_data)
+        response = client.post(f'/simulations/{simulation_range.pk}/template', data=new_sim_data)
         assert response.status_code == 200
         assert Simulation.objects.count() == 1
         simulation_range.refresh_from_db()
         assert simulation_range.notes != new_sim_data['notes']
 
     def test_initial(self, logged_in_user, client, simulation_range):
-        response = client.get('/simulations/%d/template' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/template')
         assert response.context['form'].initial == {
             'notes': simulation_range.notes,
             'model': simulation_range.model,
@@ -450,18 +446,18 @@ class TestSimulationCreateView_and_TemplateView:
             'PK_data': simulation_range.PK_data
         }
         assert str([m.message for m in response.context['INFO_MESSAGES']]) == \
-            "['Using existing simulation <em>%s</em> as a template.']" % simulation_range.title
+            f"['Using existing simulation <em>{simulation_range.title}</em> as a template.']"
 
 
 @pytest.mark.django_db
 class TestSimulationEditView:
     def test_not_logged_in(self, client, user, simulation_range):
-        response = client.get('/simulations/%d/edit' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/edit')
         assert response.status_code == 302
 
     def test_non_owner_cannot_edit(self, other_user, client, simulation_range):
         client.login(username=other_user.email, password='password')
-        response = client.get('/simulations/%d/edit' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/edit')
         assert response.status_code == 403
 
     def test_cannot_duplicate_title(self, logged_in_user, client, simulation_recipe, simulation_range, o_hara_model):
@@ -469,7 +465,7 @@ class TestSimulationEditView:
         new_simulation = simulation_recipe.make(author=logged_in_user, model=o_hara_model)
         assert new_simulation.title != simulation_range.title
         data = {'title': new_simulation.title, 'notes': 'new notes'}
-        response = client.post('/simulations/%d/edit' % simulation_range.pk, data=data)
+        response = client.post(f'/simulations/{simulation_range.pk}/edit', data=data)
         assert response.status_code == 200
         simulation_range.refresh_from_db()
         assert new_simulation.title != simulation_range.title
@@ -477,32 +473,32 @@ class TestSimulationEditView:
     def test_owner_can_edit(self, logged_in_user, client, simulation_range):
         assert simulation_range.author == logged_in_user
         data = {'title': 'new title', 'notes': 'new notes'}
-        response = client.post('/simulations/%d/edit' % simulation_range.pk, data=data)
+        response = client.post(f'/simulations/{simulation_range.pk}/edit', data=data)
         assert response.status_code == 302
         simulation_range.refresh_from_db()
         assert simulation_range.title == data['title']
         assert simulation_range.notes == data['notes']
 
     def test_initial(self, logged_in_user, client, simulation_range):
-        response = client.get('/simulations/%d/edit' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/edit')
         assert response.context['form'].initial == {'title': simulation_range.title, 'notes': simulation_range.notes}
 
 
 @pytest.mark.django_db
 class TestSimulationResultView:
     def test_non_loged_in_cannot_see(self, user, client, simulation_range):
-        response = client.get('/simulations/%d/result' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/result')
         assert response.status_code == 302
 
     def test_non_owner_cannot_see(self, other_user, client, simulation_range):
         client.login(username=other_user.email, password='password')
         assert simulation_range.author != other_user
-        response = client.get('/simulations/%d/result' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/result')
         assert response.status_code == 403
 
     def test_owner_can_see(self, logged_in_user, client, cellml_model_recipe, simulation_range):
         assert simulation_range.author == logged_in_user
-        response = client.get('/simulations/%d/result' % simulation_range.pk)
+        response = client.get(f'/simulations/{simulation_range.pk}/result')
         assert response.status_code == 200
 
 
@@ -510,7 +506,7 @@ class TestSimulationResultView:
 class TestSimulationDeleteView:
     def test_owner_can_delete(self, logged_in_user, client, simulation_range):
         assert Simulation.objects.count() == 1
-        response = client.post('/simulations/%d/delete' % simulation_range.pk)
+        response = client.post(f'/simulations/{simulation_range.pk}/delete')
         assert response.status_code == 302
         assert Simulation.objects.count() == 0
 
@@ -518,12 +514,51 @@ class TestSimulationDeleteView:
         client.login(username=other_user.email, password='password')
         assert simulation_range.author != other_user
         assert Simulation.objects.count() == 1
-        response = client.post('/simulations/%d/delete' % simulation_range.pk)
+        response = client.post(f'/simulations/{simulation_range.pk}/delete')
         assert response.status_code == 403
 
     def test_non_logged_in_owner_cannot_delete(self, user, client, simulation_range):
         assert simulation_range.author == user
         assert Simulation.objects.count() == 1
-        response = client.post('/simulations/%d/delete' % simulation_range.pk)
+        response = client.post(f'/simulations/{simulation_range.pk}/delete')
         assert response.status_code == 403
 
+
+@pytest.mark.django_db
+class TestRestartSimulationView:
+    @pytest.fixture
+    def sim(self, simulation_range):
+        simulation_range.status = Simulation.Status.SUCCESS
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+        return simulation_range
+
+    def test_non_owner_cannot_restart(self, other_user, client, sim):
+        client.login(username=other_user.email, password='password')
+        assert sim.author != other_user
+        assert Simulation.objects.count() == 1
+        response = client.post(f'/simulations/{sim.pk}/restart')
+        assert response.status_code == 403
+
+    def test_non_logged_in_owner_cannot_restart(self, user, client, sim):
+        assert sim.author == user
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.SUCCESS
+        response = client.post(f'/simulations/{sim.pk}/restart')
+        assert response.status_code == 302
+        sim.refresh_from_db()
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.SUCCESS
+
+
+    def test_logged_in_owner_ca_restart(self, logged_in_user, client, sim, httpx_mock):
+        assert sim.author == logged_in_user
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.SUCCESS
+        httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+        response = client.post(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://foo/bar')
+        assert response.status_code == 302
+        assert response.url == 'http://foo/bar'
+        sim.refresh_from_db()
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.INITIALISING

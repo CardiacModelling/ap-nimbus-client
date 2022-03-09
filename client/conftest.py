@@ -1,5 +1,6 @@
-import pytest
 import uuid
+
+import pytest
 from accounts.models import User
 from files.models import IonCurrent
 from model_bakery.recipe import Recipe, seq
