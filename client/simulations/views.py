@@ -473,8 +473,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         def len_vr():
             if not sim.voltage_results or not 'da90' in sim.voltage_results[0]:
                 return 0
-            if len(sim.voltage_results[0]) > 0:
-                return (len(sim.voltage_results[0]['da90'])) -1
+            return (len(sim.voltage_results[0]['da90'])) -1
 
         worksheet = workbook.add_worksheet('% Change and qNet')
         row = 0
