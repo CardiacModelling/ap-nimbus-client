@@ -470,6 +470,8 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         worksheet.write(row, 1, sim.notes)
 
     def qNet(self, workbook, bold, sim):
+        if not sim.voltage_results:
+            return
         worksheet = workbook.add_worksheet('% Change and qNet')
         row = 0
         worksheet.write(row, 0, 'Concentration (µM)', bold)
@@ -509,6 +511,8 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
             row += 1
 
     def voltage_traces(self, workbook, bold, sim):
+        if not sim.voltage_traces:
+            return
         worksheet = workbook.add_worksheet('Voltage Traces (concentration)')
         column = 0
         for trace in sim.voltage_traces:
@@ -534,6 +538,8 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                 worksheet.write(row + 1, column + 1, to_float(adp90))
 
     def voltage_traces_plot(self, workbook, bold, sim):
+        if not sim.voltage_traces:
+            return
         # gather and sort all the different timepoints used in any of the series
         # not all series uses every timepoint, so we need to know which ones exist in order for printing
         worksheet = workbook.add_worksheet('Voltage Traces (Plot format)')

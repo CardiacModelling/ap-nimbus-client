@@ -514,13 +514,13 @@ class TestSimulationDeleteView:
         client.login(username=other_user.email, password='password')
         assert simulation_range.author != other_user
         assert Simulation.objects.count() == 1
-        response = client.post(f'/simulations/{simulation_range.pk}/delete')
+        response = client.get(f'/simulations/{simulation_range.pk}/delete')
         assert response.status_code == 403
 
     def test_non_logged_in_owner_cannot_delete(self, user, client, simulation_range):
         assert simulation_range.author == user
         assert Simulation.objects.count() == 1
-        response = client.post(f'/simulations/{simulation_range.pk}/delete')
+        response = client.get(f'/simulations/{simulation_range.pk}/delete')
         assert response.status_code == 403
 
 
@@ -537,14 +537,14 @@ class TestRestartSimulationView:
         client.login(username=other_user.email, password='password')
         assert sim.author != other_user
         assert Simulation.objects.count() == 1
-        response = client.post(f'/simulations/{sim.pk}/restart')
+        response = client.get(f'/simulations/{sim.pk}/restart')
         assert response.status_code == 403
 
     def test_non_logged_in_owner_cannot_restart(self, user, client, sim):
         assert sim.author == user
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.SUCCESS
-        response = client.post(f'/simulations/{sim.pk}/restart')
+        response = client.get(f'/simulations/{sim.pk}/restart')
         assert response.status_code == 302
         sim.refresh_from_db()
         assert Simulation.objects.count() == 1
@@ -556,9 +556,41 @@ class TestRestartSimulationView:
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.SUCCESS
         httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
-        response = client.post(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://foo/bar')
+        response = client.get(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://foo/bar')
         assert response.status_code == 302
         assert response.url == 'http://foo/bar'
         sim.refresh_from_db()
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.INITIALISING
+
+
+@pytest.mark.django_db
+class TestSpreadsheetSimulationView:
+    @pytest.fixture
+    def sim(self, simulation_range):
+        simulation_range.status = Simulation.Status.SUCCESS
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+        return simulation_range
+
+    def test_non_owner(self, other_user, client, sim):
+        client.login(username=other_user.email, password='password')
+        assert sim.author != other_user
+        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+        assert response.status_code == 403
+
+    def test_non_logged_in_owner(self, user, client, sim):
+        assert sim.author == user
+        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+        assert response.status_code == 302
+
+    def test_logged_in_owner_no_data(self, logged_in_user, client, sim, httpx_mock):
+        assert sim.author == logged_in_user
+        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+        assert response.status_code == 200
+
+        dest = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'no_data.xlsx')
+        stream = b''.join(response.streaming_content)
+        with open(dest, 'wb') as file:
+            file.write(stream)
+        assert False, str(stream)
