@@ -572,11 +572,12 @@ class TestSpreadsheetSimulationView:
         simulation_range.status = Simulation.Status.SUCCESS
         with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
             simulation_range.q_net = json.loads(file.read())
-#qNet
-#pkpd_results
-#voltage_results
-#voltage_traces
-
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
+            simulation_range.pkpd_results = json.loads(file.read())
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
+            simulation_range.voltage_results = json.loads(file.read())
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
+            simulation_range.voltage_traces = json.loads(file.read())
         simulation_range.save()
         simulation_range.refresh_from_db()
         return simulation_range
@@ -617,28 +618,16 @@ class TestSpreadsheetSimulationView:
         response = client.get(f'/simulations/{simulation_range.pk}/spreadsheet')
         assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'no_data.xlsx')
-#
-#        response_file = os.path.join(tmp_path, 'no_data.xlsx')
-##        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'no_data.xlsx')
-#        check_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'no_data.xlsx')
-#
+
+#    def test_save(self, logged_in_user, client, sim, tmp_path):
+#        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+#        assert response.status_code == 200
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
 #        response_xlsx = b''.join(response.streaming_content)
 #        with open(response_file, 'wb') as file:
 #            file.write(response_xlsx)
-#
-#        self.check_xlsx_files(response, tmp_path, response_file, check_file)
-#        assert os.path.isfile(response_file)
-#        assert os.path.isfile(check_file)
-#
-#        sheets = list(range(5))
-#        response_df = pandas.read_excel(response_file, sheet_name=sheets)
-#        check_df = pandas.read_excel(check_file, sheet_name=sheets)
-#        for sheet in sheets:
-#            assert str(response_df[sheet]) == str(check_df[sheet])
-#
-#        # check we don't have extra sheets
-#        with pytest.raises(ValueError):
-#            pandas.read_excel(response_file, sheet_name=5)
-#
-#        with pytest.raises(ValueError):
-#            pandas.read_excel(check_file, sheet_name=5)
+
+    def test_logged_in_owner_no_data(self, logged_in_user, client, sim, tmp_path):
+        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+        assert response.status_code == 200
+        self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
