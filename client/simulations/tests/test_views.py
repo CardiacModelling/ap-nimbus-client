@@ -614,11 +614,34 @@ class TestSpreadsheetSimulationView:
         response = client.get(f'/simulations/{simulation_range.pk}/spreadsheet')
         assert response.status_code == 302
 
-    def test_logged_in_owner_no_data(self, logged_in_user, client, simulation_range, tmp_path):
+    def test_range(self, logged_in_user, client, simulation_range, tmp_path):
         response = client.get(f'/simulations/{simulation_range.pk}/spreadsheet')
         assert response.status_code == 200
-        self.check_xlsx_files(response, tmp_path, 'no_data.xlsx')
+        self.check_xlsx_files(response, tmp_path, 'range_no_data.xlsx')
 
+    def test_points(self, logged_in_user, client, simulation_points, tmp_path):
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        assert response.status_code == 200
+        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'points_no_data.xlsx')
+        response_xlsx = b''.join(response.streaming_content)
+        with open(response_file, 'wb') as file:
+            file.write(response_xlsx)
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')        
+
+    def test_pkdata(self, logged_in_user, client, simulation_pkdata, tmp_path):
+        response = client.get(f'/simulations/{simulation_pkdata.pk}/spreadsheet')
+        assert response.status_code == 200
+        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkdata_no_data.xlsx')
+        response_xlsx = b''.join(response.streaming_content)
+        with open(response_file, 'wb') as file:
+            file.write(response_xlsx)
+        self.check_xlsx_files(response, tmp_path, 'pkdata_no_data.xlsx')        
+
+    def test_all_data(self, logged_in_user, client, sim, tmp_path):
+        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+        assert response.status_code == 200
+        self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
+        
 #    def test_save(self, logged_in_user, client, sim, tmp_path):
 #        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
 #        assert response.status_code == 200
@@ -627,7 +650,4 @@ class TestSpreadsheetSimulationView:
 #        with open(response_file, 'wb') as file:
 #            file.write(response_xlsx)
 
-    def test_logged_in_owner_no_data(self, logged_in_user, client, sim, tmp_path):
-        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
-        assert response.status_code == 200
-        self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
+
