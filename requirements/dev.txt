@@ -6,3 +6,4 @@ pytest-django==4.5.2
 model-bakery==1.4.0
 pytest-httpx==0.20.0
 pytest-asyncio==0.18.2
+openpyxl==3.0.9

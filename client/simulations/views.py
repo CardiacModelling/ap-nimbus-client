@@ -470,20 +470,30 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         worksheet.write(row, 1, sim.notes)
 
     def qNet(self, workbook, bold, sim):
-        if not sim.voltage_results:
-            return
+        def len_vr():
+            if not sim.voltage_results:
+                return 0
+            if len(sim.voltage_results[0]) > 0:
+                return (len(sim.voltage_results[0]['da90'])) -1
+            return 2
+
         worksheet = workbook.add_worksheet('% Change and qNet')
         row = 0
         worksheet.write(row, 0, 'Concentration (µM)', bold)
         worksheet.write(row, 1, 'Δ APD90 (%)', bold)
-        col = 2 + (len(sim.voltage_results[0]['da90']) - 1) if len(sim.voltage_results[0]) > 0 else 2
+        col = 2
+        col += len_vr()
         worksheet.write(row, col, 'qNet (C/F)', bold)
-        col += (len(sim.voltage_results[0]['da90'])) if len(sim.voltage_results[0]) > 0 else 1
+        col += 1
+        col += len_vr()
         worksheet.write(row, col, 'PeakVm(mV)', bold)
         worksheet.write(row, col + 1, 'UpstrokeVelocity(mV/ms)', bold)
         worksheet.write(row, col + 2, 'APD50(ms)', bold)
         worksheet.write(row, col + 3, 'APD90(ms)', bold)
         row += 1
+
+        if not sim.voltage_results:
+            return
 
         if len(sim.voltage_results) > 0:
             for da_col, da90_head in enumerate(sim.voltage_results[0]['da90']):
@@ -511,9 +521,10 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
             row += 1
 
     def voltage_traces(self, workbook, bold, sim):
+        worksheet = workbook.add_worksheet('Voltage Traces (concentration)')
         if not sim.voltage_traces:
             return
-        worksheet = workbook.add_worksheet('Voltage Traces (concentration)')
+
         column = 0
         for trace in sim.voltage_traces:
             worksheet.write(0, column, 'Conc. %s µM' % trace['name'], bold)
@@ -526,11 +537,11 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
             column += 3
 
     def pkpd_results(self, workbook, bold, sim):
-        if not sim.pkpd_results:
-            return
         worksheet = workbook.add_worksheet('PKPD - APD90 vs. Timepoint')
         worksheet.write(0, 0, 'Timepoint (h)', bold)
         worksheet.write(0, 1, 'APD90 (ms)', bold)
+        if not sim.pkpd_results:
+            return
         for row, pkpd in enumerate(sim.pkpd_results):
             worksheet.write(row + 1, 0, to_float(pkpd['timepoint']))
             apd90_lst = listify(pkpd['apd90'])
@@ -538,12 +549,13 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                 worksheet.write(row + 1, column + 1, to_float(adp90))
 
     def voltage_traces_plot(self, workbook, bold, sim):
-        if not sim.voltage_traces:
-            return
         # gather and sort all the different timepoints used in any of the series
         # not all series uses every timepoint, so we need to know which ones exist in order for printing
         worksheet = workbook.add_worksheet('Voltage Traces (Plot format)')
         worksheet.write(0, 0, 'Time (ms)', bold)
+        if not sim.voltage_traces:
+            return
+
 
         time_keys = set()
         for trace in sim.voltage_traces:
