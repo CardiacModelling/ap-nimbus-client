@@ -375,7 +375,9 @@ class RestartSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwa
     def get_redirect_url(self, *args, **kwargs):
         simulation = Simulation.objects.get(pk=self.kwargs['pk'])
         start_simulation(simulation)
-        return self.request.META['HTTP_REFERER']
+        if 'result' in self.request.META['HTTP_REFERER']:
+            return reverse_lazy('simulations:simulation_result', args=[self.kwargs['pk']])
+        return reverse_lazy('simulations:simulation_list')
 
 
 class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):

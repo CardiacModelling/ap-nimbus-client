@@ -628,14 +628,27 @@ class TestRestartSimulationView:
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.SUCCESS
 
-    def test_logged_in_owner_ca_restart(self, logged_in_user, client, sim, httpx_mock):
+    def test_logged_in_owner_can_restart(self, logged_in_user, client, sim, httpx_mock):
         assert sim.author == logged_in_user
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.SUCCESS
         httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
-        response = client.get(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://foo/bar')
+        response = client.get(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://domain/simulations')
         assert response.status_code == 302
-        assert response.url == 'http://foo/bar'
+        assert response.url == '/clientdirect/simulations/'
+        sim.refresh_from_db()
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.INITIALISING
+
+    def test_logged_in_owner_can_restart_from_result(self, logged_in_user, client, sim, httpx_mock):
+        assert sim.author == logged_in_user
+        assert Simulation.objects.count() == 1
+        assert sim.status == Simulation.Status.SUCCESS
+        httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
+        response = client.get(f'/simulations/{sim.pk}/restart',
+                              HTTP_REFERER=f'http://domain/simulations/{sim.pk}/result')
+        assert response.status_code == 302
+        assert response.url == f'/clientdirect/simulations/{sim.pk}/result'
         sim.refresh_from_db()
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.INITIALISING
