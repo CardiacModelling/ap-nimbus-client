@@ -6,3 +6,6 @@ coverage:
   range: 80..95  # Below 80% is red; above 95% is green
   round: down
   precision: 1
+
+ignore:
+  - "**/asgi.py"      # don't test asgi
