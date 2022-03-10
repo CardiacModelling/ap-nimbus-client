@@ -635,7 +635,7 @@ class TestRestartSimulationView:
         httpx_mock.add_response(json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
         response = client.get(f'/simulations/{sim.pk}/restart', HTTP_REFERER='http://domain/simulations')
         assert response.status_code == 302
-        assert response.endswith('/simulations/')
+        assert str(response.url).endswith('/simulations/')
         sim.refresh_from_db()
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.INITIALISING
@@ -648,7 +648,7 @@ class TestRestartSimulationView:
         response = client.get(f'/simulations/{sim.pk}/restart',
                               HTTP_REFERER=f'http://domain/simulations/{sim.pk}/result')
         assert response.status_code == 302
-        assert response.url.endswith(f'/simulations/{sim.pk}/result')
+        assert str(response.url).endswith(f'/simulations/{sim.pk}/result')
         sim.refresh_from_db()
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.INITIALISING
