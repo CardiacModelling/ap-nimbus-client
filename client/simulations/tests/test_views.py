@@ -759,42 +759,199 @@ class TestStatusSimulationView:
                str(simulation_pkdata.pk)]
 
         # mock update sim as multi level awaits in test won't work
-        async def update_sim(self, client, sim):
+        async def update_simulation(self, client, sim):
             print(f'sim pk --{sim.pk}--')
 
-        StatusSimulationView.update_sim = update_sim
+        original_update_method = StatusSimulationView.update_sim
+        StatusSimulationView.update_sim = update_simulation
         response = client.get(f"/simulations/status/false/{'/'.join(pks)}/")
         simulation_pkdata.refresh_from_db()
         assert response.status_code == 200
         out, _ = capsys.readouterr()
         assert f'sim pk --{simulation_pkdata.pk}--' in out
+        # restore class level update method for later tests
+        StatusSimulationView.update_sim = original_update_method
 
-    def test_save_data(self, logged_in_user, httpx_mock, simulation_range):
+    def test_save_data(self, logged_in_user, simulation_range):
         view = StatusSimulationView()
 
         # mock get_from_api as multi level awaits in test won't work
-        async def get_result(client, command, sim):
+        async def get_result(*_):
             return {'success': ['msg1', 'msg2']}
         views.get_from_api = get_result
         async_to_sync(view.save_data)(None, 'messages', simulation_range)
         assert simulation_range.messages == ['msg1', 'msg2']
 
-    def test_save_data_no_result(self, logged_in_user, httpx_mock, simulation_range):
+    def test_save_data_no_result(self, logged_in_user, simulation_range):
         view = StatusSimulationView()
 
         # mock get_from_api as multi level awaits in test won't work
-        async def get_result(client, command, sim):
+        async def get_result(*_):
             return {}
         views.get_from_api = get_result
         async_to_sync(view.save_data)(None, 'messages', simulation_range)
         assert simulation_range.messages is None
 
+    def test_update_progress(self, logged_in_user, simulation_range):
+        view = StatusSimulationView()
 
-#    httpx_mock.add_response(json={'success': {'messages': ['msg1', 'msg2']}})
+        # mock get_from_api as multi level awaits in test won't work
+        async def get_result(_, _2, sim):
+            return {'success': ['Initialising...', '0% completed', '']}
+        views.get_from_api = get_result
+        async_to_sync(view.update_sim)(None, simulation_range)
+        assert simulation_range.progress == '0% completed'
+        assert simulation_range.status == Simulation.Status.RUNNING
+        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+
+    def test_update_progress_timeout(self, logged_in_user, simulation_range, capsys):
+        view = StatusSimulationView()
+        simulation_range.status = Simulation.Status.RUNNING
+        simulation_range.progress = '0% completed'
+        simulation_range.ap_predict_last_update = datetime.datetime(2020, 12, 25, 17, 5, 55)
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+
+        # mock get_from_api and save_data as multi level awaits in test won't work
+        async def get_result(_, _2, sim):
+            return {'success': ['Initialising...', '0% completed', '']}
+        async def save_err(sim, text):
+            print(f'save api error: sim: {sim.pk} text: {text}')
+        views.get_from_api = get_result
+        views.save_api_error = save_err
+        async_to_sync(view.update_sim)(None, simulation_range)
+        out, _ = capsys.readouterr()
+        assert f'save api error: sim: {simulation_range.pk} text: Progress timeout.' in out, str(out)
+        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+
+    def test_update_progress_no_change_not_stopped(self, logged_in_user, simulation_range, capsys):
+        view = StatusSimulationView()
+        simulation_range.status = Simulation.Status.RUNNING
+        simulation_range.progress = '0% completed'
+        simulation_range.ap_predict_last_update = timezone.now()
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+
+        # mock get_from_api and save_data as multi level awaits in test won't work
+        async def get_result(_, command, sim):
+            if command == 'progress_status':
+                return {'success': ['Initialising...', '0% completed', '']}
+            return {}
+
+        async def save_err(sim, text):
+            print(f'save api error: sim: {sim.pk} text: {text}')
+        views.get_from_api = get_result
+        views.save_api_error = save_err
+        async_to_sync(view.update_sim)(None, simulation_range)
+        out, _ = capsys.readouterr()
+        # no error saved, no progress change
+        assert out == ''
+        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+
+    def test_update_progress_no_change_stopped_no_data(self, logged_in_user, simulation_range, capsys):
+        view = StatusSimulationView()
+        simulation_range.status = Simulation.Status.RUNNING
+        simulation_range.progress = '0% completed'
+        simulation_range.ap_predict_last_update = timezone.now()
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+
+        # mock get_from_api and save_data as multi level awaits in test won't work
+        async def get_result(_, command, sim):
+            if command == 'progress_status':
+                return {'success': ['Initialising...', '0% completed', '']}
+            if command == 'STOP':
+                return {'success': True}
+            else:
+               return {}
+
+        async def save_dat(_, _2, command, sim):
+            print(f'save data {command}: {sim.pk}')
+
+        async def save_err(sim, text):
+            print(f'save api error: sim: {sim.pk} text: {text}')
+        views.get_from_api = get_result
+        views.save_api_error = save_err
+        views.save_data = save_dat
+        async_to_sync(view.update_sim)(None, simulation_range)
+        out, _ = capsys.readouterr()
+        assert f'save api error: sim: {simulation_range.pk} text: Simulation stopped prematurely.' in out
+        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+
+    def test_update_progress_no_change_stopped_saving_fails(self, logged_in_user, simulation_range, capsys):
+        view = StatusSimulationView()
+        simulation_range.status = Simulation.Status.RUNNING
+        simulation_range.progress = '0% completed'
+        simulation_range.ap_predict_last_update = timezone.now()
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+
+        # mock get_from_api and save_data as multi level awaits in test won't work
+        async def get_result(_, command, sim):
+            if command == 'progress_status':
+                return {'success': ['Initialising...', '0% completed', '']}
+            if command == 'STOP':
+                return {'success': True}
+            else:
+               sim.status = Simulation.Status.FAILED
+               sim.progress = 'Failed'
+               sim.api_error = 'test api error while saving data'
+               return {}
+
+        async def save_dat(_, _2, command, sim):
+            print(f'save data {command}: {sim.pk}')
+
+        async def save_err(sim, text):
+            print(f'save api error: sim: {sim.pk} text: {text}')
+        views.get_from_api = get_result
+        views.save_api_error = save_err
+        views.save_data = save_dat
+        async_to_sync(view.update_sim)(None, simulation_range)
+        out, _ = capsys.readouterr()
+        assert out == ''
+        assert simulation_range.status == Simulation.Status.FAILED
+        assert simulation_range.api_error == 'test api error while saving data'
 
 
-#@pytest.mark.asyncio
-#async def test_details(client):
-#    request = await AsyncRequestFactory().get('/customer/details')
-#    response = StatusSimulationView(request)
-#    assert response.status_code == 200
+    def test_update_progress_no_change_stopped_save_data(self, logged_in_user, simulation_range, capsys):
+        view = StatusSimulationView()
+        simulation_range.status = Simulation.Status.RUNNING
+        simulation_range.progress = '0% completed'
+        simulation_range.ap_predict_last_update = timezone.now()
+        simulation_range.save()
+        simulation_range.refresh_from_db()
+
+        # mock get_from_api and save_data as multi level awaits in test won't work
+        async def get_result(_, command, sim):
+            if command == 'progress_status':
+                return {'success': ['Initialising...', '0% completed', '']}
+            if command == 'STOP':
+                return {'success': True}
+            else:
+               data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+               with open(data_source_file) as file:
+                   return {'success': json.loads(file.read())}
+
+        async def save_dat(_, _2, command, sim):
+            print(f'save data {command}: {sim.pk}')
+
+        async def save_err(sim, text):
+            print(f'save api error: sim: {sim.pk} text: {text}')
+        views.get_from_api = get_result
+        views.save_api_error = save_err
+        views.save_data = save_dat
+        async_to_sync(view.update_sim)(None, simulation_range)
+        out, _ = capsys.readouterr()
+        assert out == ''
+        # check data has been saved to the simulation
+        for command in ('q_net', 'voltage_results', 'voltage_traces'):
+            assert getattr(simulation_range, command)
+            data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+            with open(data_source_file) as file:
+                assert json.loads(file.read()) == getattr(simulation_range, command)
+
+
+# fail saving
+
+# not progress changed no timeout - failed
+# text is done, not failed
