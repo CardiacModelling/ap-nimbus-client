@@ -41,15 +41,15 @@ def sim_no_confidence(simulation_range):
 
 
 @pytest.fixture
-def sim_all_data2(simulation_range):
+def sim_all_data(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
         simulation_range.q_net = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
         simulation_range.pkpd_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
         simulation_range.voltage_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
         simulation_range.voltage_traces = json.loads(file.read())
     simulation_range.save()
     simulation_range.refresh_from_db()
