@@ -713,7 +713,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
             requested_concentrations = tuple(to_float(c.concentration)
                                              for c in CompoundConcentrationPoint.objects.filter(simulation=sim))
 
-        if len(sim.voltage_results) > 1:
+        if sim.voltage_results:
             for percentile in sim.voltage_results[0]['da90']:
                 pct_label = f'Simulation @ {sim.pacing_frequency}Hz'
                 linewidth = 2
@@ -735,7 +735,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                 if sim.q_net:
                     data['qnet'].append(copy.deepcopy(series_dict))
 
-            for v_res, qnet in zip_longest(sim.voltage_results[1:], sim.q_net):
+            for v_res, qnet in zip_longest(sim.voltage_results[1:], (sim.q_net if sim.q_net else [])):
                 # cut off data for concentrations we haven't asked fro from qnet/adp90 graphs
                 if requested_concentrations and to_float(v_res['c']) not in requested_concentrations:
                     continue
@@ -750,7 +750,7 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                         update_unassigned(qnet_unasgn, val)
 
         # add pkd_results data
-        if len(sim.pkpd_results) > 1:
+        if sim.pkpd_results:
             for i, _ in enumerate(listify(sim.pkpd_results[0]['apd90'])):
                 data['pkpd_results'].append({'label': f'Concentration {i + 1}', 'id': i, 'data': [],
                                              'lines': {'show': True, 'lineWidth': 2, 'fill': False},
@@ -773,10 +773,11 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
                                             'max': pkpd_unasgn['max_scale'] * pkpd_unasgn['max'], 'autoScale': 'none'}
 
         # add voltage traces data
-        for i, trace in enumerate(sim.voltage_traces):
-            data['traces'].append({'color': i, 'enabled': True,
-                                   'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
-                                   'data': [[series['name'], series['value']] for series in trace['series']]})
+        if sim.voltage_traces:
+            for i, trace in enumerate(sim.voltage_traces):
+                data['traces'].append({'color': i, 'enabled': True,
+                                       'label': f"Simulation @ {sim.pacing_frequency} Hz @ {trace['name']} µM",
+                                       'data': [[series['name'], series['value']] for series in trace['series']]})
 
         return JsonResponse(data=data,
                             status=200, safe=False)

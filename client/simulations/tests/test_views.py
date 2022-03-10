@@ -27,6 +27,35 @@ from simulations.views import (
 )
 
 
+
+@pytest.fixture
+def sim_no_confidence(simulation_range):
+    simulation_range.status = Simulation.Status.SUCCESS
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_no_confidence.txt'), 'r') as file:
+        simulation_range.voltage_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_no_confidence.txt'), 'r') as file:
+        simulation_range.voltage_traces = json.loads(file.read())
+    simulation_range.save()
+    simulation_range.refresh_from_db()
+    return simulation_range
+
+
+@pytest.fixture
+def sim_all_data(simulation_range):
+    simulation_range.status = Simulation.Status.SUCCESS
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
+        simulation_range.q_net = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
+        simulation_range.pkpd_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
+        simulation_range.voltage_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
+        simulation_range.voltage_traces = json.loads(file.read())
+    simulation_range.save()
+    simulation_range.refresh_from_db()
+    return simulation_range
+
+
 @pytest.mark.django_db
 def test_to_int():
     assert to_int(12.4) == 12.4
@@ -567,34 +596,6 @@ class TestRestartSimulationView:
 
 @pytest.mark.django_db
 class TestSpreadsheetSimulationView:
-    @pytest.fixture
-    def sim_no_confidence(self, simulation_range):
-        simulation_range.status = Simulation.Status.SUCCESS
-#        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net_no_confidence.txt'), 'r') as file:
-#            simulation_range.q_net = json.loads(file.read())
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_no_confidence.txt'), 'r') as file:
-            simulation_range.voltage_results = json.loads(file.read())
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_no_confidence.txt'), 'r') as file:
-            simulation_range.voltage_traces = json.loads(file.read())
-        simulation_range.save()
-        simulation_range.refresh_from_db()
-        return simulation_range
-
-    @pytest.fixture
-    def sim(self, simulation_range):
-        simulation_range.status = Simulation.Status.SUCCESS
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
-            simulation_range.q_net = json.loads(file.read())
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
-            simulation_range.pkpd_results = json.loads(file.read())
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
-            simulation_range.voltage_results = json.loads(file.read())
-        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
-            simulation_range.voltage_traces = json.loads(file.read())
-        simulation_range.save()
-        simulation_range.refresh_from_db()
-        return simulation_range
-
     def check_xlsx_files(self, response, tmp_path, check_file):
         assert response.status_code == 200
 
@@ -650,17 +651,58 @@ class TestSpreadsheetSimulationView:
         self.check_xlsx_files(response, tmp_path, 'data_no_confidence.xlsx')
 
 
-    def test_all_data(self, logged_in_user, client, sim, tmp_path):
-        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
+    def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
+        response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
 
-##    def test_save(self, logged_in_user, client, sim, tmp_path):
-##        response = client.get(f'/simulations/{sim.pk}/spreadsheet')
-##        assert response.status_code == 200
-##        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
-##        response_xlsx = b''.join(response.streaming_content)
-##        with open(response_file, 'wb') as file:
-##            file.write(response_xlsx)
+@pytest.mark.django_db
+class TestDataSimulationView:
+    def check_data_file(self, json_data, file_name):
+        with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', file_name)) as file:
+            check_json = json.loads(file.read())
+        assert json_data == check_json
 
+    def test_non_owner(self, other_user, client, simulation_range):
+        client.login(username=other_user.email, password='password')
+        assert simulation_range.author != other_user
+        response = client.get(f'/simulations/{simulation_range.pk}/data')
+        assert response.status_code == 403
 
+    def test_non_logged_in_owner(self, user, client, simulation_range):
+        response = client.get(f'/simulations/{simulation_range.pk}/data')
+        assert response.status_code == 302
+
+    def test_range(self, logged_in_user, client, simulation_range, tmp_path):
+        response = client.get(f'/simulations/{simulation_range.pk}/data')
+        assert response.json() == {'adp90': [], 'qnet': [], 'traces': [], 'pkpd_results': [], 'messages': None}
+
+#    def test_points(self, logged_in_user, client, simulation_points, tmp_path):
+#        response = client.get(f'/simulations/{simulation_points.pk}/data')
+#        assert False, str((simulation_points.q_net, simulation_points.voltage_results))
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'points_data.txt')
+#        with open(response_file, 'w') as file:
+#            file.write(json.dumps(response.json()))
+##        assert False, str(response,json())
+##        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
+#
+##    def test_pkdata(self, logged_in_user, client, simulation_pkdata, tmp_path):
+##        response = client.get(f'/simulations/{simulation_pkdata.pk}/data')
+##        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkdata_data.txt')
+##        with open(response_file, 'w') as file:
+##            file.write(json.dumps(response.json()))
+###        self.check_xlsx_files(response, tmp_path, 'pkdata_no_data.xlsx')
+###
+    def test_data_no_confidence(self, logged_in_user, client, sim_no_confidence, tmp_path):
+        response = client.get(f'/simulations/{sim_no_confidence.pk}/data')
+        self.check_data_file(response.json(), 'no_confidence_data.txt')
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'no_confidence_data.txt')
+#        with open(response_file, 'w') as file:
+#            file.write(json.dumps(response.json()))
+
+    def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
+        response = client.get(f'/simulations/{sim_all_data.pk}/data')
+        self.check_data_file(response.json(), 'all_data.txt')
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.txt')
+#        with open(response_file, 'w') as file:
+#            file.write(json.dumps(response.json()))
