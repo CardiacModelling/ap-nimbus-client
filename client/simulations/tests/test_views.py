@@ -41,22 +41,6 @@ def sim_no_confidence(simulation_range):
 
 
 @pytest.fixture
-def sim_all_data(simulation_range):
-    simulation_range.status = Simulation.Status.SUCCESS
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
-        simulation_range.q_net = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
-        simulation_range.pkpd_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
-        simulation_range.voltage_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
-        simulation_range.voltage_traces = json.loads(file.read())
-    simulation_range.save()
-    simulation_range.refresh_from_db()
-    return simulation_range
-
-
-@pytest.fixture
 def sim_all_data2(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net2.txt'), 'r') as file:
@@ -70,7 +54,37 @@ def sim_all_data2(simulation_range):
     simulation_range.save()
     simulation_range.refresh_from_db()
     return simulation_range
-    
+
+
+@pytest.fixture
+def sim_all_data_points(simulation_points):
+    simulation_points.status = Simulation.Status.SUCCESS
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net_points.txt'), 'r') as file:
+        simulation_points.q_net = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_points.txt'), 'r') as file:
+        simulation_points.voltage_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_points.txt'), 'r') as file:
+        simulation_points.voltage_traces = json.loads(file.read())
+    simulation_points.save()
+    simulation_points.refresh_from_db()
+    return simulation_points
+
+
+@pytest.fixture
+def sim_all_data_concentration_points(simulation_range):
+    simulation_range.status = Simulation.Status.SUCCESS
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net2.txt'), 'r') as file:
+        simulation_range.q_net = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
+        simulation_range.pkpd_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results2.txt'), 'r') as file:
+        simulation_range.voltage_results = json.loads(file.read())
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces2.txt'), 'r') as file:
+        simulation_range.voltage_traces = json.loads(file.read())
+    simulation_range.save()
+    simulation_range.refresh_from_db()
+    return simulation_range
+
 
 @pytest.mark.django_db
 def test_to_int():
@@ -670,6 +684,10 @@ class TestSpreadsheetSimulationView:
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
+#        response_xlsx = b''.join(response.streaming_content)
+#        with open(response_file, 'wb') as file:
+#            file.write(response_xlsx)
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
 
 @pytest.mark.django_db
@@ -697,13 +715,22 @@ class TestDataSimulationView:
         response = client.get(f'/simulations/{sim_no_confidence.pk}/data')
         self.check_data_file(response.json(), 'no_confidence_data.txt')
 
+#    def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
+#        response = client.get(f'/simulations/{sim_all_data.pk}/data')
+#        self.check_data_file(response.json(), 'all_data.txt')
+
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/data')
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.txt')
+#        with open(response_file, 'w') as file:
+#            file.write(json.dumps(response.json()))
         self.check_data_file(response.json(), 'all_data.txt')
 
-    def test_all_data2(self, logged_in_user, client, sim_all_data, tmp_path):
-        response = client.get(f'/simulations/{sim_all_data.pk}/data')
-        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data2.txt')
-        with open(response_file, 'w') as file:
-            file.write(json.dumps(response.json()))
-        self.check_data_file(response.json(), 'all_data2.txt')
+
+    def test_all_data_points(self, logged_in_user, client, sim_all_data_points, tmp_path):
+        response = client.get(f'/simulations/{sim_all_data_points.pk}/data')
+#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data_points.txt')
+#        with open(response_file, 'w') as file:
+#            file.write(json.dumps(response.json()))
+#        self.check_data_file(response.json(), 'all_data_points.txt')
+        self.check_data_file(response.json(), 'all_data_points.txt')
