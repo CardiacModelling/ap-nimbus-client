@@ -12,8 +12,8 @@ from files.models import CellmlModel, IonCurrent
 @pytest.mark.django_db
 class TestCellmlModelForm:
     def upload_file(self, tmp_path, file_name):
-        test_file = os.path.join(settings.BASE_DIR, 'files', 'tests', file_name + ".cellml")
-        cellml_file = file_name + str(uuid.uuid4()) + '.cellml.temp'
+        test_file = os.path.join(settings.BASE_DIR, 'files', 'tests', f'{file_name}.cellml')
+        cellml_file = f'{file_name}{uuid.uuid4()}.cellml.temp'
         temp_file = os.path.join(tmp_path, cellml_file)
         assert os.path.isfile(test_file)
         copyfile(test_file, temp_file)
@@ -68,7 +68,7 @@ class TestCellmlModelForm:
         form = CellmlModelForm(user=admin_user, data=data)
         assert not form.is_valid()  # --model in call
         data['ap_predict_model_call'] = '1'
-        form = CellmlModelForm(user=admin_user, data=data)
+        form = CellmlModelForm(user=admin_user, data=data, instance=None)
         assert form.is_valid()
         model = form.save()
         assert model == CellmlModel.objects.get(name="O'Hara-Rudy-CiPA")
@@ -77,12 +77,29 @@ class TestCellmlModelForm:
         form = CellmlModelForm(user=admin_user, data=data)
         assert not form.is_valid()
 
-    def test_update(self, o_hara_model, data, admin_user):
+    def test_update(self, o_hara_model, data, admin_user, cellml_model_recipe):
         data['version'] = 'v2'
+        data['ap_predict_model_call'] = 6
         form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
         form.is_valid()
         form.save()
         assert o_hara_model.version == 'v2'
+
+        # duplicate name not allowed
+        cellml_model_recipe.make(
+            author=admin_user,
+            predefined=True,
+            name='Shannon et al.',
+            year=2004,
+            description='rabbit ventricular cell model',
+            cellml_link='',
+            paper_link='',
+            ap_predict_model_call='1'
+        )
+        data['name'] = 'Shannon et al.'
+        form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
+        assert not form.is_valid()
+        # duplicate name not allowed
 
     def test_file(self, data, file1, file2, admin_user, ion_currents):
         # file upload

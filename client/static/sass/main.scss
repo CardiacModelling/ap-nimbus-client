@@ -31,7 +31,6 @@ button {
 button,
 .button {
   background-color: #1a296b;
-  padding: 8px 12px;
   font-size: 14px;
   border-radius: 5px;
   height: 20px;
@@ -198,7 +197,7 @@ label[for=cellml_file-clear_id]{
     color: #e64d00;
 }
 
-form label{
+label{
   display: inline;
   font-weight: bold;
   color: black;
@@ -331,4 +330,145 @@ button.dt-button{
 div.dt-buttons{
     margin-left: 0.334em;
     margin-top: 0.167em;
+}
+
+.ui-progressbar-value{
+    background: #009bbd;
+}
+
+.ui-progressbar {
+    position: relative;
+    height: 1em;
+    width: 125px;
+}
+
+.progressbar-wide {
+    width: 100%;
+}
+
+
+.progress-label {
+    padding-left: 5px;
+    position: absolute;
+    top: 1px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Create two equal columns that sits next to each other for results*/
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
+}
+
+.graph-column{
+    width: 570px;
+}
+
+.control-column{
+    width: 300px;
+    padding-left:5px;
+}
+
+/* buttons for switching graphs */
+.graph-button {
+  background-color: #D3D3D3;
+  margin-left: 5px;
+  font-size: 12px;
+  border-radius: 5px;
+  height: 20px;
+  vertical-align: bottom;
+  display: inline-block; 
+   border: 0px;
+}
+
+.graph-button:hover{
+  background-color: #696969;
+  border: 0px;
+}
+
+.graph-button:disabled{
+    background-color: #989898;
+  border: 0px;
+}
+
+.show-graph{
+    visibility: visible;
+    display: block;
+}
+
+.hide-graph, {
+    visibility: hidden;
+    display: none;
+}
+
+fieldset ul {
+    display: block;
+    list-style-type: disc;
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+}
+
+.zoom-msg{
+    font-size: small;
+    font-style: italic;
+    margin-bottom:10px;
+}
+
+.x1LabelLayer, .y1LabelLayer{
+    font-size: small;
+    font-weight: bold;
+}
+
+
+.legendLayer .background {
+    fill: rgba(255, 255, 255, 0.85);
+/*    stroke: rgba(0, 0, 0, 0.85);*/
+    stroke-width: 1;
+}
+
+.control-column{
+    font-size: 14px;
+}
+
+.control-items{
+    padding: 100px 0;
+}
+
+#tooltip{
+    position: absolute;
+    display: none;
+    border: 1px solid #fdd;
+    padding: 2px;
+    background-color: #fee;
+    opacity: 0.80;
+}
+
+.data-graph{
+    width:550px;
+    height:300px;
+}
+
+.graph-column fieldset{
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-end: 0px;
+    padding-block-end: 0px;
+}
+
+.hide-messages{
+  border:none;
+  visibility: hidden;
+  display: none;
+}
+
+#messages{
+  font-size: 14px;
+}
+
+#qnet-colour{
+    background-color: #edc240;
 }

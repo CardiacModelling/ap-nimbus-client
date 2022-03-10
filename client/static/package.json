@@ -9,6 +9,7 @@
     "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^3.0.0",
     "jquery": "^3.6.0",
+    "jquery-ui": "^1.13.1",
     "npm": "^8.3.2",
     "sass": "^1.46.0",
     "vinyl-buffer": "^1.0.1",

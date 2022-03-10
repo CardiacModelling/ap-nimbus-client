@@ -38,7 +38,7 @@ jobs:
         python -m flake8 client
     - name: Test sorting with isort
       run: |
-        python -m isort --verbose --check-only --diff recursive client
+        python -m isort --verbose --check-only client
     - name: Test with pytest
       run: |
         python -m pytest --cov=client --cov-config=client/.coveragerc --cov-report term-missing client

@@ -89,20 +89,6 @@ class CellmlModel(models.Model):
     def __str__(self):
         return self.name + (" " + self.version if self.version else '') + " (" + str(self.year) + ")"
 
-    def is_editable_by(self, user):
-        """
-        Is the entity editable by the given user?
-        :param user: User object
-        :return: True if deletable, False otherwise
-        """
-        return user.is_superuser or user == self.author
-
-    def is_visible_to(self, user):
-        """
-        Can the user view this model?
-        """
-        return self.predefined or user.is_superuser or user == self.author
-
 
 @receiver(models.signals.post_delete, sender=CellmlModel)
 def auto_delete_file_on_delete(sender, instance, **kwargs):

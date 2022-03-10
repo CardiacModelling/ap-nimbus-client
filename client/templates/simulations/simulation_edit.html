@@ -6,8 +6,6 @@
 {% block title %}Edit simulations info - {% endblock title %}
 
 {% block content %}
-<div class="info">The simulation parameters cannot be edited, to run a different simulation please <a href="{% url 'simulations:create_simulation' %}"> create a new simulation</a>.</div>
-
 <section id="simulationeditinfo">
 <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
   <form method="POST" action="" enctype="multipart/form-data">
@@ -18,7 +16,7 @@
       <fieldset><legend>Model</legend>{{ object.model }}</fieldset>
       <fieldset><legend>Pacing</legend>
         <div><label>Frequency: </label> {{ object.pacing_frequency }} (Hz)</div>
-        <div><label>Max time: </label>(mins)</div>
+        <div><label>Max time: </label> {{ object.maximum_pacing_time }} (mins)</div>
       </fieldset>
       <fieldset>
         <legend>Ion Channel Current Inhibitory Concentrations</legend>

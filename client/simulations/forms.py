@@ -4,7 +4,6 @@ import magic
 from braces.forms import UserKwargModelFormMixin
 from django import forms
 from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
-from django.forms import inlineformset_factory
 from files.models import CellmlModel
 
 from .models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
@@ -45,7 +44,7 @@ class IonCurrentForm(forms.ModelForm):
 
     def save(self, simulation, **kwargs):
         # current not set, don't try to save
-        if not self.cleaned_data.get('current', None):
+        if self.cleaned_data.get('current', None) is None:
             return None
         param = super().save(commit=False)
         param.simulation = simulation
@@ -54,7 +53,7 @@ class IonCurrentForm(forms.ModelForm):
 
 
 #  Set of forms for Ion current parameters.
-IonCurrentFormSet = inlineformset_factory(
+IonCurrentFormSet = forms.inlineformset_factory(
     parent_model=Simulation,
     model=SimulationIonCurrentParam,
     form=IonCurrentForm,
@@ -79,28 +78,51 @@ class CompoundConcentrationPointForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+        self.forms = []
         self.fields['concentration'].required = False
         self.fields['concentration'].widget.attrs = {'class': 'compound-concentration', 'required': False,
                                                      'min': 0, 'step': 'any'}
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
 
+    def clean(self):
+        super().clean()
+        # check if this value is a duplicate (it appears in previously processed forms)
+        concentration = self.cleaned_data.get('concentration', None)
+        if concentration is not None:
+            other_concentrations_so_far = [getattr(frm, 'cleaned_data', {}).get('concentration', None)
+                                           for frm in self.forms if frm is not self]
+
+            if concentration in other_concentrations_so_far:
+                raise forms.ValidationError('Duplicate concentration point value!')
+        return self.cleaned_data
+
     def save(self, simulation=None, **kwargs):
         # concentration not set, don't try to save
-        if not self.cleaned_data.get('concentration', None):
+        if self.cleaned_data.get('concentration', None) is None:
             return None
         concentration = super().save(commit=False)
         concentration.simulation = simulation
-        assert concentration.concentration
         concentration.save()
         return concentration
 
 
-CompoundConcentrationPointFormSet = inlineformset_factory(
+class CompoundConcentrationPointNoDuplicatesSet(BaseSaveFormSet):
+    """
+    Set of forms with a save method that does not allow duplicate concentrations.
+    """
+    def is_valid(self):
+        # save link to other forms to check for duplicates
+        for concentration in self.forms:
+            concentration.forms = self.forms
+        return super().is_valid()
+
+
+CompoundConcentrationPointFormSet = forms.inlineformset_factory(
     parent_model=Simulation,
     model=CompoundConcentrationPoint,
     form=CompoundConcentrationPointForm,
-    formset=BaseSaveFormSet,
+    formset=CompoundConcentrationPointNoDuplicatesSet,
     exclude=('simulation', ),
     can_delete=False,
     can_order=False,
@@ -117,8 +139,8 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean_title(self):
         title = self.cleaned_data['title']
-        if self._meta.model.objects.filter(title=title, author=self.user).exclude(pk__in=[self.instance.pk
-                                                                                          if self.instance else None]):
+        if Simulation.objects.filter(title=title, author=self.user)\
+                .exclude(pk__in=[self.instance.pk if self.instance else None]).exists():
             raise forms.ValidationError('You already have a simulation with this title. The title must be unique!')
         return title
 
@@ -157,6 +179,14 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def save(self, **kwargs):
         simulation = super().save(commit=False)
+#        if simulation.pk_or_concs != Simulation.PkOptions.compound_concentration_range:
+#            simulation.minimum_concentration = 0.0
+#            simulation.maximum_concentration = 100.0
+#            simulation.intermediate_point_count = 4.0
+#            simulation.intermediate_point_log_scale = True
+#        if simulation.pk_or_concs != Simulation.PkOptions.pharmacokinetics:
+#            simulation.PK_data=None
+
         if not hasattr(simulation, 'author') or simulation.author is None:
             simulation.author = self.user
         simulation.save()
@@ -174,12 +204,11 @@ class SimulationForm(SimulationBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # populate models seperating predefined and uploaded models
-        predef_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                         if m.predefined and m.is_visible_to(self.user)]
-        uploaded_models = [(m.id, str(m)) for m in CellmlModel.objects.all()
-                           if not m.predefined and m.is_visible_to(self.user)]
-        self.fields['model'].choices = [(None, '--- Predefined models ---')] + predef_models + \
-            [(None, '--- Uploaded models ---')] + uploaded_models
+        predef_models = CellmlModel.objects.filter(predefined=True).values_list('pk', 'name', flat=False)
+        uploaded_models = CellmlModel.objects.filter(predefined=False,
+                                                     author=self.user).values_list('pk', 'name', flat=False)
+        self.fields['model'].choices = [(None, '--- Predefined models ---')] + list(predef_models) + \
+            [(None, '--- Uploaded models ---')] + list(uploaded_models)
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
 
         self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}

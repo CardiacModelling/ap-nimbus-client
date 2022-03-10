@@ -2,14 +2,6 @@ FROM python:3.9-slim
 
 USER root
 
-# environment variables
-ENV PYTHONUNBUFFERED=1
-ENV POSTGRES_DB=django
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_HOST=ap_nimbus_postgres
-ENV POSTGRES_PORT=5432
-ENV DJANGO_PORT=8000
-
 RUN mkdir /opt/django
 WORKDIR /opt/django
 
@@ -24,7 +16,7 @@ RUN apt-get install libmagic-dev -y
 RUN python3 -m venv venv
 
 # get the client from git & install
-RUN git clone --recursive https://github.com/CardiacModelling/ap-nimbus-client.git
+RUN git clone --recursive --branch simulation_call https://github.com/CardiacModelling/ap-nimbus-client.git
 RUN /opt/django/venv/bin/python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/

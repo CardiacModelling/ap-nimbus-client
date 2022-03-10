@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from accounts.models import User
 from files.models import IonCurrent
@@ -130,7 +132,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
         year=2017,
         cellml_link='https://models.cellml.org/e/4e8/',
         paper_link='https://www.ncbi.nlm.nih.gov/pubmed/28878692',
-        cellml_file='OHara-Rudy-CiPA-v1.0.cellml',
+        ap_predict_model_call='6'
     )
     model.ion_currents.set(IonCurrent.objects.all())
     model.save()
@@ -157,6 +159,8 @@ def simulation_range(simulation_recipe, user, o_hara_model):
                'saturation_level': c['default_saturation_level'],
                'spread_of_uncertainty': c['default_spread_of_uncertainty']}
               for v, c in zip(vals, PREDEF_ION_CURRENTS)]
+    # make sure we test scnario where spred of uncertainty is not set
+    del params[0]['spread_of_uncertainty']
     for curr, param in zip(IonCurrent.objects.all(), params):
         SimulationIonCurrentParam.objects.create(simulation=sim, ion_current=curr, **param)
     return sim
@@ -188,4 +192,4 @@ def simulation_pkdata(simulation_recipe, user, o_hara_model):
                                   ion_current_type=Simulation.IonCurrentType.IC50,
                                   ion_units=Simulation.IonCurrentUnits.M,
                                   pk_or_concs=Simulation.PkOptions.pharmacokinetics,
-                                  PK_data='pk_data.tsv')
+                                  PK_data=f'{uuid.uuid4()}_pk_data.tsv')

@@ -15,7 +15,7 @@
     <h3>Note:</h3>
     <ul id='infolist'>
       {% for message in INFO_MESSAGES %}
-        <li>{{ message }}</li>
+        <li>{{ message|safe }}</li>
       {% endfor %}
     </ul>
     <a class="pointer" id="dismissnotes">dismiss</a>

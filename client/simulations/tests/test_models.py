@@ -1,25 +1,89 @@
+import math
+
 import pytest
 from files.models import IonCurrent
 from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
 
 
 @pytest.mark.django_db
-def test_simulation(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
+def test_simulation_negLogM(simulation_range, simulation_points, simulation_pkdata,
+                            user, admin_user, other_user, o_hara_model):
     assert str(simulation_range) == 'my simulation1'
-    assert simulation_range.status == Simulation.Status.QUEUED
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
     assert simulation_range.author == user
     assert simulation_range.model == o_hara_model
     assert simulation_range.pacing_frequency == 0.05
     assert simulation_range.maximum_pacing_time == 5
     assert simulation_range.ion_current_type == Simulation.IonCurrentType.PIC50
+    assert Simulation.conversion(simulation_range.ion_units)(10) == 10
     assert simulation_range.ion_units == Simulation.IonCurrentUnits.negLogM
     assert simulation_range.pk_or_concs == Simulation.PkOptions.compound_concentration_range
     assert simulation_range.minimum_concentration == 0
     assert simulation_range.maximum_concentration == 100
     assert simulation_range.intermediate_point_count == '4'
-    assert simulation_range.is_editable_by(user) == simulation_range.is_visible_to(user) is True
-    assert simulation_range.is_editable_by(admin_user) == simulation_range.is_visible_to(admin_user) is True
-    assert simulation_range.is_editable_by(other_user) == simulation_range.is_visible_to(other_user) is False
+
+    assert str(simulation_points) == 'my simulation2'
+    assert str(simulation_pkdata) == 'my simulation3'
+
+
+@pytest.mark.django_db
+def test_simulation_M(simulation_range, simulation_points, simulation_pkdata,
+                      user, admin_user, other_user, o_hara_model):
+    simulation_range.ion_current_type = Simulation.IonCurrentType.IC50
+    simulation_range.ion_units = Simulation.IonCurrentUnits.M
+    assert str(simulation_range) == 'my simulation1'
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
+    assert simulation_range.author == user
+    assert simulation_range.model == o_hara_model
+    assert simulation_range.pacing_frequency == 0.05
+    assert simulation_range.maximum_pacing_time == 5
+    assert Simulation.conversion(simulation_range.ion_units)(10) == - math.log10(10)
+    assert simulation_range.pk_or_concs == Simulation.PkOptions.compound_concentration_range
+    assert simulation_range.minimum_concentration == 0
+    assert simulation_range.maximum_concentration == 100
+    assert simulation_range.intermediate_point_count == '4'
+
+    assert str(simulation_points) == 'my simulation2'
+    assert str(simulation_pkdata) == 'my simulation3'
+
+
+@pytest.mark.django_db
+def test_simulation_µM(simulation_range, simulation_points, simulation_pkdata,
+                       user, admin_user, other_user, o_hara_model):
+    simulation_range.ion_current_type = Simulation.IonCurrentType.IC50
+    simulation_range.ion_units = Simulation.IonCurrentUnits.µM
+    assert str(simulation_range) == 'my simulation1'
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
+    assert simulation_range.author == user
+    assert simulation_range.model == o_hara_model
+    assert simulation_range.pacing_frequency == 0.05
+    assert simulation_range.maximum_pacing_time == 5
+    assert Simulation.conversion(simulation_range.ion_units)(10) == - math.log10(1e-6 * 10)
+    assert simulation_range.pk_or_concs == Simulation.PkOptions.compound_concentration_range
+    assert simulation_range.minimum_concentration == 0
+    assert simulation_range.maximum_concentration == 100
+    assert simulation_range.intermediate_point_count == '4'
+
+    assert str(simulation_points) == 'my simulation2'
+    assert str(simulation_pkdata) == 'my simulation3'
+
+
+@pytest.mark.django_db
+def test_simulation_nM(simulation_range, simulation_points, simulation_pkdata,
+                       user, admin_user, other_user, o_hara_model):
+    simulation_range.ion_current_type == Simulation.IonCurrentType.IC50
+    simulation_range.ion_units = Simulation.IonCurrentUnits.nM
+    assert str(simulation_range) == 'my simulation1'
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
+    assert simulation_range.author == user
+    assert simulation_range.model == o_hara_model
+    assert simulation_range.pacing_frequency == 0.05
+    assert simulation_range.maximum_pacing_time == 5
+    assert Simulation.conversion(simulation_range.ion_units)(10) == - math.log10(1e-9 * 10)
+    assert simulation_range.pk_or_concs == Simulation.PkOptions.compound_concentration_range
+    assert simulation_range.minimum_concentration == 0
+    assert simulation_range.maximum_concentration == 100
+    assert simulation_range.intermediate_point_count == '4'
 
     assert str(simulation_points) == 'my simulation2'
     assert str(simulation_pkdata) == 'my simulation3'

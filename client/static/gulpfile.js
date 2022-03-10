@@ -1,5 +1,4 @@
 var gulp = require('gulp');
-//var sass = require('gulp-sass');
 var sass = require('gulp-sass')(require('sass'));
 var watchify = require('watchify');
 var browserify = require('browserify');
@@ -21,7 +20,6 @@ var config = {
   sass: {
     src: './sass/**/*.scss',
     dest: './css',
-    include: ['./js/visualizers/']
   }
 }
 
@@ -34,11 +32,6 @@ gulp.task('sass', () =>
     .pipe(concat('style-min.css'))
     .pipe(gulp.dest(config.sass.dest))
 );
-
-gulp.task('watch:sass', () =>
-  gulp.watch([config.sass.src, './js/visualizers/*/*.scss'], gulp.series('sass'))
-);
-
 
 var buildJs = (watch, done) => {
     // map each js source file to a stream
@@ -54,8 +47,6 @@ var buildJs = (watch, done) => {
       var bundle = () => bundler.bundle()
           .pipe(source(entry))
           .pipe(buffer())
-//          .pipe(sourcemaps.init({ loadMaps : true }))
-//          .pipe(sourcemaps.write(config.js.mapDir))
           .pipe(minify({noSource: true}))
           .pipe(gulp.dest(config.js.outputDir));
 
@@ -79,8 +70,4 @@ var buildJs = (watch, done) => {
 };
 
 gulp.task('js', (done) => buildJs(false, done));
-gulp.task('watch:js', (done) => buildJs(true, done));
-
-
-gulp.task('watch', gulp.parallel('watch:js', 'watch:sass'));
 gulp.task('default', gulp.parallel('sass', 'js'));

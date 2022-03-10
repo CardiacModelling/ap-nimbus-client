@@ -4,13 +4,7 @@
 {% block title %}Create simulation - {% endblock title %}
 
 {% block content %}
-<div id='simulationform'>
-{% if template_title %}
-  <div class="info">Using existing simulation <em>{{template_title}}</em> as a template.</div>
-  <h1>Create new simulation based on <em>{{template_title}}</em>.</h1>
-{%else %}
-  <h1>Create simulation.</h1>
-{% endif %}
+<h1>Create simulation.</h1>
 
   <form method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
@@ -45,9 +39,10 @@
                      <th>Channel <br/>protein</th><th>Gene</th><th id="ion-description-header">Description</th></tr></thead>
         {% endwith %}
         <tbody>
+{{ion_formset.non_field_errors}}
           {% for ion_form in ion_formset %}
             {{ion_form.non_field_errors}}
-            <tr><td id="currentname"><input type="hidden" name="ion-{{ forloop.counter0 }}-models" value="{{ion_form.initial.models}}" class="used-in-models" title="" id="id_ion-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
+            <tr><td id="currentname"><input type="hidden" name="ion-{{ forloop.counter0 }}-models" value="{% for ion in ion_form.initial.models %}{{ion}},{% endfor %}" class="used-in-models" title="" id="id_ion-{{ forloop.counter0 }}-models">{{ion_form.initial.ion_current}} {{ion_form.ion_current.as_hidden}}{{ion_form.ion_current.errors}}</td>
                 <td id="currentval">{{ion_form.current.errors}}{{ion_form.current}}</td><td class="ion-units">-log(m)</td>
                 <td>{{ion_form.hill_coefficient.errors}}{{ion_form.hill_coefficient}}</td>
                 <td>{{ion_form.saturation_level.errors}}{{ion_form.saturation_level}}</td>
@@ -69,6 +64,7 @@
            </div>
            <div id="div_pk_or_concs_1">
                    <div id="compound-concentration-points">
+{{concentration_formset.non_field_errors}}
                    {% for concentration_form in concentration_formset %}
                        <div class="compound-concentration-point">
                            <input type="hidden"  class="compound-concentration-point-index" value="{{forloop.counter}}">

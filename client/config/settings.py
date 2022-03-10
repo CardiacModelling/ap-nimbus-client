@@ -86,6 +86,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.common',
             ],
         },
     },
@@ -137,8 +138,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = False
 
-USE_L10N = False
-
 USE_TZ = False
 
 
@@ -166,3 +165,6 @@ MEDIA_ROOT = '/opt/django/media/'
 
 # Force using temporary fiile for upload
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
+
+AP_PREDICT_ENDPOINT = os.environ.get('AP_PREDICT_ENDPOINT', 'http://path_to_ap_manager')
+AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 300)
