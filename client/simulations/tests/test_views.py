@@ -24,13 +24,15 @@ from simulations.views import (
     start_simulation,
     to_float,
     to_int,
+    StatusSimulationView
 )
-
+from simulations import views
 
 
 @pytest.fixture
 def sim_no_confidence(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
+    simulation_range.progress = 'Completed'
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_no_confidence.txt'), 'r') as file:
         simulation_range.voltage_results = json.loads(file.read())
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_no_confidence.txt'), 'r') as file:
@@ -43,6 +45,7 @@ def sim_no_confidence(simulation_range):
 @pytest.fixture
 def sim_all_data(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
+    simulation_range.progress = 'Completed'
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
         simulation_range.q_net = json.loads(file.read())
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
@@ -59,6 +62,7 @@ def sim_all_data(simulation_range):
 @pytest.fixture
 def sim_all_data_points(simulation_points):
     simulation_points.status = Simulation.Status.SUCCESS
+    simulation_points.progress = 'Completed'
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net_points.txt'), 'r') as file:
         simulation_points.q_net = json.loads(file.read())
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_points.txt'), 'r') as file:
@@ -73,13 +77,14 @@ def sim_all_data_points(simulation_points):
 @pytest.fixture
 def sim_all_data_concentration_points(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net2.txt'), 'r') as file:
+    simulation_range.progress = 'Completed'
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'q_net.txt'), 'r') as file:
         simulation_range.q_net = json.loads(file.read())
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'pkpd_results.txt'), 'r') as file:
         simulation_range.pkpd_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results.txt'), 'r') as file:
         simulation_range.voltage_results = json.loads(file.read())
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces2.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces.txt'), 'r') as file:
         simulation_range.voltage_traces = json.loads(file.read())
     simulation_range.save()
     simulation_range.refresh_from_db()
@@ -628,7 +633,6 @@ class TestRestartSimulationView:
 class TestSpreadsheetSimulationView:
     def check_xlsx_files(self, response, tmp_path, check_file):
         assert response.status_code == 200
-
         response_file_path = os.path.join(tmp_path, 'response.xlsx')
         check_file_path = os.path.join(settings.BASE_DIR, 'simulations', 'tests', check_file)
 
@@ -674,21 +678,14 @@ class TestSpreadsheetSimulationView:
 
     def test_data_no_confidence(self, logged_in_user, client, sim_no_confidence, tmp_path):
         response = client.get(f'/simulations/{sim_no_confidence.pk}/spreadsheet')
-#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'data_no_confidence.xlsx')
-#        response_xlsx = b''.join(response.streaming_content)
-#        with open(response_file, 'wb') as file:
-#            file.write(response_xlsx)
         self.check_xlsx_files(response, tmp_path, 'data_no_confidence.xlsx')
 
 
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
-#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.xlsx')
-#        response_xlsx = b''.join(response.streaming_content)
-#        with open(response_file, 'wb') as file:
-#            file.write(response_xlsx)
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
+
 
 @pytest.mark.django_db
 class TestDataSimulationView:
@@ -715,22 +712,89 @@ class TestDataSimulationView:
         response = client.get(f'/simulations/{sim_no_confidence.pk}/data')
         self.check_data_file(response.json(), 'no_confidence_data.txt')
 
-#    def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
-#        response = client.get(f'/simulations/{sim_all_data.pk}/data')
-#        self.check_data_file(response.json(), 'all_data.txt')
-
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/data')
-#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data.txt')
-#        with open(response_file, 'w') as file:
-#            file.write(json.dumps(response.json()))
         self.check_data_file(response.json(), 'all_data.txt')
-
 
     def test_all_data_points(self, logged_in_user, client, sim_all_data_points, tmp_path):
         response = client.get(f'/simulations/{sim_all_data_points.pk}/data')
-#        response_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'all_data_points.txt')
-#        with open(response_file, 'w') as file:
-#            file.write(json.dumps(response.json()))
-#        self.check_data_file(response.json(), 'all_data_points.txt')
         self.check_data_file(response.json(), 'all_data_points.txt')
+
+
+@pytest.mark.django_db
+class TestStatusSimulationView:
+    def test_not_logged_in(self, other_user, client, sim_all_data):
+        assert sim_all_data.author != other_user
+        response = client.get(f"/simulations/status/true/{sim_all_data.pk}/")
+        assert response.status_code == 404
+
+    def test_non_owner(self, other_user, client, sim_all_data):
+        client.login(username=other_user.email, password='password')
+        assert sim_all_data.author != other_user
+        response = client.get(f"/simulations/status/true/{sim_all_data.pk}/")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_progress_skip_updates(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points, simulation_pkdata):
+        pks = [str(sim_all_data.pk),
+               str(sim_all_data_points.pk),
+               str(simulation_pkdata.pk)]
+        response = client.get(f"/simulations/status/true/{'/'.join(pks)}/")
+        assert response.status_code == 200
+        assert response.json() == [{'pk': simulation_pkdata.pk, 'progress': 'Initialising..', 'status': 'NOT_STARTED'},
+                                   {'pk': sim_all_data_points.pk, 'progress': 'Completed', 'status': 'SUCCESS'},
+                                   {'pk': sim_all_data.pk, 'progress': 'Completed', 'status': 'SUCCESS'}]
+
+    def test_progress_nothng_to_update(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points):
+        pks = [str(sim_all_data.pk),
+               str(sim_all_data_points.pk)]
+        response = client.get(f"/simulations/status/false/{'/'.join(pks)}/")
+        assert response.status_code == 200
+        assert response.json() == [{'pk': sim_all_data_points.pk, 'progress': 'Completed', 'status': 'SUCCESS'},
+                                   {'pk': sim_all_data.pk, 'progress': 'Completed', 'status': 'SUCCESS'}]
+
+    def test_progress_calls_update(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points, simulation_pkdata, capsys):
+        pks = [str(sim_all_data.pk),
+               str(sim_all_data_points.pk),
+               str(simulation_pkdata.pk)]
+
+        # mock update sim as multi level awaits in test won't work
+        async def update_sim(self, client, sim):
+            print(f'sim pk --{sim.pk}--')
+
+        StatusSimulationView.update_sim = update_sim
+        response = client.get(f"/simulations/status/false/{'/'.join(pks)}/")
+        simulation_pkdata.refresh_from_db()
+        assert response.status_code == 200
+        out, _ = capsys.readouterr()
+        assert f'sim pk --{simulation_pkdata.pk}--' in out
+
+    def test_save_data(self, logged_in_user, httpx_mock, simulation_range):
+        view = StatusSimulationView()
+
+        # mock get_from_api as multi level awaits in test won't work
+        async def get_result(client, command, sim):
+            return {'success': ['msg1', 'msg2']}
+        views.get_from_api = get_result
+        async_to_sync(view.save_data)(None, 'messages', simulation_range)
+        assert simulation_range.messages == ['msg1', 'msg2']
+
+    def test_save_data_no_result(self, logged_in_user, httpx_mock, simulation_range):
+        view = StatusSimulationView()
+
+        # mock get_from_api as multi level awaits in test won't work
+        async def get_result(client, command, sim):
+            return {}
+        views.get_from_api = get_result
+        async_to_sync(view.save_data)(None, 'messages', simulation_range)
+        assert simulation_range.messages is None
+
+
+#    httpx_mock.add_response(json={'success': {'messages': ['msg1', 'msg2']}})
+
+
+#@pytest.mark.asyncio
+#async def test_details(client):
+#    request = await AsyncRequestFactory().get('/customer/details')
+#    response = StatusSimulationView(request)
+#    assert response.status_code == 200

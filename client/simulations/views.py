@@ -657,6 +657,7 @@ class StatusSimulationView(View):
         if self.kwargs['update'].lower() == 'false':
             sims_to_update = await sync_to_async(list)(simulations.exclude(status=Simulation.Status.SUCCESS))
             if sims_to_update:
+                #pass
                 async with httpx.AsyncClient(timeout=None) as client:
                     await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
 
