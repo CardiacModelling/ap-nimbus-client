@@ -850,9 +850,8 @@ class TestStatusSimulationView:
         simulation_range.refresh_from_db()
 
         # mock get_from_api and save_data as multi level awaits in test won't work
+        # mock no progress messages available
         async def get_result(_, command, sim):
-            if command == 'progress_status':
-                return {'success': ['Initialising...', '0% completed', '']}
             return {}
 
         async def save_err(sim, text):
@@ -969,7 +968,3 @@ class TestStatusSimulationView:
             data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
             with open(data_source_file) as file:
                 assert json.loads(file.read()) == getattr(simulation_range, command)
-
-
-# not progress changed no timeout - failed
-# text is done, not failed
