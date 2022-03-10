@@ -43,7 +43,8 @@ def test_print_compound_concentrations_range(simulation_range, simulation_points
         ('[24.9197, 25.85, 27.73, 35.8, 41.032, 42.949, 56.2, 62.0, 67.31, 72.27] (µM)', '[24.9197 ... 72.27] (µM)')
     assert simulation_pkdata.PK_data.path.endswith('pk_data.tsv')
     assert print_compound_concentrations(simulation_pkdata) == \
-        f'Compound concentrations from TSV file: {simulation_pkdata.PK_data}.{str(simulation_pkdata.PK_data)[:20]}...'
+        (f'Compound concentrations from TSV file: {simulation_pkdata.PK_data}.',
+         f'{str(simulation_pkdata.PK_data)[:20]}...')
 
 
 @pytest.mark.django_db
