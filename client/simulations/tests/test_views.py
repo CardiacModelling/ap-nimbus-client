@@ -1,39 +1,38 @@
-import asyncio
 import datetime
 import json
 import os
 import shutil
 import uuid
-import pandas
 
 import httpx
+import pandas
 import pytest
-import pytest_asyncio
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.utils import timezone
 from files.models import IonCurrent
+from simulations import views
 from simulations.models import Simulation
 from simulations.views import (
     AP_MANAGER_URL,
     COMPILING_CELLML,
     INITIALISING,
+    StatusSimulationView,
     get_from_api,
     listify,
     save_api_error_sync,
     start_simulation,
     to_float,
     to_int,
-    StatusSimulationView
 )
-from simulations import views
 
 
 @pytest.fixture
 def sim_no_confidence(simulation_range):
     simulation_range.status = Simulation.Status.SUCCESS
     simulation_range.progress = 'Completed'
-    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_results_no_confidence.txt'), 'r') as file:
+    with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests',
+                           'voltage_results_no_confidence.txt'), 'r') as file:
         simulation_range.voltage_results = json.loads(file.read())
     with open(os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'voltage_traces_no_confidence.txt'), 'r') as file:
         simulation_range.voltage_traces = json.loads(file.read())
@@ -112,7 +111,7 @@ def test_listify():
 
 @pytest.mark.django_db
 def test_save_api_error_sync(simulation_range):
-    assert simulation_range.status == Simulation.Status.NOT_STARTED 
+    assert simulation_range.status == Simulation.Status.NOT_STARTED
     message = 'something went wrong' * 15
     save_api_error_sync(simulation_range, message)
     assert simulation_range.progress == 'Failed!'
@@ -157,7 +156,8 @@ class TestGetFromApi:
             response = await get_from_api(client, 'messages', sim)
             assert response == json_data
             assert sim.status == Simulation.Status.FAILED
-            assert str(sim.api_errors) == "Result to call messages failed JSON validation: 'some other response' is not of type 'array'"
+            assert str(sim.api_errors) == \
+                "Result to call messages failed JSON validation: 'some other response' is not of type 'array'"
 
     async def test_json_decode_error(self, httpx_mock):
         sim = await sync_to_async(Simulation)()
@@ -187,6 +187,7 @@ class TestGetFromApi:
             assert sim.status == Simulation.Status.FAILED
             assert str(sim.api_errors) == f'Inavlid URL {AP_MANAGER_URL % (sim.ap_predict_call_id, call)}.'
 
+
 @pytest.mark.django_db
 class TestReStartSimulation:
     def test_re_start(self, httpx_mock, simulation_range):
@@ -207,20 +208,26 @@ class TestReStartSimulation:
         def check_request(request: httpx.Request):
             # check call data and return mock response
             call_data = json.loads(request.content)
-            assert call_data ==  {'pacingFrequency': 0.05,
-                                  'pacingMaxTime': 5.0,
-                                  'plasmaMinimum': 0.0,
-                                  'plasmaMaximum': 100.0,
-                                  'plasmaIntermediatePointCount': '4',
-                                  'plasmaIntermediatePointLogScale': True,
-                                  'modelId': '6',
-                                  'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
-                                  'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
-                                  'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                                  'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
-                                  'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
-                                  'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                                  'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
+            assert call_data == {'pacingFrequency': 0.05,
+                                 'pacingMaxTime': 5.0,
+                                 'plasmaMinimum': 0.0,
+                                 'plasmaMaximum': 100.0,
+                                 'plasmaIntermediatePointCount': '4',
+                                 'plasmaIntermediatePointLogScale': True,
+                                 'modelId': '6',
+                                 'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
+                                 'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}],
+                                         'spreads': {'c50Spread': 0.2}},
+                                 'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}],
+                                          'spreads': {'c50Spread': 0.15}},
+                                 'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}],
+                                         'spreads': {'c50Spread': 0.17}},
+                                 'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}],
+                                         'spreads': {'c50Spread': 0.18}},
+                                 'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}],
+                                         'spreads': {'c50Spread': 0.15}},
+                                 'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}],
+                                          'spreads': {'c50Spread': 0.2}}}
 
             return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
@@ -241,6 +248,7 @@ class TestReStartSimulation:
     def test_currents(self, httpx_mock, simulation_points):
         assert simulation_points.status == Simulation.Status.NOT_STARTED
         assert simulation_points.ap_predict_call_id == ''
+
         def check_request(request: httpx.Request):
             # check call data and return mock response
             call_data = json.loads(request.content)
@@ -282,10 +290,10 @@ class TestReStartSimulation:
         def check_request(request: httpx.Request):
             # check call data and return mock response
             call_data = json.loads(request.content)
-            assert call_data ==  {'pacingFrequency': 0.05,
-                                  'pacingMaxTime': 5,
-                                  'PK_data_file': '0.1\t1\t1.1\n0.2\t2\t2.1\n',
-                                  'modelId': '6'}
+            assert call_data == {'pacingFrequency': 0.05,
+                                 'pacingMaxTime': 5,
+                                 'PK_data_file': '0.1\t1\t1.1\n0.2\t2\t2.1\n',
+                                 'modelId': '6'}
             return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
         httpx_mock.add_callback(check_request)
@@ -327,20 +335,26 @@ class TestReStartSimulation:
             # check call data and return mock response
             call_data = json.loads(request.content)
             with open(uploaded_model.cellml_file.path, 'rb') as cellml_file:
-                assert call_data ==  {'cellml_file': cellml_file.read().decode('unicode-escape'),
-                                      'pacingFrequency': 0.05,
-                                      'pacingMaxTime': 5.0,
-                                      'plasmaMinimum': 0.0,
-                                      'plasmaMaximum': 100.0,
-                                      'plasmaIntermediatePointCount': '4',
-                                      'plasmaIntermediatePointLogScale': True,
-                                      'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
-                                      'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}},
-                                      'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                                      'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.17}},
-                                      'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.18}},
-                                      'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.15}},
-                                      'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}], 'spreads': {'c50Spread': 0.2}}}
+                assert call_data == {'cellml_file': cellml_file.read().decode('unicode-escape'),
+                                     'pacingFrequency': 0.05,
+                                     'pacingMaxTime': 5.0,
+                                     'plasmaMinimum': 0.0,
+                                     'plasmaMaximum': 100.0,
+                                     'plasmaIntermediatePointCount': '4',
+                                     'plasmaIntermediatePointLogScale': True,
+                                     'IKr': {'associatedData': [{'pIC50': 4.37, 'hill': 1.0, 'saturation': 0.0}]},
+                                     'INa': {'associatedData': [{'pIC50': 44.716, 'hill': 1.0, 'saturation': 0.0}],
+                                             'spreads': {'c50Spread': 0.2}},
+                                     'ICaL': {'associatedData': [{'pIC50': 70.0, 'hill': 1.0, 'saturation': 0.0}],
+                                              'spreads': {'c50Spread': 0.15}},
+                                     'IKs': {'associatedData': [{'pIC50': 45.3, 'hill': 1.0, 'saturation': 0.0}],
+                                             'spreads': {'c50Spread': 0.17}},
+                                     'IK1': {'associatedData': [{'pIC50': 41.8, 'hill': 1.0, 'saturation': 0.0}],
+                                             'spreads': {'c50Spread': 0.18}},
+                                     'Ito': {'associatedData': [{'pIC50': 13.4, 'hill': 1.0, 'saturation': 0.0}],
+                                             'spreads': {'c50Spread': 0.15}},
+                                     'INaL': {'associatedData': [{'pIC50': 52.1, 'hill': 1.0, 'saturation': 0.0}],
+                                              'spreads': {'c50Spread': 0.2}}}
 
             return httpx.Response(status_code=200, json={'success': {'id': '828b142a-9ecc-11ec-b909-0242ac120002'}})
 
@@ -355,7 +369,6 @@ class TestReStartSimulation:
         assert not os.path.isfile(dest_cellml)
 
     def test_error_msg(self, httpx_mock, simulation_range):
-        json_data = {'error': 'some error message'}
         httpx_mock.add_response(json={'error': 'some error message'})
         start_simulation(simulation_range)
         assert simulation_range.status == Simulation.Status.FAILED
@@ -615,7 +628,6 @@ class TestRestartSimulationView:
         assert Simulation.objects.count() == 1
         assert sim.status == Simulation.Status.SUCCESS
 
-
     def test_logged_in_owner_ca_restart(self, logged_in_user, client, sim, httpx_mock):
         assert sim.author == logged_in_user
         assert Simulation.objects.count() == 1
@@ -680,7 +692,6 @@ class TestSpreadsheetSimulationView:
         response = client.get(f'/simulations/{sim_no_confidence.pk}/spreadsheet')
         self.check_xlsx_files(response, tmp_path, 'data_no_confidence.xlsx')
 
-
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
@@ -735,7 +746,8 @@ class TestStatusSimulationView:
         assert response.status_code == 200
         assert response.json() == []
 
-    def test_progress_skip_updates(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points, simulation_pkdata):
+    def test_progress_skip_updates(self, logged_in_user, client, sim_all_data, sim_all_data_points,
+                                   sim_all_data_concentration_points, simulation_pkdata):
         pks = [str(sim_all_data.pk),
                str(sim_all_data_points.pk),
                str(simulation_pkdata.pk)]
@@ -745,7 +757,8 @@ class TestStatusSimulationView:
                                    {'pk': sim_all_data_points.pk, 'progress': 'Completed', 'status': 'SUCCESS'},
                                    {'pk': sim_all_data.pk, 'progress': 'Completed', 'status': 'SUCCESS'}]
 
-    def test_progress_nothng_to_update(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points):
+    def test_progress_nothng_to_update(self, logged_in_user, client, sim_all_data,
+                                       sim_all_data_points, sim_all_data_concentration_points):
         pks = [str(sim_all_data.pk),
                str(sim_all_data_points.pk)]
         response = client.get(f"/simulations/status/false/{'/'.join(pks)}/")
@@ -753,7 +766,8 @@ class TestStatusSimulationView:
         assert response.json() == [{'pk': sim_all_data_points.pk, 'progress': 'Completed', 'status': 'SUCCESS'},
                                    {'pk': sim_all_data.pk, 'progress': 'Completed', 'status': 'SUCCESS'}]
 
-    def test_progress_calls_update(self, logged_in_user, client, sim_all_data, sim_all_data_points, sim_all_data_concentration_points, simulation_pkdata, capsys):
+    def test_progress_calls_update(self, logged_in_user, client, sim_all_data, sim_all_data_points,
+                                   sim_all_data_concentration_points, simulation_pkdata, capsys):
         pks = [str(sim_all_data.pk),
                str(sim_all_data_points.pk),
                str(simulation_pkdata.pk)]
@@ -802,7 +816,8 @@ class TestStatusSimulationView:
         async_to_sync(view.update_sim)(None, simulation_range)
         assert simulation_range.progress == '0% completed'
         assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
 
     def test_update_progress_timeout(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -815,6 +830,7 @@ class TestStatusSimulationView:
         # mock get_from_api and save_data as multi level awaits in test won't work
         async def get_result(_, _2, sim):
             return {'success': ['Initialising...', '0% completed', '']}
+
         async def save_err(sim, text):
             print(f'save api error: sim: {sim.pk} text: {text}')
         views.get_from_api = get_result
@@ -822,7 +838,8 @@ class TestStatusSimulationView:
         async_to_sync(view.update_sim)(None, simulation_range)
         out, _ = capsys.readouterr()
         assert f'save api error: sim: {simulation_range.pk} text: Progress timeout.' in out, str(out)
-        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
 
     def test_update_progress_no_change_not_stopped(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -846,7 +863,8 @@ class TestStatusSimulationView:
         out, _ = capsys.readouterr()
         # no error saved, no progress change
         assert out == ''
-        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
 
     def test_update_progress_no_change_stopped_no_data(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -863,7 +881,7 @@ class TestStatusSimulationView:
             if command == 'STOP':
                 return {'success': True}
             else:
-               return {}
+                return {}
 
         async def save_dat(_, _2, command, sim):
             print(f'save data {command}: {sim.pk}')
@@ -876,7 +894,8 @@ class TestStatusSimulationView:
         async_to_sync(view.update_sim)(None, simulation_range)
         out, _ = capsys.readouterr()
         assert f'save api error: sim: {simulation_range.pk} text: Simulation stopped prematurely.' in out
-        assert not any((simulation_range.q_net, simulation_range.voltage_results, simulation_range.voltage_traces, simulation_range.messages))
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
 
     def test_update_progress_no_change_stopped_saving_fails(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -893,10 +912,10 @@ class TestStatusSimulationView:
             if command == 'STOP':
                 return {'success': True}
             else:
-               sim.status = Simulation.Status.FAILED
-               sim.progress = 'Failed'
-               sim.api_error = 'test api error while saving data'
-               return {}
+                sim.status = Simulation.Status.FAILED
+                sim.progress = 'Failed'
+                sim.api_error = 'test api error while saving data'
+                return {}
 
         async def save_dat(_, _2, command, sim):
             print(f'save data {command}: {sim.pk}')
@@ -911,7 +930,8 @@ class TestStatusSimulationView:
         assert out == ''
         assert simulation_range.status == Simulation.Status.FAILED
         assert simulation_range.api_error == 'test api error while saving data'
-
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
 
     def test_update_progress_no_change_stopped_save_data(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -928,9 +948,9 @@ class TestStatusSimulationView:
             if command == 'STOP':
                 return {'success': True}
             else:
-               data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
-               with open(data_source_file) as file:
-                   return {'success': json.loads(file.read())}
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+                with open(data_source_file) as file:
+                    return {'success': json.loads(file.read())}
 
         async def save_dat(_, _2, command, sim):
             print(f'save data {command}: {sim.pk}')
@@ -950,8 +970,6 @@ class TestStatusSimulationView:
             with open(data_source_file) as file:
                 assert json.loads(file.read()) == getattr(simulation_range, command)
 
-
-# fail saving
 
 # not progress changed no timeout - failed
 # text is done, not failed

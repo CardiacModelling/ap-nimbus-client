@@ -6,7 +6,8 @@ from simulations.models import CompoundConcentrationPoint, Simulation, Simulatio
 
 
 @pytest.mark.django_db
-def test_simulation_negLogM(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
+def test_simulation_negLogM(simulation_range, simulation_points, simulation_pkdata,
+                            user, admin_user, other_user, o_hara_model):
     assert str(simulation_range) == 'my simulation1'
     assert simulation_range.status == Simulation.Status.NOT_STARTED
     assert simulation_range.author == user
@@ -26,7 +27,8 @@ def test_simulation_negLogM(simulation_range, simulation_points, simulation_pkda
 
 
 @pytest.mark.django_db
-def test_simulation_M(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
+def test_simulation_M(simulation_range, simulation_points, simulation_pkdata,
+                      user, admin_user, other_user, o_hara_model):
     simulation_range.ion_current_type = Simulation.IonCurrentType.IC50
     simulation_range.ion_units = Simulation.IonCurrentUnits.M
     assert str(simulation_range) == 'my simulation1'
@@ -46,7 +48,8 @@ def test_simulation_M(simulation_range, simulation_points, simulation_pkdata, us
 
 
 @pytest.mark.django_db
-def test_simulation_µM(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
+def test_simulation_µM(simulation_range, simulation_points, simulation_pkdata,
+                       user, admin_user, other_user, o_hara_model):
     simulation_range.ion_current_type = Simulation.IonCurrentType.IC50
     simulation_range.ion_units = Simulation.IonCurrentUnits.µM
     assert str(simulation_range) == 'my simulation1'
@@ -66,7 +69,8 @@ def test_simulation_µM(simulation_range, simulation_points, simulation_pkdata, 
 
 
 @pytest.mark.django_db
-def test_simulation_nM(simulation_range, simulation_points, simulation_pkdata, user, admin_user, other_user, o_hara_model):
+def test_simulation_nM(simulation_range, simulation_points, simulation_pkdata,
+                       user, admin_user, other_user, o_hara_model):
     simulation_range.ion_current_type == Simulation.IonCurrentType.IC50
     simulation_range.ion_units = Simulation.IonCurrentUnits.nM
     assert str(simulation_range) == 'my simulation1'

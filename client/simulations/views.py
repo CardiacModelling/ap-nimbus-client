@@ -471,9 +471,9 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
 
     def qNet(self, workbook, bold, sim):
         def len_vr():
-            if not sim.voltage_results or not 'da90' in sim.voltage_results[0]:
+            if not sim.voltage_results or 'da90' not in sim.voltage_results[0]:
                 return 0
-            return (len(sim.voltage_results[0]['da90'])) -1
+            return (len(sim.voltage_results[0]['da90'])) - 1
 
         worksheet = workbook.add_worksheet('% Change and qNet')
         row = 0
@@ -552,7 +552,6 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         worksheet.write(0, 0, 'Time (ms)', bold)
         if not sim.voltage_traces:
             return
-
 
         time_keys = set()
         for trace in sim.voltage_traces:
@@ -657,7 +656,6 @@ class StatusSimulationView(View):
         if self.kwargs['update'].lower() == 'false':
             sims_to_update = await sync_to_async(list)(simulations.exclude(status=Simulation.Status.SUCCESS))
             if sims_to_update:
-                #pass
                 async with httpx.AsyncClient(timeout=None) as client:
                     await asyncio.wait([asyncio.ensure_future(self.update_sim(client, sim)) for sim in sims_to_update])
 
