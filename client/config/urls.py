@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, re_path
 from django.views.generic import TemplateView
+from onfig.view import MediaView
 
 
 media_path = settings.MEDIA_URL.replace(settings.FORCE_SCRIPT_NAME, '')
