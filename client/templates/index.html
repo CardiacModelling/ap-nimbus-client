@@ -4,6 +4,34 @@
 {% block title %}Home - {% endblock title %}
 
 {% block content %}
-  <h1>AP portal Web client</h1>
+  <h1>ActionPotential-Portal application</h1>
+<p>
+  This web portal provides a user-interface, results database and results presentation for the <a href="https://www.maths.nottingham.ac.uk/plp/pmzgm/ap_predict/">'Action Potential Prediction' (ApPredict)</a> open source cardiac electrophysiology simulator, for changes to the action potential under drug block of multiple ion channels.
+  <br>It allows you to enter information on multiple cardiac ion channel block by a compound, and to predict the effect on whole cardiac myocyte electrophysiology, across a range of concentrations, as shown below:
+</p>
+<p>
+  This particular version is a redevelopment of the original portal, and it has been designed to run in a series of docker containers, which provides a convenient way to install a local instance. See <a href="https://github.com/CardiacModelling/ap-nimbus-client">instructions on github</a> for ore details.
+  <br/>
+  We are inviting users to register their interest by <a href="{% url 'accounts:register' %}">registering for an account</a>. For information about privacy and security see our <a href="{% url 'privacy' %}">privacy policy</a>.
+  Any queries or feedback you may have for us will be gratefully received, please <a href="{% url 'contact' %}">contact the team</a> to let us know.
+</p>
+<p>
+  <img alt="Flowchart of information from ion channel screening informing action potential models." title="Flowchart of information from ion channel screening informing action potential models." src="{% static 'images/sim_flowchart_web.png' %}">
+<p>
+  A full guide to (an earlier version of) this web portal has been uploaded to Figshare :
+  <a href="http://dx.doi.org/10.6084/m9.figshare.1039436" title="A guide to the Action Potential Prediction 'AP-Portal' web portal" target="blank">A guide to the Action Potential Prediction 'AP-Portal' web portal</a> (pdf).
+  <br>
+  Journal of Pharmacological and Toxicological Methods article :
+  <a href="http://dx.doi.org/10.1016/j.vascn.2015.05.002" title="A web portal for in-silico action potential predictions" target="blank">A web portal for in-silico action potential predictions</a>.
+  <br>
+  The underlying ApPredict software is available as open <a href="https://github.com/Chaste/ApPredict" target="blank">source software on github</a>.
+  The portal software itself is also open source and can also be found on: <a href="https://github.com/CardiacModelling/ap-nimbus-client" target="blank">github</a>.
+</p>
+  Development of this web portal was funded under a Mathematics in Toxicology Strategic Award (NC/K001337/1) to Dr Gary Mirams, by the EPSRC and NC3Rs:
+</p>
+<p>
+  <a href="http://www.epsrc.ac.uk/" target="blank" title="Engineering and Physical Sciences Research Council"><img alt="Engineering and Physical Sciences Research Council logo" title="Engineering and Physical Sciences Research Council" src="{% static 'images/epsrc_logo.png' %}></a>
+  <a href="http://www.nc3rs.org.uk/" target="blank" title="National Centre for the Replacement, Refinement &amp; Reduction of Animals in Research"><img style="padding:10px;" alt="National Centre for the Replacement, Refinement &amp; Reduction of Animals in Research logo" title="National Centre for the Replacement, Refinement &amp; Reduction of Animals in Research" src="{% static 'images/nc3rs_logo.gif' %}"></a>
+  </p>
 
 {% endblock content %}
