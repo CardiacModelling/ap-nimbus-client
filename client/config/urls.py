@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from core.views import MediaView
 from django.contrib import admin
 from django.urls import include, re_path
 from django.views.generic import TemplateView
@@ -22,6 +23,9 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='index.html'), name="home"),
     re_path(r'^contact$', TemplateView.as_view(template_name='contact.html'), name="contact"),
     re_path(r'^privacy$', TemplateView.as_view(template_name='privacy.html'), name="privacy"),
+
+    # protected file upload
+    re_path(r'^media/(?P<file_name>.+)$', MediaView.as_view(), name="media"),
 
     re_path(r'^admin/', admin.site.urls),
     re_path(r'^accounts/', include('accounts.urls', namespace='accounts')),
