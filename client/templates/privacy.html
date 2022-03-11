@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ap_nimubs %}
 
 {% block title %}Privacy notice - {% endblock title %}
 
@@ -32,9 +33,8 @@
   When you log in to the ActionPotential-Portal we also store a cookie on your machine so that you can access protected features of the ActionPotential-Portal.
 </p>
 
-<p>
-  All information we store is held on computers within the University of Nottingham's network.
-  All web access to the ActionPotential-Portal uses the secure 'HTTPS' protocol.
+<h2>Web hosting</h2>
+<p><pre>{% hosting_info %}</pre>
 </p>
 
 <h2>Who can see this information?</h2>
