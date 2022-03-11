@@ -8,15 +8,15 @@ from django.http import FileResponse
 
 
 @pytest.mark.django_db
-def test_not_logged_in(user, client):
-    response = client.get('/media/somefile.cellml')
-    assert response.status_code == 302
+def test_media_root(logged_in_user, client):
+    # the url patterns assume /media is used, so don't change it
+    assert settings.MEDIA_URL == (settings.FORCE_SCRIPT_NAME + '/media/').replace('//', '/')
 
 
 @pytest.mark.django_db
-def test_media_root(logged_in_user, client):
-    # the url patterns assume /media is used, so don't change it
-    assert settings.MEDIA_URL == settings.FORCE_SCRIPT_NAME + 'media/'
+def test_not_logged_in(user, client):
+    response = client.get('/media/somefile.cellml')
+    assert response.status_code == 302
 
 
 @pytest.mark.django_db
