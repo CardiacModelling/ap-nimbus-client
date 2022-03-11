@@ -166,5 +166,9 @@ MEDIA_ROOT = '/opt/django/media/'
 # Force using temporary fiile for upload
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
 
+# API location for AP manager
 AP_PREDICT_ENDPOINT = os.environ.get('AP_PREDICT_ENDPOINT', 'http://path_to_ap_manager')
 AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 300)
+
+# Hosting information for the privacy policy
+HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
