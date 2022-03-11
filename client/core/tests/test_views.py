@@ -23,7 +23,7 @@ def test_not_a_file(logged_in_user, client):
 def test_not_the_author(other_user, client, simulation_pkdata):
     client.login(username=other_user.email, password='password')
     assert simulation_pkdata.author != other_user
-    response = client.get('/media/{simulation_pkdata.PK_data}')
+    response = client.get(f'/media/{simulation_pkdata.PK_data}')
     assert response.status_code == 403
 
 
@@ -32,7 +32,10 @@ def test_is_author(logged_in_user, client, simulation_pkdata, tmp_path):
     assert simulation_pkdata.author == logged_in_user
     # copy pk data file
     pkd_test_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'small_sample.tsv')
-    pkd_test_dest_file = os.path.join(settings.MEDIA_ROOT, str(simulation_pkdata.PK_data))
+    pkd_test_dest_file = os.path.join(settings.MEDIA_ROOT, f'test_serving{simulation_pkdata.PK_data}')
+    simulation_pkdata.PK_data = f'test_serving{simulation_pkdata.PK_data}'
+    simulation_pkdata.save()
+    simulation_pkdata.refresh_from_db()
     shutil.copy(pkd_test_source_file, pkd_test_dest_file)
     assert os.path.isfile(pkd_test_dest_file)
 
