@@ -14,6 +14,12 @@ def test_not_logged_in(user, client):
 
 
 @pytest.mark.django_db
+def test_media_root(logged_in_user, client):
+    # the url patterns assume /media is used, so don't change it
+    assert settings.MEDIA_URL = settings.FORCE_SCRIPT_NAME + 'media/'
+
+
+@pytest.mark.django_db
 def test_not_a_file(logged_in_user, client):
     response = client.get('/media/somefile.cellml')
     assert response.status_code == 403
