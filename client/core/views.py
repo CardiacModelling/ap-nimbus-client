@@ -1,15 +1,10 @@
 import os
-from braces.views import UserFormKwargsMixin
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.urls import reverse_lazy
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django.views.generic.list import ListView
-from django.utils.decorators import classonlymethod
-from django.views.generic.base import RedirectView
-from django.conf import settings
-from django.http import FileResponse
 
+from braces.views import UserFormKwargsMixin
+from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import FileResponse
+from django.views.generic.base import RedirectView
 from files.models import CellmlModel
 from simulations.models import Simulation
 
