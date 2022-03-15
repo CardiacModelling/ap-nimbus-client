@@ -635,6 +635,8 @@ class StatusSimulationView(View):
                 # simulation has stopped, try to save results
                 await asyncio.wait([asyncio.ensure_future(self.save_data(client, command, sim))
                                     for command in self.COMMANDS])
+                # make call to clean up run and result files (we're not interested in the results)
+                await get_from_api(client, 'received', sim)
 
                 if sim.status != Simulation.Status.FAILED:  # if we didn't fail saving
                     # check we have voltage_traces
