@@ -952,12 +952,17 @@ class TestStatusSimulationView:
         simulation_range.ap_predict_last_update = timezone.now()
         simulation_range.save()
         simulation_range.refresh_from_db()
+        self.stop_called = False
 
         # mock get_from_api and save_data as multi level awaits in test won't work
         async def get_result(_, command, sim):
             if command == 'progress_status':
                 return {'success': ['Initialising...', '0% completed', '']}
             if command == 'STOP':
+                self.stop_called = True
+                return {'success': True}
+            if command == 'received':
+                assert self.stop_called
                 return {'success': True}
             else:
                 data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
