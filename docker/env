@@ -12,6 +12,9 @@ DJANGO_SUPERUSER_PASSWORD=
 # this is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
 subfolder=
 
+# allowd hosts django should be allowed to serve web pages for (comma separated). In production this should probably be set to the public facing hostnae of your webpage to prevent security issues wuch as web cache poisoning. If left empty any host will be allowed ('*')
+ALLOWED_HOSTS=
+
 # set the smtp server used to send emails from
 smtp_server=
 

@@ -38,9 +38,9 @@ WELCOME_SUBJECT = os.environ.get('WELCOME_SUBJECT', '[AP Portal] Welcome')
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -172,3 +172,10 @@ AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 300)
 
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
+
+# prevent unwated HTTP access
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+
+# unlimited persistent connections
+CONN_MAX_AGE = None
