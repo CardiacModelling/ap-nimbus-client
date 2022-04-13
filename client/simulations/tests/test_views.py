@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import uuid
+import sys
 
 import httpx
 import pandas
@@ -24,6 +25,7 @@ from simulations.views import (
     start_simulation,
     to_float,
     to_int,
+    update_unassigned,
 )
 
 
@@ -743,6 +745,31 @@ class TestDataSimulationView:
     def test_all_data_points(self, logged_in_user, client, sim_all_data_points, tmp_path):
         response = client.get(f'/simulations/{sim_all_data_points.pk}/data')
         self.check_data_file(response.json(), 'all_data_points.txt')
+
+
+@pytest.mark.django_db
+class TestUpdate_unassigned:
+    @pytest.fixture
+    def unassigned_info(self):
+        return {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
+                'min_scale': 1.1, 'max_scale': 1.1}
+
+    def test_no_val(self, unassigned_info):
+        update_unassigned(unassigned_info, 'NoActionPotential_1')
+        unassigned_info == {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max, 'min_scale': 1.5, 'max_scale': 1.5}
+
+    def test_smaller(self, unassigned_info):
+        update_unassigned(unassigned_info, -1.0e+201)
+        unassigned_info == {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max, 'min_scale': 1.5, 'max_scale': 1.1}
+
+    def test_larger(self, unassigned_info):
+        update_unassigned(unassigned_info, 1.0e+201)
+        unassigned_info == {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max, 'min_scale': 1.1, 'max_scale': 1.5}
+
+    def test_normal_val(self, unassigned_info):
+        update_unassigned(unassigned_info, -6)
+        update_unassigned(unassigned_info, 25)
+        unassigned_info == {'unassigned': False, 'max': 25, 'min': -6, 'min_scale': 1.1, 'max_scale': 1.1}
 
 
 @pytest.mark.django_db

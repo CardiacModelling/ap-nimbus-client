@@ -203,6 +203,9 @@ function renderGraph(pk){
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
 
                 if(graphData['pkpd_results'].length > 0){
+                    // show graph, so we can draw
+                    $('#pkpd_results').click();
+
                     pkpd_resultsOptions = {legend: {show: true, container: $('#legendContainerpkpd_results').get(0)},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
@@ -227,6 +230,9 @@ function renderGraph(pk){
                 }
 
                 if(graphData['qnet'].length > 0){
+                    // show graph, so we can draw
+                    $('#qnet').click();
+
                     qnetOptions = {legend: {show: false},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
