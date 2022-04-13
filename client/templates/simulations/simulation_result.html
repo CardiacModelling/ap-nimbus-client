@@ -75,6 +75,7 @@
     <fieldset>
       <legend>Actions</legend>
         <ul>
+          <li><a title="Back to simulations overview table" href="{% url 'simulations:simulation_list' %}" title="Back to simulations overview table"><img src="{% static 'images/back.png' %}" alt="Back"/> Back to simulations overview table.</a>
           <li><a title="Edit this simulation info" href="{% url 'simulations:simulation_edit' object.id %}" title="Edit the information"><img src="{% static 'images/edit.png' %}" alt="Edit"/> Edit info.</a></li>
           <li><a title="Use simulation as template for a new simulation" href="{% url 'simulations:simulation_template' object.id %}" title="Use as a template to create a new simulation"><img src="{% static 'images/template.png' %}" alt="Use as template"/> Use as template.</a></li>
           <li><a title="Export as spreadsheet (.xlsx)" href="{% url 'simulations:simulation_spreadsheet' object.id %}" title="Export as spreadsheet (.xlsx)"><img src="{% static 'images/spreadsheet.png' %}" alt="Export as spreadsheet (.xlsx)"/> Export as spreadsheet.</a></li>
