@@ -301,7 +301,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):
-        return reverse_lazy('simulations:simulation_list')
+        return reverse_lazy('simulations:simulation_result', kwargs={'pk': self.object.pk})
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
