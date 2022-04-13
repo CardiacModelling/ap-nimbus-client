@@ -179,14 +179,6 @@ class SimulationBaseForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def save(self, **kwargs):
         simulation = super().save(commit=False)
-#        if simulation.pk_or_concs != Simulation.PkOptions.compound_concentration_range:
-#            simulation.minimum_concentration = 0.0
-#            simulation.maximum_concentration = 100.0
-#            simulation.intermediate_point_count = 4.0
-#            simulation.intermediate_point_log_scale = True
-#        if simulation.pk_or_concs != Simulation.PkOptions.pharmacokinetics:
-#            simulation.PK_data=None
-
         if not hasattr(simulation, 'author') or simulation.author is None:
             simulation.author = self.user
         simulation.save()
@@ -202,13 +194,15 @@ class SimulationForm(SimulationBaseForm):
         exclude = ('author', )
 
     def __init__(self, *args, **kwargs):
+        def get_choices(queryset):
+            return [(model.id, str(model)) for model in queryset]
+
         super().__init__(*args, **kwargs)
         # populate models seperating predefined and uploaded models
-        predef_models = CellmlModel.objects.filter(predefined=True).values_list('pk', 'name', flat=False)
-        uploaded_models = CellmlModel.objects.filter(predefined=False,
-                                                     author=self.user).values_list('pk', 'name', flat=False)
-        self.fields['model'].choices = [(None, '--- Predefined models ---')] + list(predef_models) + \
-            [(None, '--- Uploaded models ---')] + list(uploaded_models)
+        predef_models = CellmlModel.objects.filter(predefined=True)
+        uploaded_models = CellmlModel.objects.filter(predefined=False, author=self.user)
+        self.fields['model'].choices = [(None, '--- Predefined models ---')] + get_choices(predef_models) + \
+            [(None, '--- Uploaded models ---')] + get_choices(uploaded_models)
         self.fields['ion_current_type'].choices = Simulation.IonCurrentType.choices
 
         self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}
