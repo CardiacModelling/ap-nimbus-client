@@ -35,7 +35,7 @@ PGHOST=ap_nimbus_postgres
 PGUSER=postgres
 
 # Location of the AP predict endpoint (usually in your docker network, but could be set to be elsewhere)
-AP_PREDICT_ENDPOINT=http://ap_nimbus_network:8080
+AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080
 
 #Supply a brief sentence about where this instance is hosted
 HOSTING_INFO=""
