@@ -45,7 +45,7 @@ jobs:
       env:
         DJANGO_SUPERUSER_EMAIL: django@test.com
         PGDATABASE: django
-        POSTGRES_USER: client
+        PGUSER: client
         PGPASSWORD: not-so-secret django db password
         PGHOST: localhost
         PGPORT: 5432
