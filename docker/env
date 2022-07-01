@@ -21,17 +21,15 @@ smtp_server=
 # this email address is used as the from address in any emails sent by the client
 django_email_from_addr=
 
-#Database settings
-# please pick a secure password for use with the postgres database
-POSTGRES_PASSWORD=
+# port to run django on
+DJANGO_PORT=8000
 
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
 #PYTHONUNBUFFERED=1
-DJANGO_PORT=8000
-PGPASSWORD=mysecretpassword
-PGDATABASE=django_ap_nimbus_client
-PGPORT=5432
-PGHOST=ap_nimbus_postgres
+POSTGRES_PASSWORD=mysecretpassword
+POSTGRES_DATABASE=django_ap_nimbus_client
+POSTGRES_PORT=5432
+POSTGRES_HOST=ap_nimbus_postgres
 PGUSER=postgres
 
 # Location of the AP predict endpoint (usually in your docker network, but could be set to be elsewhere)
