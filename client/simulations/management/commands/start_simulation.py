@@ -65,9 +65,9 @@ class Command(BaseCommand):
 
         model = CellmlModel.objects.filter(name=kwargs['model_name'])
         if kwargs.get('model_year', None):
-            model = model.filter(year=kwargs['mode_year'])
+            model = model.filter(year=int(kwargs['model_year']))
         if kwargs.get('model_version', None):
-            model = model.filter(year=kwargs['mode_version'])
+            model = model.filter(version=kwargs['model_version'])
         if not model.count() == 1:
             raise ValueError('Ambiguous specification of model')
         model = model.first()
@@ -82,13 +82,16 @@ class Command(BaseCommand):
         elif ion_units == '' and ion_current_type == 'pIC50':
             ion_units = '-log(M)'
 
+        if ion_current_type == 'pIC50' and ion_units != '-log(M)':
+            raise ValueError("pIC50's are only available with ion_units -log(M)")
+
         if kwargs['pk_or_concs'] not in ('compound_concentration_range', 'compound_concentration_points',
                                          'pharmacokinetics'):
             raise ValueError('Invalid concentration_type')
         if kwargs['maximum_concentration'] <= kwargs['minimum_concentration']:
             raise ValueError('maximum_concentration needs to be larger than minimum_concentration')
         if kwargs['intermediate_point_count'] < 0 or kwargs['intermediate_point_count'] > 10:
-            raise ValueError('invalid intermediate_point_count')
+            raise ValueError('Invalid intermediate_point_count')
 
         PK_data = ''
         if kwargs['pk_or_concs'] == 'pharmacokinetics':
