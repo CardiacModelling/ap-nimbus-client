@@ -26,7 +26,7 @@ DJANGO_PORT=8000
 
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
 #PYTHONUNBUFFERED=1
-POSTGRES_PASSWORD=mysecretpassword
+POSTGRES_PASSWORD=
 POSTGRES_DATABASE=django_ap_nimbus_client
 POSTGRES_PORT=5432
 POSTGRES_HOST=ap_nimbus_postgres
