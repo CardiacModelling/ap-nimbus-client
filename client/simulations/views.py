@@ -301,7 +301,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
         return super().get_context_data(**kwargs)
 
     def get_success_url(self, *args, **kwargs):
-        return reverse_lazy('simulations:simulation_list')
+        return reverse_lazy('simulations:simulation_result', kwargs={'pk': self.object.pk})
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -671,6 +671,25 @@ class StatusSimulationView(View):
                             status=200, safe=False)
 
 
+def update_unassigned(unasgn, value):
+    """
+    Updates whether we have seen unassigned qnet values.
+    If so we'll have to set a manual scale for the graph.
+    """
+    try:
+        val = float(value)
+    except ValueError:
+        unasgn['unassigned'], unasgn['min_scale'], unasgn['max_scale'] = True, 1.5, 1.5
+        return
+
+    if val <= -1.0e+200:
+        unasgn['unassigned'], unasgn['min_scale'] = True, 1.5
+    elif val >= 1.0e+200:
+        unasgn['unassigned'], unasgn['max_scale'] = True, 1.5
+    else:
+        unasgn['max'], unasgn['min'] = max(unasgn['max'], val), min(unasgn['min'], val)
+
+
 class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
 
     """
@@ -682,18 +701,6 @@ class DataSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargs
         return self.get_object().author == self.request.user
 
     def get(self, request, *args, **kwargs):
-        def update_unassigned(unasgn, val):
-            """
-            Updates whether we have seen unassigned qnet values.
-            If so we'll have to set a manual scale for the graph.
-            """
-
-            if val <= -1.0e+200:
-                unasgn['unassigned'], unasgn['min_scale'] = True, 2.0
-            elif val >= 1.0e+200:
-                unasgn['unassigned'], unasgn['max_scale'] = True, 2.0
-            else:
-                unasgn['max'], unasgn['min'] = max(unasgn['max'], val), min(unasgn['min'], val)
         adp90_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
                         'min_scale': 1.1, 'max_scale': 1.1}
         qnet_unasgn = {'unassigned': False, 'max': sys.float_info.min, 'min': sys.float_info.max,
