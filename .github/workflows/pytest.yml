@@ -44,11 +44,11 @@ jobs:
         python -m pytest --cov=client --cov-config=client/.coveragerc --cov-report term-missing client
       env:
         DJANGO_SUPERUSER_EMAIL: django@test.com
-        PGDATABASE: django
-        PGUSER: client
-        PGPASSWORD: not-so-secret django db password
-        PGHOST: localhost
-        PGPORT: 5432
+        DJANGO_DATABASE: django
+        DJANGO_USER: client
+        DJANGO_PASSWORD: not-so-secret django db password
+        DJANGO_HOST: localhost
+        DJANGO_PORT: 5432
         DJANGO_SECRET_KEY: 'django very secret key, honest'
     - uses: codecov/codecov-action@v1
       with:
