@@ -6,7 +6,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
 # create connection
-vars = os.environ['POSTGRES_USER'], os.environ['POSTGRES_HOST'], os.environ['POSTGRES_PASSWORD']
+vars = os.environ['PGUSER'], os.environ['PGHOST'], os.environ['PGPASSWORD']
 constr = "user='%s' host='%s' password='%s'" % vars
 conn = psycopg2.connect(constr)
 
@@ -16,7 +16,7 @@ cur = conn.cursor()
 
 # create database if it doesn't exist
 try:
-    cur.execute("CREATE DATABASE %s;" % (os.environ['POSTGRES_PASSWORD']))
+    cur.execute("CREATE DATABASE %s;" % (os.environ['PGPASSWORD']))
 except errors.DuplicateDatabase:
     pass  # exists
 

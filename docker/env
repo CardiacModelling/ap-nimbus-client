@@ -26,11 +26,11 @@ DJANGO_PORT=8000
 
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
 #PYTHONUNBUFFERED=1
-POSTGRES_PASSWORD=
-POSTGRES_DATABASE=django_ap_nimbus_client
-POSTGRES_PORT=5432
-POSTGRES_HOST=ap-nimbus-postgres
-POSTGRES_USER=postgres
+PGPASSWORD=
+PGDATABASE=django_ap_nimbus_client
+PGPORT=5432
+PGHOST=ap-nimbus-postgres
+PGUSER=postgres
 
 # Location of the AP predict endpoint (usually in your docker network, but could be set to be elsewhere)
 AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080

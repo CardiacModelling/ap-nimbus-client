@@ -1,0 +1,38 @@
+# m h  dom mon dow   command
+* 1 * * * /data/backup_ap_nimbus/backup_daily.sh
+* 2 * * 0 /data/backup_ap_nimbus/backup_weekly.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+^G Get Help       ^O Write Out      ^W Where Is       ^K Cut Text       ^J Justify        ^C Cur Pos        M-U Undo          M-A Mark Text     M-] To Bracket    M-▲ Previous      ^B Back           ^◀ Prev Word      ^A Home           ^P Prev Line      M-- Scroll Up     ^▲ Prev Block     M-( Beg of Par
+^X Exit           ^R Read File      ^\ Replace        ^U Uncut Text     ^T To Spell       ^_ Go To Line     M-E Redo          M-6 Copy Text     M-W WhereIs Next  M-▼ Next          ^F Forwards       ^▶ Next Word      ^E End            ^N Next Line      M-+ Scroll Down   ^▼ Next Block     M-) End of Par
