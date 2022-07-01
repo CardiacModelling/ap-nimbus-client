@@ -16,7 +16,7 @@ cur = conn.cursor()
 
 # create database if it doesn't exist
 try:
-    cur.execute("CREATE DATABASE %s;" % (os.environ['PGDATABASE']))
+    cur.execute("CREATE DATABASE %s;" % (os.environ['POSTGRES_PASSWORD']))
 except errors.DuplicateDatabase:
     pass  # exists
 
