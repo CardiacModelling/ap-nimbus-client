@@ -6,7 +6,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
 # create connection
-vars = os.environ['PGUSER'], os.environ['PGHOST'], os.environ['PGPASSWORD']
+vars = os.environ['POSTGRES_USER'], os.environ['POSTGRES_HOST'], os.environ['POSTGRES_PASSWORD']
 constr = "user='%s' host='%s' password='%s'" % vars
 conn = psycopg2.connect(constr)
 
