@@ -97,6 +97,11 @@ class TestCommandLineSimulationCreate:
             call_command('start_simulation', 'my title', logged_in_user.email, "O'Hara-Rudy-CiPA",
                          '--ion_current_type=pIC50', '--ion_units==M')
 
+    def test_wrong_current_type(self, logged_in_user, client, httpx_mock, o_hara_model):
+        with pytest.raises(ValueError, match=re.escape('Incorrect specification of ion_current_type')):
+            call_command('start_simulation', 'my title', logged_in_user.email, "O'Hara-Rudy-CiPA",
+                         '--ion_current_type=bla')
+
     def test_wrong_concentration_type(self, logged_in_user, client, httpx_mock, o_hara_model):
         with pytest.raises(ValueError, match='Invalid concentration_type'):
             call_command('start_simulation', 'my title', logged_in_user.email, "O'Hara-Rudy-CiPA", '--pk_or_concs=bla')
