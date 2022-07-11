@@ -12,12 +12,9 @@ RUN apt-get install build-essential -y
 RUN apt-get install nginx -y
 RUN apt-get install libmagic-dev -y
 
-# Set up python virtual environment
-RUN python3 -m venv venv
-
 # get the client from git & install
 RUN git clone --recursive --branch master https://github.com/CardiacModelling/ap-nimbus-client.git
-RUN /opt/django/venv/bin/python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
+RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
 RUN chmod +x /opt/django/ap-nimbus-client/docker/kick_off.sh
