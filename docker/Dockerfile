@@ -1,6 +1,8 @@
 FROM python:3.9-slim
 
 USER root
+ENV pythonpath /usr/local/lib/python3
+
 
 RUN mkdir /opt/django
 WORKDIR /opt/django
