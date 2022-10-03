@@ -7,10 +7,11 @@
 
 {% block content %}
 {% endblock content %}
+{% set viewing = true %}
 
 {% block data %}
 <section id="simulationresults">
-<h1 id="entityname"><a title="Back to simulations overview table" href="{% url 'simulations:simulation_list' %}" title="Back to simulations overview table"><img src="{% static 'images/back.png' %}" alt="Back"/></a>{% include "./simulation_header.html" %}Simulation: {{ object.title }}.</h1>
+<h1 id="entityname"><a title="Back to simulations overview table" href="{% url 'simulations:simulation_list' %}" title="Back to simulations overview table"><img src="{% static 'images/back.png' %}" alt="Back"/></a>{% with viewing='true' %}{% include "./simulation_header.html" %}{% endwith %}Simulation: {{ object.title }}.</h1>
 <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
 
 <div class="row">
