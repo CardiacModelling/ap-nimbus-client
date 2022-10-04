@@ -44,7 +44,7 @@
         <td class="sim-date">{{object.created_at}}</td>
         <td class="sim-model"><a href="{% url 'files:model_detail' object.model.pk %}">{{object.model}}</a></td>
         <td class="sim-status"><div id="progressbar-{{object.pk}}" class="progressbar"><div class="progress-label"></div></div></td>
-        <td class="sim-action">{% include "./simulation_header.html" %}</td>
+        <td class="sim-action">{% include "./simulation_header.html" with showView=True%}</td>
         <td class="sim-pacing-freq pacing">{{object.pacing_frequency}} <em>Hz</em></td><td class="sim-pacing-time pacing">{{object.maximum_pacing_time}} <em>min</em></td>
         {% for cur in all_currents %}
         {% simulation_ion_current object cur as currentparam%}
