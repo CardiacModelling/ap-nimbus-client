@@ -14,6 +14,64 @@
 {% block data %}
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
 
+
+<table class="stripe row-border order-column" id="simulations_table" style="width:100%; overflow-wrap: break-word;">
+      <thead>
+        <tr>
+          <th style="min-width: 250px; max-width: 250px; width: 250px;" id="title">Title</th>
+          <th style="min-width: 55px; max-width: 55px; width: 55px;">Date</th>
+          <th style="min-width: 175px; max-width: 175px; width: 175px;">Model</th>
+          <th style="min-width: 125px; max-width: 125px; width: 125px;">Status</th>
+          <th style="min-width: 100px; max-width: 100px; width: 100px;">Action</th>
+
+<!--          <th colspan="2">Pacing</th>-->
+<th>Freq.</td><th>Max Time</th>
+        {% ion_currents as all_currents %}
+<!--          <th colspan="{{ all_currents|length|add:1 }}">Ion Channel Current Inhibitory Concentrations</th>-->
+        {% for cur in all_currents %}
+          <th>{{ cur }}</th>
+        {% endfor %}
+ <th>Units</th>
+<th></th><th></th>
+
+<!--          <th colspan="2">Compound Concentrations</th>-->
+        </tr>
+<!--        <tr>
+        <th colspan="4"></th>
+        <th>Freq.</td><th>Max Time</th>
+        {% for cur in all_currents %}
+          <th>{{ cur }}</th>
+        {% endfor %}
+        <th>Units</th>
+        <th></th><th></th>
+      </tr>-->
+      </thead>
+      <tbody>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{% url 'simulations:simulation_result' object.pk %}">{{object.title}}</a></td>
+        <td>{{object.created_at|date:"SHORT_DATE_FORMAT"}}</td>
+        <td><a href="{% url 'files:model_detail' object.model.pk %}">{{object.model}}</a></td>
+        <td>{{object.status}}<div id="progressbar-{{object.pk}}" class="progressbar"><div class="progress-label"></div></div>
+        </td>
+        <td>{% include "./simulation_header.html" with showView=True%} </td>
+        <td>{{object.pacing_frequency}} <em>Hz</em></td><td>{{object.maximum_pacing_time}} <em>
+        {% for cur in all_currents %}
+        {% simulation_ion_current object cur as currentparam%}
+            <td>{{ currentparam.current }}</td>
+        {% endfor %}
+        <td>{{object.ion_units}}<br/>({{object.ion_current_type}})</td>
+        <td>{% short_field_name object.pk_or_concs %}</td>
+        {%print_compound_concentrations object as inhconc %}
+        <td title="{{ inhconc.0 }}">{{ inhconc.1|truncatechars:20 }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+</table>
+
+<!--
+<br/><br/><br/><br/>
+----------------------------------------
     <table id="simulations_table" class="stripe row-border order-column">
       <thead>
         <tr>
@@ -58,6 +116,7 @@
       {% endfor %}
       </tbody>
     </table>
+-->
   </section>
 
 {% endblock data %}

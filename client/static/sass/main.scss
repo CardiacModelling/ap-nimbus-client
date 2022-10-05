@@ -13,7 +13,7 @@ code, input {
   margin: auto; 
 }
 #wide-data{
-  max-width: 2080px;
+  max-width: 1300px;
   margin: auto;
 }
 
@@ -333,6 +333,10 @@ button.dt-button{
 div.dt-buttons{
     margin-left: 0.334em;
     margin-top: 0.167em;
+}
+
+.progressbar{
+    margin-bottom: 10px;
 }
 
 .ui-progressbar-value{

@@ -521,12 +521,15 @@ $(document).ready(function(){
     } );
 
     // init data table for simulation results
-    $('#simulations_table').DataTable( {
-        stateSave: false,
-        order: [],
-        dom: 'lBfrtip',
-        stateSave: true,
-    });
+    var datatable = $('#simulations_table').removeAttr('width').DataTable( {
+        autoWidth: false,
+        scrollY: false,
+        scrollX: "850px",
+//        scrollCollapse: true,
+        paging: true,
+        fixedColumns: true,
+    } );
+
     // when we paginate to a different set of simulations, stop waiting & ask for status right away
     $('.paginate_button').click(function(){
         clearTimeout(updateProgressBarTimeout);
