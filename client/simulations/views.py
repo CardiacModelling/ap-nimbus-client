@@ -256,7 +256,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             visible_models = (CellmlModel.objects.filter(predefined=True) |
                               CellmlModel.objects.filter(predefined=False,
                                                          author=self.request.user)).values_list('pk', flat=True)
-            for curr in IonCurrent.objects.all():
+            for curr in IonCurrent.objects.all().order_by('pk'):
                 param = SimulationIonCurrentParam.objects.filter(simulation=self.pk, ion_current=curr).first()
                 initial.append({'current': param.current if param else None,
                                 'ion_current': curr,

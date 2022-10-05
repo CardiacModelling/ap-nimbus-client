@@ -6,9 +6,7 @@
 {% block title %}Edit simulations info - {% endblock title %}
 
 {% block content %}
-{% endblock content %}
 
-{% block data %}
 <section id="simulationresults">
 <h1 id="entityname"><a title="Back to simulations overview table" href="{% url 'simulations:simulation_list' %}" title="Back to simulations overview table"><img src="{% static 'images/back.png' %}" alt="Back"/></a>{% include "./simulation_header.html" %}Simulation: {{ object.title }}.</h1>
 <small>Created <time>{{object.created_at}}</time> by <em>{{object.author.full_name}}</em>.</small>
@@ -16,73 +14,46 @@
 <div class="row">
   <div class="column">
   <fieldset>
-    <legend>Info</legend>
-    <fieldset>
-      <legend>Title</legend>{{object.title}}
-    </fieldset>
-    <fieldset>
-    <legend>Notes</legend>
-       <div class="markdowrenderview">
-         <textarea class="markdownsource">{{object.notes | safe}}</textarea>
-       </div>
-    </fieldset>
-  </fieldset>
-  <fieldset>
-    <legend>Simulation parameters</legend>
-      <fieldset><legend>Model</legend>{{ object.model }}</fieldset>
-      <fieldset><legend>Pacing</legend>
-        <div><label>Frequency: </label> {{ object.pacing_frequency }} (Hz)</div>
-        <div><label>Max time: </label> {{ object.maximum_pacing_time }} (mins)</div>
-      </fieldset>
-      <fieldset>
-        <legend>Ion Channel Current Inhibitory Concentrations</legend>
-        <table class="ioncurrent-formset" id="ioncurrent-formset">
-          <thead><tr><th colspan="2">Ion Current {{object.ion_current_type}}</th>
+    <legend><button type="button" class="graph-button" id="infoButton" disabled="">Info</button></legend>
+    <table class="stripe dataTable">
+      <tr class="odd"><td>Title</td><td>{{ object.title }}</td></tr>
+       <tr class="even"><td>Model</td><td>{{ object.model }}</td></tr>
+       <tr class="odd"><td>Pacing frequency</td><td>{{ object.pacing_frequency }} (Hz)</td></tr>
+       <tr class="even"><td>Max pacing time</td><td>{{ object.maximum_pacing_time }} (mins)</td></tr>
+       <tr class="odd"><td>{% print_field_name object.pk_or_concs %}</td><td>{% print_compound_concentrations object as inhconc %}{{ inhconc.0 }}</td></tr>
+       <tr class="even"><td>Status</td><td><div id="progressbar-{{object.pk}}" class="progressbar progressbar-wide"><div class="progress-label"></div></div></td></tr>
+    </table>
+    <br/>
+        <label>Ion Channel Current Inhibitory Concentrations</label><br/>
+        <table class="stripe dataTable" id="ioncurrent-formset">
+          <thead><tr><th>Ion Current</th>
+                     <th>{{object.ion_current_type}}</th>
                      <th>Hill <br/>Coefficient</th>
                      <th>Saturation <br/>Level (%)</th>
                      <th>Spread of <br/>Uncertainty</th>
-                     <th>Channel <br/>protein</th><th>Gene</th>
-                     <th>Description</th>
                  </tr>
           </thead>
           <tbody>
             {% ion_currents as all_currents %}
             {% for current in all_currents %}
             {% simulation_ion_current object current as currentparam %}
-            <tr><td>{{ current }}</td>
-                <td>{{ currentparam.current }}{% if currentparam.current%} ({{object.ion_units}}){% endif %}</td>
+            <tr class="{% if forloop.counter|divisibleby:'2' %}even{% else %}odd{%endif%}{% if not currentparam.current%} disabled{% endif%}"><td title="{{ current.description }}, Gene: {{ current.gene }}, Protein: {{ current.channel_protein|safe }}">{{ current }}</td>
+                <td>{{ currentparam.current }}{% if currentparam.current%}<br/>({{object.ion_units}}){% endif %}</td>
                 <td>{{ currentparam.hill_coefficient}}</td>
                 <td>{{ currentparam.saturation_level }}</td>
                 <td>{{ currentparam.spread_of_uncertainty }}</td>
-                <td>{{ current.channel_protein|safe }}</td>
-                <td>{{ current.gene }}</td>
-                <td>{{ current.description }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
-    </fieldset>
-    <fieldset>
-      <legend>{% print_field_name object.pk_or_concs %}</legend>
-      {% print_compound_concentrations object as inhconc %}
-      {{ inhconc.0 }}
-    </fieldset>
-    <fieldset>
-      <legend>Status</legend>
-      <div id="progressbar-{{object.pk}}" class="progressbar progressbar-wide"><div class="progress-label"></div></div>
-      {% if object.api_errors %}<br/><div><label>API errors: </label></div><div> {{ object.api_errors }}</div>{% endif %}
-       <div id="messages-container" class="hide-messages"><div><br/><label>AP Predict messages: </label></div><div id="messages"></div></div>
-    </fieldset>
-    <fieldset>
-      <legend>Actions</legend>
-        <ul>
-          <li><a title="Back to simulations overview table" href="{% url 'simulations:simulation_list' %}" title="Back to simulations overview table"><img src="{% static 'images/back.png' %}" alt="Back"/> Back to simulations overview table.</a>
-          <li><a title="Edit this simulation info" href="{% url 'simulations:simulation_edit' object.id %}" title="Edit the information"><img src="{% static 'images/edit.png' %}" alt="Edit"/> Edit info.</a></li>
-          <li><a title="Use simulation as template for a new simulation" href="{% url 'simulations:simulation_template' object.id %}" title="Use as a template to create a new simulation"><img src="{% static 'images/template.png' %}" alt="Use as template"/> Use as template.</a></li>
-          <li><a title="Export as spreadsheet (.xlsx)" href="{% url 'simulations:simulation_spreadsheet' object.id %}" title="Export as spreadsheet (.xlsx)"><img src="{% static 'images/spreadsheet.png' %}" alt="Export as spreadsheet (.xlsx)"/> Export as spreadsheet.</a></li>
-          <li><a title="Restart the simulation" href="{% url 'simulations:simulation_restart' object.id %}" title="Restart the simulation"><img src="{% static 'images/restart.png' %}" alt="Restart the simulation"/> Restart.</a></li>
-          <li><a title="Delete this simulation and all results" href="{% url 'simulations:simulation_delete' object.id %}" title="Delete"><img src="{% static 'images/delete.png' %}" alt="Delete"/> Delete.</a></li>
-      </ul>
-    </fieldset>
+        {%if object.notes %}
+        <br/><div><label>Notes</label>
+           <div class="markdowrenderview">
+             <textarea class="markdownsource">{{object.notes | safe}}</textarea>
+           </div>
+        </div>{% endif %}
+      {% if object.api_errors %}<br/><div><label>API errors </label></div><br/><div> {{ object.api_errors }}</div>{% endif %}
+       <div id="messages-container" class="hide-messages"><div><br/><label>AP Predict messages </label></div><br/><div id="messages"></div></div>
+
   </fieldset>
 
   </div>
@@ -129,4 +100,4 @@
 <div id='tooltip'></div>
 </section>
 
-{% endblock data %}
+{% endblock content %}

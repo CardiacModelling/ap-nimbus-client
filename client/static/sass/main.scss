@@ -259,6 +259,9 @@ h1#entityname{
     font-size: 12px;
     text-align: left;
 }
+#ioncurrent-formset .disabled{
+    color:#989898;
+}
 
 #ioncurrent-formset input[type='number']{
     width: 45px;
@@ -365,7 +368,7 @@ div.dt-buttons{
 }
 
 .graph-column{
-    width: 570px;
+    width: 400px;
 }
 
 .control-column{
@@ -449,8 +452,8 @@ fieldset ul {
 }
 
 .data-graph{
-    width:550px;
-    height:300px;
+    width:380px;
+    height:275px;
 }
 
 .graph-column fieldset{

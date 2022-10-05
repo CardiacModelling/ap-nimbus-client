@@ -838,7 +838,6 @@
         "anymatch": "^2.0.0",
         "async-each": "^1.0.1",
         "braces": "^2.3.2",
-        "fsevents": "^1.2.7",
         "glob-parent": "^3.1.0",
         "inherits": "^2.0.3",
         "is-binary-path": "^1.0.0",
@@ -4448,7 +4447,6 @@
       "inBundle": true,
       "license": "MIT",
       "dependencies": {
-        "colors": "^1.1.2",
         "object-assign": "^4.1.0",
         "string-width": "^4.2.0"
       },
@@ -5252,7 +5250,6 @@
       "inBundle": true,
       "license": "MIT",
       "dependencies": {
-        "encoding": "^0.1.12",
         "minipass": "^3.1.0",
         "minipass-sized": "^1.0.3",
         "minizlib": "^2.0.0"
@@ -7054,7 +7051,6 @@
       "dependencies": {
         "anymatch": "~3.1.2",
         "braces": "~3.0.2",
-        "fsevents": "~2.3.2",
         "glob-parent": "~5.1.2",
         "is-binary-path": "~2.1.0",
         "is-glob": "~4.0.1",
@@ -8386,7 +8382,6 @@
       "dependencies": {
         "anymatch": "~3.1.2",
         "braces": "~3.0.2",
-        "fsevents": "~2.3.2",
         "glob-parent": "~5.1.2",
         "is-binary-path": "~2.1.0",
         "is-glob": "~4.0.1",
