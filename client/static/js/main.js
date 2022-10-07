@@ -293,10 +293,8 @@ function renderGraph(pk){
 function updateProgressbars(skipUpdate=false){
     progressbars = [];
     $('.progressbar').each(function(){
-        if($(this).text() != 'Completed'){
-            pk = $(this).attr('id').replace('progressbar-', '');
-            progressbars.push(pk);
-        }
+        pk = $(this).attr('id').replace('progressbar-', '');
+        progressbars.push(pk);
     });
 
     if(progressbars.length > 0){
@@ -304,7 +302,6 @@ function updateProgressbars(skipUpdate=false){
                 url: `${base_url}/simulations/status/${skipUpdate}/${progressbars.join('/')}`,
                 dataType: 'json',
                 success: function(data) {
-                    progressbars = [];
                     data.forEach(function (simulation) {
                         bar = $(`#progressbar-${simulation['pk']}`);
                         // set label
@@ -321,10 +318,37 @@ function updateProgressbars(skipUpdate=false){
                                 bar.progressbar('value', parseInt(progress_number));
                             }
                         }
+                        setTimeout(updateProgressbars, progressBarTimeout);
                     })
-                    updateProgressBarTimeout = setTimeout(updateProgressbars, progressBarTimeout);
                 }
         });
+    }
+}
+
+function updateProgressIcons(skipUpdate=false){
+    progressIcons = [];
+    $('.progressIcon').each(function(){
+        pk = $(this).attr('id').replace('progressIcon-', '');
+        progressIcons.push(pk);
+    });
+    if(progressIcons.length > 0){
+        $.ajax({type: 'GET',
+            url: `${base_url}/simulations/status/${skipUpdate}/${progressIcons.join('/')}`,
+            dataType: 'json',
+            success: function(data) {
+                data.forEach(function (simulation) {
+                    icon = $(`#progressIcon-${simulation['pk']}`);
+                    if(simulation['status'] == 'SUCCESS'){
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/finished.gif`);
+                    }else if(simulation['status'] == 'FAILED'){
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/failed.gif`);
+                    }else{
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/inprogress.gif`);
+                    }
+                });
+                updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
+            }
+        })
     }
 }
 
@@ -334,7 +358,9 @@ $(document).ready(function(){
         bar = $(this).progressbar();
     });
     //update progress bar now
-    updateProgressbars(true, false);
+    updateProgressbars(true);
+    //set update of progress icons
+    updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
 
 
     // add dismiss action to notifications
@@ -525,15 +551,14 @@ $(document).ready(function(){
         autoWidth: false,
         scrollY: false,
         scrollX: "850px",
-//        scrollCollapse: true,
         paging: true,
         fixedColumns: true,
     } );
 
     // when we paginate to a different set of simulations, stop waiting & ask for status right away
     $('.paginate_button').click(function(){
-        clearTimeout(updateProgressBarTimeout);
-        updateProgressbars(true, true)
+        clearTimeout(updateProgressIcons);
+        updateProgressIcons(true);
     });
 
     //Render markdown editor
