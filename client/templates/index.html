@@ -5,8 +5,8 @@
 
 {% block content %}
   <h1>ActionPotential-Portal application</h1>
-<button id="runSimulation" onclick="location.href='{% url 'simulations:create_simulation' %}'">Run simulation</button>
-<button id="runSimulation" onclick="location.href='{% url 'simulations:simulation_list' %}'">Siulation Results</button>
+<button id="runSimulation" onclick="location.href='{% url 'simulations:create_simulation' %}'">New Simulation</button>
+<button id="runSimulation" onclick="location.href='{% url 'simulations:simulation_list' %}'">Simulation Results</button>
 <p>
   This web portal provides a user-interface, results database and results presentation for the <a href="https://www.maths.nottingham.ac.uk/plp/pmzgm/ap_predict/">'Action Potential Prediction' (ApPredict)</a> open source cardiac electrophysiology simulator, for changes to the action potential under drug block of multiple ion channels.
   <br>It allows you to enter information on multiple cardiac ion channel block by a compound, and to predict the effect on whole cardiac myocyte electrophysiology, across a range of concentrations, as shown below:
