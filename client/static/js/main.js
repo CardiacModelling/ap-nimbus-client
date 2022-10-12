@@ -30,6 +30,8 @@ const marked = require("./lib/marked.min.js"); // Markdown render
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 const notifications = require('./lib/notifications.js');
 
+var graphRendered = false;
+
 // set progressbar timeout, progressbars to update and get base url
 var progressBarTimeout = 3000;
 var base_url = $(location).attr('href');
@@ -309,10 +311,12 @@ function updateProgressbars(skipUpdate=false){
                         // update progress bar
                         if(simulation['status'] == 'SUCCESS'){
                             bar.progressbar('value', 100);
-                            if($('#traces-graph').length > 0){
+                            if($('#traces-graph').length > 0 && !graphRendered){
                                 renderGraph(simulation['pk']);
+                                graphRendered = true;
                             }
                         }else{ // convert into number
+                            graphRendered = false;
                             progress_number = simulation['progress'].replace('% completed', '');
                             if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
                                 bar.progressbar('value', parseInt(progress_number));
