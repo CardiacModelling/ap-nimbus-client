@@ -164,6 +164,7 @@ function renderGraph(pk){
                 }
                 if (!$.isEmptyObject(confidencePercentages)){
                     $('#confidence-percentages').removeClass('hide-messages');
+                    $('#confidence-percentages').empty();
                     for (const [pct, series] of Object.entries(confidencePercentages)) {
                         $('#confidence-percentages').append(`<input type="checkbox" id="${pct}" class="confidence-checkbox" checked> ${pct}<br/>`);
                     }
@@ -318,6 +319,9 @@ function updateProgressbars(skipUpdate=false){
                         }else{ // convert into number
                             graphRendered = false;
                             progress_number = simulation['progress'].replace('% completed', '');
+                            if(progress_number == 'Initialising..'){
+                                progress_number = 0;
+                            }
                             if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
                                 bar.progressbar('value', parseInt(progress_number));
                             }
