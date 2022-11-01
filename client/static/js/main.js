@@ -396,9 +396,9 @@ $(document).ready(function(){
 
     //Set cancel / close button action
     if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
-        $('#backbutton').attr("href", $('#home_link').attr("href"));
+        $('#backbutton').click(function(){window.location.href = $('#home_link').attr("href");});
     }else{
-       $('#backbutton').attr("href", "javascript:history.back();");
+       $('#backbutton').click(function(){history.back();});
     }
 
     // update ion current enabledness when model changes
