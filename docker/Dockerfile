@@ -13,7 +13,7 @@ RUN apt-get install git -y
 RUN apt-get install build-essential -y
 RUN apt-get install nginx -y
 RUN apt-get install libmagic-dev -y
-RUN apt-get install uwsgi
+RUN apt-get install uwsgi -y
 RUN apt-get install uwsgi-plugin-python3 -y
 RUN apt-get install libpcre3-dev -y
 
