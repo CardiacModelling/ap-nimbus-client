@@ -34,6 +34,14 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
             self.fields.pop('ap_predict_model_call')
             self.fields.pop('ion_currents')
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if hasattr(self, 'cellmlmanip_model'):
+            cleaned_data['model_name_tag'] = self.cellmlmanip_model.name
+        raise forms.ValidationError(cleaned_data['model_name_tag'])
+        return cleaned_data
+
+
     def clean_name(self):
         name = self.cleaned_data['name']
         models_with_name = CellmlModel.objects.filter(name=name, author=self.user)
@@ -57,8 +65,11 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         if cellml_file is False:  # treat clearing file the same as no entry for file
             cellml_file = None
 
+        if not self.user.is_superuser and cellml_file is None:
+            raise forms.ValidationError("A cellml file is required!")
+
         if (model_call is None) == (cellml_file is None):  # Need either a file or model call
-            raise forms.ValidationError("Either a cellml file or an Ap Predict call is required (bot not both)")
+            raise forms.ValidationError("Either a cellml file or an Ap Predict call is required!")
 
         # check mime type of any uploaded file (should be XML)
         if cellml_file and isinstance(cellml_file, UploadedFile):

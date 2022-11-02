@@ -642,4 +642,15 @@ $(document).ready(function(){
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
+    // model_name_tag and ap_predict_model_call only enabled if no file is selected
+    $('#id_cellml_file').on('change', function(){
+        cellml_file_selected = $('#id_cellml_file').val().trim() != '';
+        $('#id_model_name_tag').prop('disabled', cellml_file_selected);
+        $('#id_ap_predict_model_call').prop('disabled', cellml_file_selected);
+        $('#cellml_file-clear_id').prop('disabled', cellml_file_selected);
+    });
+   // initially model_name_tag and ap_predict_model_call disabled is there is a clear for the model
+   $('#id_model_name_tag').prop('disabled', $('#cellml_file-clear_id').length);
+   $('#id_ap_predict_model_call').prop('disabled', $('#cellml_file-clear_id').length);
+
 });

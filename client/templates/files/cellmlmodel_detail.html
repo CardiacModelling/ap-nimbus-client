@@ -7,6 +7,7 @@
 {% include "./cellmlmodel_header.html" %}
   <table>
     <tr><td><strong>Name:</strong></td><td>{{ object.name }}</td></tr>
+    <tr><td><strong>Model name tag:</strong></td><td>{{ object.model_name_tag }}</td></tr>
     <tr><td><strong>Version: </strong></td><td>{{ object.version }}</td></tr>
     <tr><td><strong>Year: </strong></td><td>{{ object.year }}</td></tr>
     <tr><td><strong>CellMl_link: </strong></td><td><a href="{{ object.cellml_link }}" target="_blank">{% if object.cellml_link %}{{ object.cellml_link }} {% endif %}</a></td></tr>
