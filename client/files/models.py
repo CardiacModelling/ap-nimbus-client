@@ -1,9 +1,38 @@
 import os
 
+import re
+import httpx
 import django.db.models.deletion
 from django.conf import settings
 from django.db import models
 from django.dispatch import receiver
+from django.conf import settings
+
+
+class AppredictLookupTableManifest(models.Model):
+    manifest = models.TextField(default='')
+    response_text = models.TextField(default='')
+    date_modified = models.DateTimeField(auto_now=True)
+
+    def save_manifest(self, response_text):
+        if self.response_text != response_text:
+            self.response_text = response_text
+            matches = set(re.findall('(.*)_\dd_.*\n', response_text))
+            self.manifest = '\n'.join(matches)
+            self.save()
+
+    @classmethod
+    def get_manifest(cls):
+        if not AppredictLookupTableManifest.objects.exists():
+            AppredictLookupTableManifest.objects.create()
+        lut_manifest = AppredictLookupTableManifest.objects.first()
+        try:  # update lookup table manifest if changed
+            response_text = httpx.get(settings.APPREDICT_LOOKUP_TABLE_MANIFEST).text.strip()
+            lut_manifest.save_manifest(response_text)
+        except httpx.HTTPError as e:
+            pass  # using fallback
+        return lut_manifest.manifest.split('\n')
+
 
 
 class IonCurrent(models.Model):

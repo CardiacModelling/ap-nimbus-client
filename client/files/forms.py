@@ -6,7 +6,7 @@ from cellmlmanip import load_model
 from django import forms
 from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 
-from .models import CellmlModel, IonCurrent
+from .models import CellmlModel, IonCurrent, AppredictLookupTableManifest
 
 
 OXMETA = 'https://chaste.comlab.ox.ac.uk/cellml/ns/oxford-metadata#'
@@ -36,8 +36,7 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean(self):
         cleaned_data = super().clean()
-        if hasattr(self, 'cellmlmanip_model'):
-            cleaned_data['model_name_tag'] = self.cellmlmanip_model.name
+        assert False, str(AppredictLookupTableManifest.get_manifest())
         raise forms.ValidationError(cleaned_data['model_name_tag'])
         return cleaned_data
 
