@@ -29,6 +29,7 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
             field.widget.attrs['title'] = field.help_text.replace('<em>', '').replace('</em>', '')
 
         if not self.user.is_superuser:
+            self.fields.pop('model_name_tag')
             self.fields.pop('predefined')
             self.fields.pop('ap_predict_model_call')
             self.fields.pop('ion_currents')

@@ -49,12 +49,18 @@ class CellmlModel(models.Model):
     )
     name = models.CharField(max_length=255,
                             help_text="The name of the model, e.g. <em>O'Hara-Rudy</em>.")
+    model_name_tag = models.CharField(
+        max_length=255, null=True, blank=True,
+        help_text="Model name tag used for finding lookup tables.\n"
+                  "This is automatically populated when a cellml file is uploaded."
+                  "\nThis option is only available to admins."
+    )
     description = models.CharField(
         max_length=255, default='',
         help_text="A short description e.g. <em>human ventricular cell model (endocardial)</em>."
     )
     version = models.CharField(max_length=255, default='', blank=True,
-                               help_text="An (optional) version, e.g. <em>CiPA-v1.0</em>.")
+                               help_text="An (optional) version, e.g. <em>(endo)</em>.")
     year = models.PositiveIntegerField(
         blank=True,
         help_text="The year this specific model (version) was published e.g. <em>2017</em>."
@@ -70,9 +76,10 @@ class CellmlModel(models.Model):
     ap_predict_model_call = models.CharField(
         max_length=255, null=True, blank=True,
         help_text="call to pass to Ap Predict with --model parameter e.g. <em>1</em> or <em> "
-                  "shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and cannot be "
+                  "shannon_wang_puglisi_weber_bers_2004</em>. \nThis option is only available to admins and cannot be "
                   "combianed with uploading a cellml file."
     )
+
     cellml_file = models.FileField(blank=True, upload_to="",
                                    help_text="Please upload the cellml file here. Please note: the cellml file is "
                                              "expected to be annotated.")
