@@ -6,7 +6,7 @@ from cellmlmanip import load_model
 from django import forms
 from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 
-from .models import CellmlModel, IonCurrent, AppredictLookupTableManifest
+from .models import AppredictLookupTableManifest, CellmlModel, IonCurrent
 
 
 OXMETA = 'https://chaste.comlab.ox.ac.uk/cellml/ns/oxford-metadata#'
@@ -36,18 +36,38 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
 
     def clean(self):
         cleaned_data = super().clean()
-        assert False, str(AppredictLookupTableManifest.get_manifest())
-        raise forms.ValidationError(cleaned_data['model_name_tag'])
-        return cleaned_data
+        if hasattr(self, 'cellmlmanip_model'):
+            cleaned_data['model_name_tag'] = self.cellmlmanip_model.name
 
+        lut_manifest = AppredictLookupTableManifest.get_manifest()
+        if not self.user.is_superuser and cleaned_data['model_name_tag'] in lut_manifest:
+            raise forms.ValidationError('You have uploaded a CellML model with name tag: '
+                                        f'{cleaned_data["model_name_tag"]} this tag is reserved for lookup table '
+                                        'pruposes and models with this name can only be uploaded by admins.')
+        models_with_name_tag = \
+            CellmlModel.objects.filter(
+                model_name_tag=cleaned_data['model_name_tag'],
+                author=self.user).union(CellmlModel.objects.filter(model_name_tag=cleaned_data['model_name_tag'],
+                                                                   predefined=True))
+
+        if self.instance and self.instance.pk is not None:
+            models_with_name_tag = models_with_name_tag.exclude(pk=self.instance.pk)
+        if models_with_name_tag:
+            raise forms.ValidationError(f'A CellML model with the model name tag {cleaned_data["model_name_tag"]} '
+                                        'exsists, the model name tag must be unique!')
+        return cleaned_data
 
     def clean_name(self):
         name = self.cleaned_data['name']
-        models_with_name = CellmlModel.objects.filter(name=name, author=self.user)
+        models_with_name = \
+            CellmlModel.objects.filter(
+                name=name, author=self.user).union(CellmlModel.objects.filter(name=name, predefined=True))
+
         if self.instance and self.instance.pk is not None:
             models_with_name = models_with_name.exclude(pk=self.instance.pk)
         if models_with_name:
-            raise forms.ValidationError('You already have a CellML model with this name, the name must be unique!')
+            raise forms.ValidationError('A CellML model with this name esists, the name must be unique!')
+
         return name
 
     def clean_ap_predict_model_call(self):

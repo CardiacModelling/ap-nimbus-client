@@ -59,7 +59,7 @@ class Command(BaseCommand):
         kwargs['author'] = User.objects.get(email=kwargs['author_email'])
         title = kwargs['title']
         i = 2
-        while(Simulation.objects.filter(title=title, author=kwargs['author']).exists()):
+        while Simulation.objects.filter(title=title, author=kwargs['author']).exists():
             title = f"{kwargs['title']} ({i})"
             i += 1
 

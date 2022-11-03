@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from .models import CellmlModel, IonCurrent, AppredictLookupTableManifest
-
+from .models import AppredictLookupTableManifest, CellmlModel, IonCurrent
 
 
 class AppredictLookupTableManifestAdmin(admin.ModelAdmin):

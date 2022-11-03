@@ -16,7 +16,11 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-APPREDICT_LOOKUP_TABLE_MANIFEST = os.environ.get('APPREDICT_LOOKUP_TABLE_MANIFEST', 'https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt')
+123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+APPREDICT_LOOKUP_TABLE_MANIFEST = os.environ.get(
+    'APPREDICT_LOOKUP_TABLE_MANIFEST',
+    'https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt'
+)
 
 # running in subfolder
 subfolder = os.environ.get('subfolder', None)
