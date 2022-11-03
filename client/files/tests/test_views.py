@@ -23,11 +23,15 @@ class TestCellmlModelCreateView:
         response = client.get('/files/models/new')
         assert response.status_code == 200
 
-    def test_create_cellml_model(self, logged_in_admin, client):
+    def test_create_cellml_model(self, logged_in_admin, client, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         assert CellmlModel.objects.count() == 0
         data = {
             'predefined': True,
             'name': "O'Hara-Rudy-CiPA",
+            'model_name_tag': 'ohara_rudy_cipa_v1_2017',
             'description': 'human ventricular cell model (endocardial)',
             'version': 'v1.0',
             'year': 2017,
@@ -41,12 +45,16 @@ class TestCellmlModelCreateView:
 
 
 @pytest.mark.django_db
-def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
+def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe, httpx_mock, manifest_contents):
+    # mock getting manifest file from cardiac server
+    httpx_mock.add_response(text=manifest_contents)
+
     # admin can edit predefined
     model = cellml_model_recipe.make(
         author=logged_in_admin,
         predefined=True,
         name="O'Hara-Rudy-CiPA",
+        model_name_tag='ohara_rudy_cipa_v1_2017',
         description='human ventricular cell model (endocardial)',
         version='v1.0',
         year=2017,
@@ -58,6 +66,7 @@ def test_CellmlModelUpdateView(logged_in_admin, client, cellml_model_recipe):
     data = {
         'predefined': model.predefined,
         'name': 'new test name',
+        'model_name_tag': '',
         'description': model.description,
         'version': model.version,
         'year': model.year,

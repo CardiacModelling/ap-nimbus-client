@@ -1,7 +1,9 @@
+import os
 import uuid
 
 import pytest
 from accounts.models import User
+from django.conf import settings
 from files.models import IonCurrent
 from model_bakery.recipe import Recipe, seq
 from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
@@ -127,6 +129,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
         author=user,
         predefined=True,
         name="O'Hara-Rudy-CiPA",
+        model_name_tag='ohara_rudy_cipa_v1_2017',
         description='human ventricular cell model (endocardial)',
         version='v1.0',
         year=2017,
@@ -193,3 +196,11 @@ def simulation_pkdata(simulation_recipe, user, o_hara_model):
                                   ion_units=Simulation.IonCurrentUnits.M,
                                   pk_or_concs=Simulation.PkOptions.pharmacokinetics,
                                   PK_data=f'{uuid.uuid4()}_pk_data.tsv')
+
+
+@pytest.fixture
+def manifest_contents():
+    manifest_file = os.path.join(settings.BASE_DIR, 'files', 'migrations', 'appredict_lookup_table_manifest.txt')
+    with open(manifest_file) as f:
+        return f.read().strip()
+

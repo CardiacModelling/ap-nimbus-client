@@ -39,23 +39,24 @@ class CellmlModelForm(forms.ModelForm, UserKwargModelFormMixin):
         if hasattr(self, 'cellmlmanip_model'):
             cleaned_data['model_name_tag'] = self.cellmlmanip_model.name
 
-        lut_manifest = AppredictLookupTableManifest.get_manifest()
-        if not self.user.is_superuser and cleaned_data['model_name_tag'] in lut_manifest:
-            raise forms.ValidationError('You have uploaded a CellML model with name tag: '
-                                        f'{cleaned_data["model_name_tag"]} this tag is reserved for lookup table '
-                                        'pruposes and models with this name can only be uploaded by admins.')
+        if 'model_name_tag' in cleaned_data:
+            lut_manifest = AppredictLookupTableManifest.get_manifest()
+            if not self.user.is_superuser and cleaned_data['model_name_tag'] in lut_manifest:
+                raise forms.ValidationError('You have uploaded a CellML model with name tag: '
+                                            f'{cleaned_data["model_name_tag"]} this tag is reserved for lookup table '
+                                            'pruposes and models with this name can only be uploaded by admins.')
 
-        models_with_name_tag = CellmlModel.objects.filter(model_name_tag=cleaned_data['model_name_tag'],
-                                                          author=self.user)
-        predef_models_with_name_tag = CellmlModel.objects.filter(model_name_tag=cleaned_data['model_name_tag'],
-                                                                 predefined=True)
+            models_with_name_tag = CellmlModel.objects.filter(model_name_tag=cleaned_data['model_name_tag'],
+                                                              author=self.user)
+            predef_models_with_name_tag = CellmlModel.objects.filter(model_name_tag=cleaned_data['model_name_tag'],
+                                                                     predefined=True)
 
-        if self.instance and self.instance.pk is not None:
-            models_with_name_tag = models_with_name_tag.exclude(pk=self.instance.pk)
-            predef_models_with_name_tag = predef_models_with_name_tag.exclude(pk=self.instance.pk)
-        if models_with_name_tag.union(predef_models_with_name_tag):
-            raise forms.ValidationError(f'A CellML model with the model name tag {cleaned_data["model_name_tag"]} '
-                                        'exsists, the model name tag must be unique!')
+            if self.instance and self.instance.pk is not None:
+                models_with_name_tag = models_with_name_tag.exclude(pk=self.instance.pk)
+                predef_models_with_name_tag = predef_models_with_name_tag.exclude(pk=self.instance.pk)
+            if models_with_name_tag.union(predef_models_with_name_tag):
+                raise forms.ValidationError(f'A CellML model with the model name tag {cleaned_data["model_name_tag"]} '
+                                            'exsists, the model name tag must be unique!')
         return cleaned_data
 
     def clean_name(self):

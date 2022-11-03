@@ -57,7 +57,10 @@ class TestCellmlModelForm:
         assert 'ap_predict_model_call' not in form.fields
         assert 'predefined' not in form.fields
 
-    def test_create(self, admin_user, data):
+    def test_create(self, admin_user, data, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         assert not CellmlModel.objects.filter(name="O'Hara-Rudy-CiPA").exists()
         form = CellmlModelForm(user=admin_user, data=data)
         assert 'ap_predict_model_call' in form.fields
@@ -77,7 +80,10 @@ class TestCellmlModelForm:
         form = CellmlModelForm(user=admin_user, data=data)
         assert not form.is_valid()
 
-    def test_update(self, o_hara_model, data, admin_user, cellml_model_recipe):
+    def test_update(self, o_hara_model, data, admin_user, cellml_model_recipe, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         data['version'] = 'v2'
         data['ap_predict_model_call'] = 6
         form = CellmlModelForm(user=admin_user, instance=o_hara_model, data=data)
@@ -101,13 +107,16 @@ class TestCellmlModelForm:
         assert not form.is_valid()
         # duplicate name not allowed
 
-    def test_file(self, data, file1, file2, admin_user, ion_currents):
+    def test_file(self, data, file1, file2, admin_user, ion_currents, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         # file upload
         assert not CellmlModel.objects.filter(name="O'Hara-Rudy-CiPA").exists()
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
-        assert form.is_valid(), str(form.errors)
+        assert form.is_valid()
         model = form.save()
         assert os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file1)))
         assert model == CellmlModel.objects.get(name="O'Hara-Rudy-CiPA")
@@ -129,12 +138,82 @@ class TestCellmlModelForm:
         model.delete()
         assert not os.path.isfile(os.path.join(settings.MEDIA_ROOT, str(file2)))
 
-    def test_both_call_and_file(self, o_hara_model, data, file1, admin_user):
+    def test_both_call_and_file(self, o_hara_model, data, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         data['ap_predict_model_call'] = '1'
         form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
         assert not form.is_valid()
+        assert 'Either a cellml file or an Ap Predict call is required!' in form.errors['cellml_file']
 
-    def test_clear_file(self, o_hara_model, data, file1, admin_user):
+    def test_neither_call_nor_file(self, o_hara_model, data, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        form = CellmlModelForm(data, {}, user=admin_user)
+        assert not form.is_valid()
+        assert 'Either a cellml file or an Ap Predict call is required!' in form.errors['cellml_file']
+
+    def test_no_file_non_admin(self, o_hara_model, data, file1, other_user):
+        form = CellmlModelForm(data, {}, user=other_user)
+        assert not form.is_valid()
+        assert 'A cellml file is required!' in form.errors['cellml_file']
+
+    def test_uploaded_duplicate_name_predef(self, o_hara_model, data, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        assert o_hara_model.author != admin_user
+        form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
+        assert not form.is_valid()
+        assert 'A CellML model with this name esists, the name must be unique!' in form.errors['name']
+
+    def test_uploaded_duplicate_name_own(self, o_hara_model, data, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        o_hara_model.author = admin_user
+        o_hara_model.save()
+        o_hara_model.refresh_from_db()
+        form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
+        assert not form.is_valid()
+        assert 'A CellML model with this name esists, the name must be unique!' in form.errors['name']
+
+    def test_uploaded_lut_file_admin(self, data, o_hara_model, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        data['name'] = 'new model'
+        form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user)
+        assert not form.is_valid()
+        assert ('A CellML model with the model name tag ohara_rudy_cipa_v1_2017 exsists, '
+                'the model name tag must be unique!') in form.errors['__all__']
+
+    def test_uploaded_lut_file_admin_modify(self, data, o_hara_model, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        data['name'] += ' v1'
+        form = CellmlModelForm(data, {'cellml_file': file1}, user=admin_user, instance=o_hara_model)
+        assert form.is_valid()
+        form.save()
+        o_hara_model.refresh_from_db()
+        assert o_hara_model.name == "O'Hara-Rudy-CiPA v1"
+
+    def test_uploaded_lut_file_non_admin(self, data, file1, other_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
+        form = CellmlModelForm(data, {'cellml_file': file1}, user=other_user)
+        assert not form.is_valid()
+        assert ('You have uploaded a CellML model with name tag: ohara_rudy_cipa_v1_2017 this tag is reserved for look'
+                'up table pruposes and models with this name can only be uploaded by admins.') in form.errors['__all__']
+
+    def test_clear_file(self, o_hara_model, data, file1, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         form = CellmlModelForm(data, {'cellml_file': file1}, instance=o_hara_model, user=admin_user)
         assert form.is_valid()
         assert form.save() == o_hara_model
@@ -149,12 +228,18 @@ class TestCellmlModelForm:
         form.save()
         assert str(o_hara_model.cellml_file) == ''
 
-    def test_wrong_file_type(self, data, file3, admin_user):
+    def test_wrong_file_type(self, data, file3, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         form = CellmlModelForm(data, {'cellml_file': file3}, user=admin_user)
         assert not form.is_valid()  # This is an image not really an xml file
         assert "Unsupported file type, expecting a cellml file." in form.errors['cellml_file']
 
-    def test_incorrect_cellml(self, data, file4, admin_user):
+    def test_incorrect_cellml(self, data, file4, admin_user, httpx_mock, manifest_contents):
+        # mock getting manifest file from cardiac server
+        httpx_mock.add_response(text=manifest_contents)
+
         form = CellmlModelForm(data, {'cellml_file': file4}, user=admin_user)
         assert not form.is_valid()  # This is an image not really an xml file
         assert "Could not process cellml model: \n    'Unknown unit <coulomb_per_mole>.'" in form.errors['cellml_file']

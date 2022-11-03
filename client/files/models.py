@@ -26,8 +26,9 @@ class AppredictLookupTableManifest(models.Model):
             AppredictLookupTableManifest.objects.create()
         lut_manifest = AppredictLookupTableManifest.objects.first()
         try:  # update lookup table manifest if changed
-            response_text = httpx.get(settings.APPREDICT_LOOKUP_TABLE_MANIFEST).text.strip()
-            lut_manifest.save_manifest(response_text)
+            response = httpx.get(settings.APPREDICT_LOOKUP_TABLE_MANIFEST)
+            response.raise_for_status()
+            lut_manifest.save_manifest(response.text.strip())
         except httpx.HTTPError:
             pass  # using fallback
         return lut_manifest.manifest.split('\n')
