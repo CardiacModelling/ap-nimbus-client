@@ -293,6 +293,17 @@ function renderGraph(pk){
     });
 }
 
+function setSimulationButtonVisibility(button, isvisble){
+    if(isvisble){
+        $(button).css('visibility', 'visible');
+        $(button).css('display', 'inline');
+    }else{
+        $(button).css('visibility', 'hidden');
+        $(button).css('display', 'none');
+    }
+
+}
+
 function updateProgressbars(skipUpdate=false){
     progressbars = [];
     $('.progressbar').each(function(){
@@ -309,24 +320,18 @@ function updateProgressbars(skipUpdate=false){
                         bar = $(`#progressbar-${simulation['pk']}`);
                         // set label
                         bar.find('.progress-label').text(simulation['progress']); // set label
+                        // update icons
+                        setSimulationButtonVisibility(`#spreadsheetexport${simulation['pk']}`, simulation['status'] == 'SUCCESS');
+                        setSimulationButtonVisibility(`#restart${simulation['pk']}`, simulation['status'] == 'FAILED');
                         // update progress bar
                         if(simulation['status'] == 'SUCCESS'){
                             bar.progressbar('value', 100);
-                            //show export
-                            $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'visible');
-                            $(`#spreadsheetexport${simulation['pk']}`).css('display', 'inline');
                             // show graph
                             if($('#traces-graph').length > 0 && !graphRendered){
                                 renderGraph(simulation['pk']);
                                 graphRendered = true;
                             }
-                        }else if(simulation['status'] == 'FAILED'){
-                            $(`#restart${simulation['pk']}`).css('visibility', 'visible');
-                            $(`#restart${simulation['pk']}`).css('display', 'inline');
                         }else{ // convert into number
-                            //hide export
-                            $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'hidden');
-                            $(`#spreadsheetexport${simulation['pk']}`).css('display', 'none');
                             graphRendered = false;
                             progress_number = simulation['progress'].replace('% completed', '');
                             if(progress_number == 'Initialising..'){
@@ -356,20 +361,16 @@ function updateProgressIcons(skipUpdate=false){
             success: function(data) {
                 data.forEach(function (simulation) {
                     icon = $(`#progressIcon-${simulation['pk']}`);
+                    // update icons
+                    setSimulationButtonVisibility(`#spreadsheetexport${simulation['pk']}`, simulation['status'] == 'SUCCESS');
+                    setSimulationButtonVisibility(`#restart${simulation['pk']}`, simulation['status'] == 'FAILED');
+                    // update progress icons
                     if(simulation['status'] == 'SUCCESS'){
                         $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/finished.gif`);
-                        //show export
-                        $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'visible');
-                        $(`#spreadsheetexport${simulation['pk']}`).css('display', 'inline');
+                    }else if(simulation['status'] == 'FAILED'){
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/failed.gif`);
                     }else{
-                        //hide export
-                        $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'hidden');
-                        $(`#spreadsheetexport${simulation['pk']}`).css('display', 'none');
-                        if(simulation['status'] == 'FAILED'){
-                            $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/failed.gif`);
-                        }else{
-                            $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/inprogress.gif`);
-                        }
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/inprogress.gif`);
                     }
                 });
                 updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
