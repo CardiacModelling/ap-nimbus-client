@@ -8,6 +8,6 @@
   <a title="Edit this simulation info" href="{% url 'simulations:simulation_edit' object.id %}" title="Edit the information"><img src="{% static 'images/edit.png' %}" alt="Edit"/></a>
   <a title="Use simulation as template for a new simulation" href="{% url 'simulations:simulation_template' object.id %}" title="Use as a template to create a new simulation"><img src="{% static 'images/template.png' %}" alt="Use as template"/></a> 
   <span id="spreadsheetexport{{object.id}}" {%if 'SUCCESS' != object.status%}style="visibility: hidden; display: none"{%endif%}><a title="Export as spreadsheet (.xlsx)" href="{% url 'simulations:simulation_spreadsheet' object.id %}" title="Export as spreadsheet (.xlsx)"><img src="{% static 'images/spreadsheet.png' %}" alt="Export as spreadsheet (.xlsx)"/></a></span>
-  <a title="Restart the simulation" href="{% url 'simulations:simulation_restart' object.id %}" title="Restart the simulation"><img src="{% static 'images/restart.png' %}" alt="Restart the simulation"/></a> 
+  <span id="restart{{object.id}}" {%if 'FAILED' != object.status%}style="visibility: hidden; display: none"{%endif%}><a title="Restart the simulation" href="{% url 'simulations:simulation_restart' object.id %}" title="Restart the simulation"><img src="{% static 'images/restart.png' %}" alt="Restart the simulation"/></a> </span>
   <a title="Delete this simulation and all results" href="{% url 'simulations:simulation_delete' object.id %}" title="Delete"><img src="{% static 'images/delete.png' %}" alt="Delete"/></a>
 {% endif %}

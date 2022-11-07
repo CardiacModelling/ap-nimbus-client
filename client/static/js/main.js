@@ -315,10 +315,14 @@ function updateProgressbars(skipUpdate=false){
                             //show export
                             $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'visible');
                             $(`#spreadsheetexport${simulation['pk']}`).css('display', 'inline');
+                            // show graph
                             if($('#traces-graph').length > 0 && !graphRendered){
                                 renderGraph(simulation['pk']);
                                 graphRendered = true;
                             }
+                        }else if(simulation['status'] == 'FAILED'){
+                            $(`#restart${simulation['pk']}`).css('visibility', 'visible');
+                            $(`#restart${simulation['pk']}`).css('display', 'inline');
                         }else{ // convert into number
                             //hide export
                             $(`#spreadsheetexport${simulation['pk']}`).css('visibility', 'hidden');
