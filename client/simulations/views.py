@@ -623,7 +623,7 @@ class StatusSimulationView(View):
                     sim.version_info['appredict_args'] = match.group(1)
                 match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.stdout['content'], re.DOTALL)
                 if match:
-                    sim.version_info['versions'] = xmltodict.parse(match.group(0))
+                    sim.version_info['versions'] = xmltodict.parse(match.group(0))['ChasteBuildInfo']
 
         response = await get_from_api(client, 'progress_status', sim)
         # get progress if there is progress
