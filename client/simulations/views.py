@@ -2,6 +2,8 @@ import asyncio
 import copy
 import io
 import sys
+import re
+import xmltodict
 from itertools import zip_longest
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
@@ -612,6 +614,17 @@ class StatusSimulationView(View):
             setattr(sim, command, response['success'])
 
     async def update_sim(self, client, sim):
+        if not sim.stdout:
+            sim.stdout = await get_from_api(client, 'STDOUT', sim)
+            sim.version_info = {}
+            if 'content' in sim.stdout:
+                match = re.search(r'ApPredict args :(.*)', sim.stdout['content'])
+                if match:
+                    sim.version_info['appredict_args'] = match.group(1)
+                match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.stdout['content'], re.DOTALL)
+                if match:
+                    sim.version_info['versions'] = xmltodict.parse(match.group(0))
+
         response = await get_from_api(client, 'progress_status', sim)
         # get progress if there is progress
         progress_text = next((p for p in reversed(response.get('success', '')) if p), '')

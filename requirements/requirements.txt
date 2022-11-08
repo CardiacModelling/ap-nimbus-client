@@ -7,3 +7,4 @@ cellmlmanip==0.3.5
 httpx==0.23.0
 xlsxwriter==3.0.3
 jsonschema==4.17.0
+xmltodict==0.13.0

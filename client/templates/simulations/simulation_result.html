@@ -51,6 +51,7 @@
              <textarea class="markdownsource">{{object.notes | safe}}</textarea>
            </div>
         </div>{% endif %}
+      {% if object.version_info %}<br/><div><label>ApPredict version information </label></div><br/><div> {{ object.version_info }}</div>{% endif %}
       {% if object.api_errors %}<br/><div><label>API errors </label></div><br/><div> {{ object.api_errors }}</div>{% endif %}
        <div id="messages-container" class="hide-messages"><div><br/><label>AP Predict messages </label></div><br/><div id="messages"></div></div>
 

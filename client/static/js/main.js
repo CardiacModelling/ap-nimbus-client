@@ -354,6 +354,7 @@ function updateProgressIcons(skipUpdate=false){
         pk = $(this).attr('id').replace('progressIcon-', '');
         progressIcons.push(pk);
     });
+
     if(progressIcons.length > 0){
         $.ajax({type: 'GET',
             url: `${base_url}/simulations/status/${skipUpdate}/${progressIcons.join('/')}`,
