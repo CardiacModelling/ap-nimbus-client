@@ -301,7 +301,6 @@ function setSimulationButtonVisibility(button, isvisble){
         $(button).css('visibility', 'hidden');
         $(button).css('display', 'none');
     }
-
 }
 
 function updateProgressbars(skipUpdate=false){
@@ -660,4 +659,28 @@ $(document).ready(function(){
    $('#id_model_name_tag').prop('disabled', $('#cellml_file-clear_id').length);
    $('#id_ap_predict_model_call').prop('disabled', $('#cellml_file-clear_id').length);
 
+   // set css for data tables rows for version info
+   $('#appredictversioninfo > tbody > tr:odd').each(function(){
+       $(this).addClass('even');
+   })
+   $('#appredictversioninfo > tbody > tr:even').each(function(){
+       $(this).addClass('odd');
+   })
+   // hook up show/hide buttons for version info
+   $('#showappredictversioninfo').click(function(){
+       $('#appredictversioninfo').css('visibility', 'visible');
+       $('#appredictversioninfo').css('display', 'inline');
+       $('#hideappredictversioninfo').css('visibility', 'visible');
+       $('#hideappredictversioninfo').css('display', 'inline');
+       $('#showappredictversioninfo').css('visibility', 'hidden');
+       $('#showappredictversioninfo').css('display', 'none');
+   });
+   $('#hideappredictversioninfo').click(function(){
+       $('#appredictversioninfo').css('visibility', 'hidden');
+       $('#appredictversioninfo').css('display', 'none');
+       $('#hideappredictversioninfo').css('visibility', 'hidden');
+       $('#hideappredictversioninfo').css('display', 'none');
+       $('#showappredictversioninfo').css('visibility', 'visible');
+       $('#showappredictversioninfo').css('display', 'inline');
+   });
 });
