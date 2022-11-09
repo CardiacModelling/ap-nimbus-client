@@ -581,6 +581,7 @@ $(document).ready(function(){
         scrollX: "850px",
         paging: true,
         fixedColumns: true,
+        order: [[1, 'desc']],
     } );
 
     // when we paginate to a different set of simulations, stop waiting & ask for status right away
