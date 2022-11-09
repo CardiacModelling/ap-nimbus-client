@@ -12,10 +12,6 @@ code, input {
   width: 850px;
   margin: auto; 
 }
-#wide-data{
-  max-width: 1300px;
-  margin: auto;
-}
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
@@ -479,4 +475,8 @@ fieldset ul {
 
 #qnet-colour{
     background-color: #edc240;
+}
+
+#simulations_table{
+    font-size:12px;
 }
