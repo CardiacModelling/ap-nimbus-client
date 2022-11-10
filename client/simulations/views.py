@@ -577,6 +577,62 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                 row = time_keys.index(to_float(series['name'])) + 1
                 worksheet.write(row, column, to_float(series['value']))
 
+    def version_info(self, workbook, bold, sim):
+        worksheet = workbook.add_worksheet('ApPredict version information')
+        row = 0
+        if sim.version_info:
+            if 'versions' in sim.version_info:
+                if 'ProvenanceInfo' in sim.version_info['versions']:
+                    if 'Projects' in sim.version_info['versions']['ProvenanceInfo'] and\
+                            'Project' in sim.version_info['versions']['ProvenanceInfo']['Projects'] and\
+                            'Version' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project'] and\
+                            'Name' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
+                        worksheet.write(
+                            row, 0,
+                            sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Name'] + ' Version'
+                        )
+                        worksheet.write(
+                            row, 1,
+                            sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Version']
+                        )
+                        row += 1
+                    if 'VersionString' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'Chaste Version')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['VersionString'])
+                        row += 1
+                    if 'Modified' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
+                        worksheet.write(row, 0, 'Modified')
+                        worksheet.write(
+                            row, 1, sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Modified']
+                        )
+                        row += 1
+                    if 'BuildInformation' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'Build options')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['BuildInformation'])
+                        row += 1
+                    if 'BuilderUnameInfo' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'OS info')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['BuilderUnameInfo'])
+                        row += 1
+                if 'Compiler' in sim.version_info['versions']:
+                    if 'NameAndVersion' in sim.version_info['versions']['Compiler']:
+                        worksheet.write(row, 0, 'Compiler')
+                        worksheet.write(row, 1, sim.version_info['versions']['Compiler']['NameAndVersion'])
+                        row += 1
+                    if 'Flags' in sim.version_info['versions']['Compiler']:
+                        worksheet.write(row, 0, 'Compiler flags')
+                        worksheet.write(row, 1, sim.version_info['versions']['Compiler']['Flags'])
+                        row += 1
+                if 'Libraries' in sim.version_info['versions']:
+                    for key, value in sim.version_info['versions']['Libraries'].items():
+                        for lib, ver in value.items():
+                            worksheet.write(row, 0, lib)
+                            worksheet.write(row, 1, ver)
+                            row += 1
+            if 'appredict_args' in sim.version_info:
+                worksheet.write(row, 0, 'Ap Predict arguments')
+                worksheet.write(row, 1, sim.version_info['appredict_args'])
+
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
         buffer = io.BytesIO()
@@ -587,6 +643,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         self.pkpd_results(workbook, bold, sim)
         self.voltage_traces(workbook, bold, sim)
         self.voltage_traces_plot(workbook, bold, sim)
+        self.version_info(workbook, bold, sim)
 
         workbook.close()
         buffer.seek(0)

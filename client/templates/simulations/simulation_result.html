@@ -60,7 +60,7 @@
                 {%if object.version_info and object.version_info.versions%}
                     {%if object.version_info.versions%}
                         {%if object.version_info.versions.ProvenanceInfo%}
-                            {%if object.version_info.versions.ProvenanceInfo.Projects.Project.Version%}<tr><td>ApPredict Version</td><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Version}}</td></tr>{%endif%}
+                            {%if object.version_info.versions.ProvenanceInfo.Projects.Project.Version%}<tr><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Name}} Version</td><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Version}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.VersionString%}<tr><td>Chaste Version</td><td>{{object.version_info.versions.ProvenanceInfo.VersionString}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.Projects.Project.Modified%}<tr><td>Modified</td><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Modified}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.BuildInformation%}<tr><td>Build options</td><td>{{object.version_info.versions.ProvenanceInfo.BuildInformation}}</td></tr>{%endif%}
@@ -68,7 +68,7 @@
                         {%endif%}
                         {%if object.version_info.versions.Compiler%}
                             {%if object.version_info.versions.Compiler.NameAndVersion%}<tr><td>Compiler</td><td>{{object.version_info.versions.Compiler.NameAndVersion}}</td></tr>{%endif%}
-                            {%if object.version_info.versions.Compiler.Flags%}<tr><td>Flags</td><td>{{object.version_info.versions.Compiler.Flags}}</td></tr>{%endif%}
+                            {%if object.version_info.versions.Compiler.Flags%}<tr><td>Compiler flags</td><td>{{object.version_info.versions.Compiler.Flags}}</td></tr>{%endif%}
                         {%endif%}
                         {%if object.version_info.versions.Libraries%}
                             {%for key, value in object.version_info.versions.Libraries.items%}{% for lib, ver in value.items%}<tr><td>{{lib}}</td><td>{{ver}}</td></tr>{%endfor%}{%endfor%}

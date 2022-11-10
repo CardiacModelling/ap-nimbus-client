@@ -677,9 +677,9 @@ class TestSpreadsheetSimulationView:
 
         # check we don't have extra sheets
         with pytest.raises(ValueError):
-            pandas.read_excel(response_file_path, sheet_name=5)
+            pandas.read_excel(response_file_path, sheet_name=6)
         with pytest.raises(ValueError):
-            pandas.read_excel(check_file_path, sheet_name=5)
+            pandas.read_excel(check_file_path, sheet_name=6)
 
     def test_non_owner(self, other_user, client, simulation_range):
         client.login(username=other_user.email, password='password')
