@@ -858,19 +858,23 @@ class TestStatusSimulationView:
                     assert json.loads(file.read()) == getattr(simulation_range, command)
 
         view = StatusSimulationView()
+
         # mock get_from_api as multi level awaits in test won't work
         async def get_result(_, _2, sim):
             return {'success': ['Initialising...', '0% completed', '']}
+
         async def get_result2(_, command, sim):
             if command == 'STDOUT':
                 return {'success': True, 'content': 'blabla'}
-            return {'success': ['Initialising...', '0% completed', '25% completed', '']} 
+            return {'success': ['Initialising...', '0% completed', '25% completed', '']}
+
         async def get_result3(_, command, sim):
             if command == 'STDOUT':
                 data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'STDOUT.txt')
                 with open(data_source_file, encoding='utf-8') as file:
                     return json.loads(file.read())
             return {'success': ['Initialising...', '0% completed', '50% completed', '']}
+
         async def get_result4(_, command, sim):
             assert command != 'STDOUT'
             return {'success': ['Initialising...', '0% completed', '50% completed', '75% completed', '']}
