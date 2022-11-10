@@ -951,8 +951,12 @@ class TestStatusSimulationView:
         async def get_result(_, command, sim):
             if command == 'progress_status':
                 return {'success': ['Initialising...', '0% completed', '']}
-            if command == 'STOP':
+            elif command == 'STOP':
                 return {'success': True}
+            elif command == 'STDOUT':
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
             else:
                 sim.status = Simulation.Status.FAILED
                 sim.progress = 'Failed'
@@ -986,17 +990,20 @@ class TestStatusSimulationView:
 
         # mock get_from_api and save_data as multi level awaits in test won't work
         async def get_result(_, command, sim):
+            data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
             if command == 'progress_status':
                 return {'success': ['Initialising...', '0% completed', '']}
-            if command == 'STOP':
+            elif command == 'STOP':
                 self.stop_called = True
                 return {'success': True}
-            if command == 'received':
+            elif command == 'received':
                 assert self.stop_called
                 return {'success': True}
+            elif command == 'STDOUT':
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
             else:
-                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
-                with open(data_source_file) as file:
+                with open(data_source_file, encoding='utf-8') as file:
                     return {'success': json.loads(file.read())}
 
         async def save_dat(_, _2, command, sim):
@@ -1011,8 +1018,8 @@ class TestStatusSimulationView:
         out, _ = capsys.readouterr()
         assert out == ''
         # check data has been saved to the simulation
-        for command in ('q_net', 'voltage_results', 'voltage_traces'):
+        for command in ('q_net', 'voltage_results', 'voltage_traces', 'STDOUT', 'version_info'):
             assert getattr(simulation_range, command)
             data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
-            with open(data_source_file) as file:
+            with open(data_source_file, encoding='utf-8') as file:
                 assert json.loads(file.read()) == getattr(simulation_range, command)

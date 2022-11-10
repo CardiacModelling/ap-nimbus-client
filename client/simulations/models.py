@@ -99,7 +99,7 @@ class Simulation(models.Model):
     voltage_traces = models.JSONField(blank=True, null=True)
     voltage_results = models.JSONField(blank=True, null=True)
     pkpd_results = models.JSONField(blank=True, null=True)
-    stdout = models.JSONField(blank=True, null=True)
+    STDOUT = models.JSONField(blank=True, null=True)
     version_info = models.JSONField(blank=True, null=True)
 
     class Meta:

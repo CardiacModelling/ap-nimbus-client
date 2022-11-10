@@ -614,17 +614,6 @@ class StatusSimulationView(View):
             setattr(sim, command, response['success'])
 
     async def update_sim(self, client, sim):
-        if not sim.stdout:
-            sim.stdout = await get_from_api(client, 'STDOUT', sim)
-            sim.version_info = {}
-            if 'content' in sim.stdout:
-                match = re.search(r'ApPredict args :(.*)', sim.stdout['content'])
-                if match:
-                    sim.version_info['appredict_args'] = match.group(1)
-                match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.stdout['content'], re.DOTALL)
-                if match:
-                    sim.version_info['versions'] = xmltodict.parse(match.group(0))['ChasteBuildInfo']
-
         response = await get_from_api(client, 'progress_status', sim)
         # get progress if there is progress
         progress_text = next((p for p in reversed(response.get('success', '')) if p), '')
@@ -660,6 +649,17 @@ class StatusSimulationView(View):
                     else:  # we didn't get any data after stopping, we must have stopped prematurely
                         await save_api_error(sim, ('Simulation stopped prematurely. '
                                                    '(No data available after simulation stopped).'))
+        if not sim.STDOUT:  # save STDOUT if not yet saved
+            sim.STDOUT = await get_from_api(client, 'STDOUT', sim)
+            sim.version_info = {}
+            if 'content' in sim.STDOUT:
+                match = re.search(r'ApPredict args :(.*)', sim.STDOUT['content'])
+                if match:
+                    sim.version_info['appredict_args'] = match.group(1)
+                match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.STDOUT['content'], re.DOTALL)
+                if match:
+                    sim.version_info['versions'] = xmltodict.parse(match.group(0))['ChasteBuildInfo']
+
         await sync_to_async(sim.save)()
 
     async def get(self, request, *args, **kwargs):
