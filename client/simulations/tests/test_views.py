@@ -850,17 +850,68 @@ class TestStatusSimulationView:
         assert simulation_range.messages is None
 
     def test_update_progress(self, logged_in_user, simulation_range):
-        view = StatusSimulationView()
+        def check_version_info(simulation_range):
+            for command in ('STDOUT', 'version_info'):
+                assert getattr(simulation_range, command)
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    assert json.loads(file.read()) == getattr(simulation_range, command)
 
+        view = StatusSimulationView()
         # mock get_from_api as multi level awaits in test won't work
         async def get_result(_, _2, sim):
             return {'success': ['Initialising...', '0% completed', '']}
+        async def get_result2(_, command, sim):
+            if command == 'STDOUT':
+                return {'success': True, 'content': 'blabla'}
+            return {'success': ['Initialising...', '0% completed', '25% completed', '']} 
+        async def get_result3(_, command, sim):
+            if command == 'STDOUT':
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'STDOUT.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
+            return {'success': ['Initialising...', '0% completed', '50% completed', '']}
+        async def get_result4(_, command, sim):
+            assert command != 'STDOUT'
+            return {'success': ['Initialising...', '0% completed', '50% completed', '75% completed', '']}
+
+        # no 'content' in STDOUT
         views.get_from_api = get_result
         async_to_sync(view.update_sim)(None, simulation_range)
         assert simulation_range.progress == '0% completed'
         assert simulation_range.status == Simulation.Status.RUNNING
         assert not any((simulation_range.q_net, simulation_range.voltage_results,
                         simulation_range.voltage_traces, simulation_range.messages))
+        assert simulation_range.STDOUT == {'success': ['Initialising...', '0% completed', '']}
+        assert simulation_range.version_info == {}
+
+        # stdout saved, but doesn't have a sensible content
+        views.get_from_api = get_result2
+        async_to_sync(view.update_sim)(None, simulation_range)
+        assert simulation_range.progress == '25% completed'
+        assert simulation_range.status == Simulation.Status.RUNNING
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
+        assert simulation_range.STDOUT == {'success': True, 'content': 'blabla'}
+        assert simulation_range.version_info == {}
+
+        # stdout saved properly
+        views.get_from_api = get_result3
+        async_to_sync(view.update_sim)(None, simulation_range)
+        assert simulation_range.progress == '50% completed'
+        assert simulation_range.status == Simulation.Status.RUNNING
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
+        check_version_info(simulation_range)
+
+        # stdout already saved so call skipped (not requested from api)
+        views.get_from_api = get_result4
+        async_to_sync(view.update_sim)(None, simulation_range)
+        assert simulation_range.progress == '75% completed'
+        assert simulation_range.status == Simulation.Status.RUNNING
+        assert not any((simulation_range.q_net, simulation_range.voltage_results,
+                        simulation_range.voltage_traces, simulation_range.messages))
+        check_version_info(simulation_range)
 
     def test_update_progress_timeout(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()

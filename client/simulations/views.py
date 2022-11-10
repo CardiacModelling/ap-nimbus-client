@@ -706,7 +706,7 @@ class StatusSimulationView(View):
                     else:  # we didn't get any data after stopping, we must have stopped prematurely
                         await save_api_error(sim, ('Simulation stopped prematurely. '
                                                    '(No data available after simulation stopped).'))
-        if not sim.STDOUT:  # save STDOUT if not yet saved
+        if not sim.version_info:  # save STDOUT if not yet saved
             sim.STDOUT = await get_from_api(client, 'STDOUT', sim)
             sim.version_info = {}
             if 'content' in sim.STDOUT:
