@@ -669,7 +669,7 @@ class TestSpreadsheetSimulationView:
         assert os.path.isfile(response_file_path)
         assert os.path.isfile(check_file_path)
 
-        sheets = list(range(5))
+        sheets = list(range(6))
         response_df = pandas.read_excel(response_file_path, sheet_name=sheets, engine='openpyxl')
         check_df = pandas.read_excel(check_file_path, sheet_name=sheets, engine='openpyxl')
         for sheet in sheets:
@@ -711,6 +711,25 @@ class TestSpreadsheetSimulationView:
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
+
+    def test_wrong_version_info1(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'bla': 'bla'}
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
+
+    def test_wrong_version_info2(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'versions': 'bla'}
+        assert 'versions' not in simulation_points.version_info
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
+
+    def test_wrong_version_info3(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'versions': {'ProvenanceInfo': 'bla', 'Compiler': 'bla', 'Libraries': 'bla'}}
+        # assert 'versions' in simulation_points.version_info
+        # assert 'Compiler' in simulation_points.version_info
+        # assert 'Libraries' in simulation_points.version_info
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
 
 @pytest.mark.django_db
@@ -849,15 +868,18 @@ class TestStatusSimulationView:
         async_to_sync(view.save_data)(None, 'messages', simulation_range)
         assert simulation_range.messages is None
 
-    def test_update_progress(self, logged_in_user, simulation_range):
-        def check_version_info(simulation_range):
+    def test_update_progress(self, logged_in_user, simulation_points):
+        def check_version_info(sim):
             for command in ('STDOUT', 'version_info'):
-                assert getattr(simulation_range, command)
+                assert getattr(sim, command)
                 data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
                 with open(data_source_file, encoding='utf-8') as file:
-                    assert json.loads(file.read()) == getattr(simulation_range, command)
+                    assert json.loads(file.read()) == getattr(sim, command)
 
         view = StatusSimulationView()
+
+        assert not simulation_points.STDOUT
+        assert not simulation_points.version_info
 
         # mock get_from_api as multi level awaits in test won't work
         async def get_result(_, _2, sim):
@@ -881,41 +903,41 @@ class TestStatusSimulationView:
 
         # no 'content' in STDOUT
         views.get_from_api = get_result
-        async_to_sync(view.update_sim)(None, simulation_range)
-        assert simulation_range.progress == '0% completed'
-        assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results,
-                        simulation_range.voltage_traces, simulation_range.messages))
-        assert simulation_range.STDOUT == {'success': ['Initialising...', '0% completed', '']}
-        assert simulation_range.version_info == {}
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '0% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        assert simulation_points.STDOUT == {'success': ['Initialising...', '0% completed', '']}
+        assert simulation_points.version_info == {}
 
         # stdout saved, but doesn't have a sensible content
         views.get_from_api = get_result2
-        async_to_sync(view.update_sim)(None, simulation_range)
-        assert simulation_range.progress == '25% completed'
-        assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results,
-                        simulation_range.voltage_traces, simulation_range.messages))
-        assert simulation_range.STDOUT == {'success': True, 'content': 'blabla'}
-        assert simulation_range.version_info == {}
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '25% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        assert simulation_points.STDOUT == {'success': True, 'content': 'blabla'}
+        assert simulation_points.version_info == {}
 
         # stdout saved properly
         views.get_from_api = get_result3
-        async_to_sync(view.update_sim)(None, simulation_range)
-        assert simulation_range.progress == '50% completed'
-        assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results,
-                        simulation_range.voltage_traces, simulation_range.messages))
-        check_version_info(simulation_range)
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '50% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        check_version_info(simulation_points)
 
         # stdout already saved so call skipped (not requested from api)
         views.get_from_api = get_result4
-        async_to_sync(view.update_sim)(None, simulation_range)
-        assert simulation_range.progress == '75% completed'
-        assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results,
-                        simulation_range.voltage_traces, simulation_range.messages))
-        check_version_info(simulation_range)
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '75% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        check_version_info(simulation_points)
 
     def test_update_progress_timeout(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
