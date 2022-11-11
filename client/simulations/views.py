@@ -600,7 +600,9 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                         worksheet.write(row, 0, 'Chaste Version')
                         worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['VersionString'])
                         row += 1
-                    if 'Modified' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
+                    if 'Projects' in sim.version_info['versions']['ProvenanceInfo'] and\
+                            'Project' in sim.version_info['versions']['ProvenanceInfo']['Projects'] and\
+                            'Modified' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
                         worksheet.write(row, 0, 'Modified')
                         worksheet.write(
                             row, 1, sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Modified']
@@ -623,7 +625,8 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                         worksheet.write(row, 0, 'Compiler flags')
                         worksheet.write(row, 1, sim.version_info['versions']['Compiler']['Flags'])
                         row += 1
-                if 'Libraries' in sim.version_info['versions']:
+                if 'Libraries' in sim.version_info['versions'] and\
+                        isinstance(sim.version_info['versions']['Libraries'], dict):
                     for key, value in sim.version_info['versions']['Libraries'].items():
                         for lib, ver in value.items():
                             worksheet.write(row, 0, lib)
