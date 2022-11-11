@@ -714,20 +714,21 @@ class TestSpreadsheetSimulationView:
 
     def test_wrong_version_info1(self, logged_in_user, client, simulation_points, tmp_path):
         simulation_points.version_info = {'bla': 'bla'}
+        assert 'versions' not in simulation_points.version_info
         response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
         self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
     def test_wrong_version_info2(self, logged_in_user, client, simulation_points, tmp_path):
         simulation_points.version_info = {'versions': 'bla'}
-        assert 'versions' not in simulation_points.version_info
+        assert 'versions' in simulation_points.version_info
         response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
         self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
     def test_wrong_version_info3(self, logged_in_user, client, simulation_points, tmp_path):
         simulation_points.version_info = {'versions': {'ProvenanceInfo': 'bla', 'Compiler': 'bla', 'Libraries': 'bla'}}
-        # assert 'versions' in simulation_points.version_info
-        # assert 'Compiler' in simulation_points.version_info
-        # assert 'Libraries' in simulation_points.version_info
+        assert 'versions' in simulation_points.version_info
+        assert 'Compiler' in simulation_points.version_info['versions']
+        assert 'Libraries' in simulation_points.version_info['versions']
         response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
         self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
