@@ -308,7 +308,7 @@ function updateProgressbar(skipUpdate=false){
     if($('.progressbar').length){
         progressbar_id = $('.progressbar').first().attr('id').replace('progressbar-', '');
     }
-    if($('#version_info_label').length == 0 & progressbar_id != undefined){
+    if($('#version_info_label').length == 0 && progressbar_id != undefined){
         $.ajax({type: 'GET',
                 url: `${base_url}/simulations/${progressbar_id}/version`,
                 success: function(html) {
