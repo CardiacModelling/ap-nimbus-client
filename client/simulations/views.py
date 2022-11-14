@@ -349,6 +349,17 @@ class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwar
         return self.get_object().author == self.request.user
 
 
+class SimulationVersionView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+    """
+    View viewing simulations details (and results).
+    """
+    model = Simulation
+    template_name = 'simulations/simulation_version.html'
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+
 class SimulationDeleteView(UserPassesTestMixin, DeleteView):
     """
     Delete a simulation

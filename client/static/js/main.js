@@ -32,7 +32,7 @@ const notifications = require('./lib/notifications.js');
 
 var graphRendered = false;
 
-// set progressbar timeout, progressbars to update and get base url
+// set progressbar timeout, progressbar to update and get base url
 var progressBarTimeout = 3000;
 var base_url = $(location).attr('href');
 var i = base_url.lastIndexOf('/simulations/');
@@ -303,16 +303,24 @@ function setSimulationButtonVisibility(button, isvisble){
     }
 }
 
-function updateProgressbars(skipUpdate=false){
-    progressbars = [];
-    $('.progressbar').each(function(){
-        pk = $(this).attr('id').replace('progressbar-', '');
-        progressbars.push(pk);
-    });
-
-    if(progressbars.length > 0){
+function updateProgressbar(skipUpdate=false){
+    progressbar_id = undefined;
+    if($('.progressbar').length){
+        progressbar_id = $('.progressbar').first().attr('id').replace('progressbar-', '');
+    }
+    if($('#version_info_label').length == 0 & progressbar_id != undefined){
         $.ajax({type: 'GET',
-                url: `${base_url}/simulations/status/${skipUpdate}/${progressbars.join('/')}`,
+                url: `${base_url}/simulations/${progressbar_id}/version`,
+                success: function(html) {
+                    $('#version_info').html(html);
+                }
+        });
+
+    }
+
+    if(progressbar_id != undefined){
+        $.ajax({type: 'GET',
+                url: `${base_url}/simulations/status/${skipUpdate}/${progressbar_id}`,
                 dataType: 'json',
                 success: function(data) {
                     data.forEach(function (simulation) {
@@ -340,7 +348,7 @@ function updateProgressbars(skipUpdate=false){
                                 bar.progressbar('value', parseInt(progress_number));
                             }
                         }
-                        setTimeout(updateProgressbars, progressBarTimeout);
+                        setTimeout(updateProgressbar, progressBarTimeout);
                     })
                 }
         });
@@ -380,12 +388,12 @@ function updateProgressIcons(skipUpdate=false){
 }
 
 $(document).ready(function(){
-    //init progress bars
+    //init progress bar
     $('.progressbar').each(function(){
         bar = $(this).progressbar();
     });
     //update progress bar now
-    updateProgressbars(true);
+    updateProgressbar(true);
     //set update of progress icons
     updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
 
@@ -667,7 +675,7 @@ $(document).ready(function(){
        $(this).addClass('odd');
    })
    // hook up show/hide buttons for version info
-   $('#showappredictversioninfo').click(function(){
+   $('body').on('click', '#showappredictversioninfo', function() {
        $('#appredictversioninfo').css('visibility', 'visible');
        $('#appredictversioninfo').css('display', 'inline');
        $('#hideappredictversioninfo').css('visibility', 'visible');
@@ -675,7 +683,7 @@ $(document).ready(function(){
        $('#showappredictversioninfo').css('visibility', 'hidden');
        $('#showappredictversioninfo').css('display', 'none');
    });
-   $('#hideappredictversioninfo').click(function(){
+   $('body').on('click', '#hideappredictversioninfo', function(){
        $('#appredictversioninfo').css('visibility', 'hidden');
        $('#appredictversioninfo').css('display', 'none');
        $('#hideappredictversioninfo').css('visibility', 'hidden');
