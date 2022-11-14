@@ -600,14 +600,6 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                         worksheet.write(row, 0, 'Chaste Version')
                         worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['VersionString'])
                         row += 1
-                    if 'Projects' in sim.version_info['versions']['ProvenanceInfo'] and\
-                            'Project' in sim.version_info['versions']['ProvenanceInfo']['Projects'] and\
-                            'Modified' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
-                        worksheet.write(row, 0, 'Modified')
-                        worksheet.write(
-                            row, 1, sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Modified']
-                        )
-                        row += 1
                     if 'BuildInformation' in sim.version_info['versions']['ProvenanceInfo']:
                         worksheet.write(row, 0, 'Build options')
                         worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['BuildInformation'])

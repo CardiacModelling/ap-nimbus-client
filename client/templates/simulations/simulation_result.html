@@ -62,7 +62,6 @@
                         {%if object.version_info.versions.ProvenanceInfo%}
                             {%if object.version_info.versions.ProvenanceInfo.Projects.Project.Version%}<tr><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Name}} Version</td><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Version}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.VersionString%}<tr><td>Chaste Version</td><td>{{object.version_info.versions.ProvenanceInfo.VersionString}}</td></tr>{%endif%}
-                            {%if object.version_info.versions.ProvenanceInfo.Projects.Project.Modified%}<tr><td>Modified</td><td>{{object.version_info.versions.ProvenanceInfo.Projects.Project.Modified}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.BuildInformation%}<tr><td>Build options</td><td>{{object.version_info.versions.ProvenanceInfo.BuildInformation}}</td></tr>{%endif%}
                             {%if object.version_info.versions.ProvenanceInfo.BuilderUnameInfo%}<tr><td>OS info</td><td>{{object.version_info.versions.ProvenanceInfo.BuilderUnameInfo}}</td></tr>{%endif%}
                         {%endif%}
