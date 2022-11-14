@@ -583,6 +583,24 @@ class TestSimulationResultView:
 
 
 @pytest.mark.django_db
+class TestSimulationVersionView:
+    def test_non_loged_in_cannot_see(self, user, client, simulation_range):
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 302
+
+    def test_non_owner_cannot_see(self, other_user, client, simulation_range):
+        client.login(username=other_user.email, password='password')
+        assert simulation_range.author != other_user
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 403
+
+    def test_owner_can_see(self, logged_in_user, client, cellml_model_recipe, simulation_range):
+        assert simulation_range.author == logged_in_user
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 class TestSimulationDeleteView:
     def test_owner_can_delete(self, logged_in_user, client, simulation_range):
         assert Simulation.objects.count() == 1

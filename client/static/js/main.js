@@ -341,7 +341,7 @@ function updateProgressbar(skipUpdate=false){
                         }else{ // convert into number
                             graphRendered = false;
                             progress_number = simulation['progress'].replace('% completed', '');
-                            if(progress_number == 'Initialising..'){
+                            if(progress_number == 'Initialising..' || progress_number == 'Converting CellML...'){
                                 progress_number = 0;
                             }
                             if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
