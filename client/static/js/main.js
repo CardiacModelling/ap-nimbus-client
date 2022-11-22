@@ -387,6 +387,23 @@ function updateProgressIcons(skipUpdate=false){
     }
 }
 
+function update_cellml_selected(){
+    if ($('#id_cellml_file').length == 1){
+        has_currently = $('#id_cellml_file').parent().html().includes(' Currently: ') && !$('#cellml_file-clear_id').is(':checked');
+        cellml_file_selected = ($('#id_cellml_file').val().trim() != '' || has_currently);
+
+        $('#id_model_name_tag').prop('disabled', cellml_file_selected);
+        $('#id_ap_predict_model_call').prop('disabled', cellml_file_selected);
+    }
+}
+
+function update_required_pk_data(){
+        div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
+        required = div_2_vis && $('#id_PK_data').length == 1 && (!$('#id_PK_data').parent().html().includes(' Currently: ') || $('#PK_data-clear_id').is(':checked'));
+        $('#id_PK_data').attr('required', required);
+        $('#id_PK_data').attr('disabled', !div_2_vis);
+}
+
 $(document).ready(function(){
     //init progress bar
     $('.progressbar').each(function(){
@@ -530,11 +547,9 @@ $(document).ready(function(){
         $('#id_concentration-0-concentration').attr('required', div_1_vis);
 
         // update required for Pharmacokinetics
-        div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
-        $('#id_PK_data').attr('required', div_2_vis);
-        $('#id_PK_data').attr('disabled', !div_2_vis);
-
+        update_required_pk_data();
     })
+
     //initialise compound parems isplay
     $('.pk_or_concs').change();
 
@@ -657,15 +672,15 @@ $(document).ready(function(){
     });
 
     // model_name_tag and ap_predict_model_call only enabled if no file is selected
-    $('#id_cellml_file').on('change', function(){
-        cellml_file_selected = $('#id_cellml_file').val().trim() != '';
-        $('#id_model_name_tag').prop('disabled', cellml_file_selected);
-        $('#id_ap_predict_model_call').prop('disabled', cellml_file_selected);
-        $('#cellml_file-clear_id').prop('disabled', cellml_file_selected);
-    });
+    $('#id_cellml_file').on('change', update_cellml_selected);
+    $('#cellml_file-clear_id').on('change', update_cellml_selected);
+
+    // update pk_data required when chnaged
+    $('#id_PK_data').on('change',update_required_pk_data);
+    $('#PK_data-clear_id').on('change',update_required_pk_data);
+
    // initially model_name_tag and ap_predict_model_call disabled is there is a clear for the model
-   $('#id_model_name_tag').prop('disabled', $('#cellml_file-clear_id').length);
-   $('#id_ap_predict_model_call').prop('disabled', $('#cellml_file-clear_id').length);
+   update_cellml_selected()
 
    // set css for data tables rows for version info
    $('#appredictversioninfo > tbody > tr:odd').each(function(){
