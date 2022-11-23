@@ -18,7 +18,7 @@ RUN apt-get install uwsgi-plugin-python3 -y
 RUN apt-get install libpcre3-dev -y
 
 # get the client from git & install
-RUN git clone --recursive --branch UI_Improvements https://github.com/CardiacModelling/ap-nimbus-client.git
+RUN git clone --recursive --branch master https://github.com/CardiacModelling/ap-nimbus-client.git
 RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
