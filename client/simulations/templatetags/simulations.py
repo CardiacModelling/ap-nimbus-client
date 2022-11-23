@@ -11,7 +11,7 @@ def ion_currents():
     """
     All ion currents.
     """
-    return IonCurrent.objects.all()
+    return IonCurrent.objects.all().order_by('pk')
 
 
 @register.simple_tag

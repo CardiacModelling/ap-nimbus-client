@@ -1,5 +1,6 @@
+import httpx
 import pytest
-from files.models import CellmlModel, IonCurrent
+from files.models import AppredictLookupTableManifest, CellmlModel, IonCurrent
 
 
 @pytest.mark.django_db
@@ -69,3 +70,37 @@ def test_IonCurrent(user):
                                             "membrane_persistent_sodium_current_conductance_scaling_factor",
                               default_spread_of_uncertainty=0.2)
     assert IonCurrent.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_AppredictLookupTableManifest(httpx_mock, manifest_contents):
+    expected_manifest = set(['tentusscher_model_2006_epi',
+                             'paci_hyttinen_aaltosetala_severi_ventricularVersion',
+                             'HundRudy2004_units',
+                             'MahajanShiferaw2008_units',
+                             'grandi_pasqualini_bers_2010_epi',
+                             'ohara_rudy_cipa_v1_2017',
+                             'ohara_rudy_2011_endo',
+                             'shannon_wang_puglisi_weber_bers_2004_model_updated'])
+
+    assert AppredictLookupTableManifest.objects.count() == 0
+
+    # mock getting manifest file from cardiac server
+    httpx_mock.add_response(text=manifest_contents)
+    assert set(AppredictLookupTableManifest.get_manifest()) == expected_manifest
+    assert AppredictLookupTableManifest.objects.count() == 1
+
+    # calling again does not create more DB entries
+    httpx_mock.add_response(text=manifest_contents)
+    assert set(AppredictLookupTableManifest.get_manifest()) == expected_manifest
+    assert AppredictLookupTableManifest.objects.count() == 1
+
+    # fallback if url does not respond with status 200
+    httpx_mock.add_response(status_code=404)
+    assert set(AppredictLookupTableManifest.get_manifest()) == expected_manifest
+    assert AppredictLookupTableManifest.objects.count() == 1
+
+    # fallback on httpx error
+    httpx_mock.add_exception(httpx.ReadTimeout("Unable to read within timeout"))
+    assert set(AppredictLookupTableManifest.get_manifest()) == expected_manifest
+    assert AppredictLookupTableManifest.objects.count() == 1

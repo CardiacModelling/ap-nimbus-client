@@ -9,7 +9,7 @@ PREDEF_ION_CURRENTS = [
     {'name': 'IKr',
      'alternative_name': 'herg',
      'metadata_tags': 'membrane_rapid_delayed_rectifier_potassium_current_conductance, membrane_rapid_delayed_rectifier_potassium_current_conductance_scaling_factor',
-     'channel_protein': 'K<sub>v</sub>11.1 ',
+     'channel_protein': 'K_v 11.1 ',
      'gene': 'hERG or KCNH2',
      'description': 'Rapid delayed rectifier potassium current',
      'default_hill_coefficient': 1,
@@ -18,7 +18,7 @@ PREDEF_ION_CURRENTS = [
 
     {'name': 'INa',
      'metadata_tags': 'membrane_fast_sodium_current_conductance, membrane_fast_sodium_current_conductance_scaling_factor',
-     'channel_protein': 'Na<sub>v</sub>1.5',
+     'channel_protein': 'Na_v 1.5',
      'gene': 'SCN5A',
      'description': 'Fast sodium current',
      'default_hill_coefficient': 1,
@@ -27,7 +27,7 @@ PREDEF_ION_CURRENTS = [
 
     {'name': 'ICaL',
      'metadata_tags': 'membrane_L_type_calcium_current_conductance, membrane_L_type_calcium_current_conductance_scaling_factor',
-     'channel_protein': 'Ca<sub>v</sub>1.2',
+     'channel_protein': 'Ca_v 1.2',
      'gene': 'CACNA1C',
      'description': 'Long-lasting (L-type) calcium current',
      'default_hill_coefficient': 1,
@@ -36,7 +36,7 @@ PREDEF_ION_CURRENTS = [
 
     {'name': 'IKs',
      'metadata_tags': 'membrane_slow_delayed_rectifier_potassium_current_conductance, membrane_slow_delayed_rectifier_potassium_current_conductance_scaling_factor',
-     'channel_protein': 'K<sub>v</sub>7.1',
+     'channel_protein': 'K_v 7.1',
      'gene': 'KCNQ1/minK',
      'description': 'Slow delayed rectifier potassium current',
      'default_hill_coefficient': 1,
@@ -45,7 +45,7 @@ PREDEF_ION_CURRENTS = [
 
     {'name': 'IK1',
      'metadata_tags': 'membrane_inward_rectifier_potassium_current_conductance, membrane_inward_rectifier_potassium_current_conductance_scaling_factor',
-     'channel_protein': 'K<sub>ir</sub>2.1',
+     'channel_protein': 'K_ir 2.1',
      'gene': 'KCNJ2',
      'description': 'Inward rectifier potassium current',
      'default_hill_coefficient': 1,
@@ -54,7 +54,7 @@ PREDEF_ION_CURRENTS = [
 
     {'name': 'Ito',
      'metadata_tags': 'membrane_fast_transient_outward_current_conductance, membrane_fast_transient_outward_current_conductance_scaling_factor, membrane_transient_outward_current_conductance, membrane_transient_outward_current_conductance_scaling_factor',
-     'channel_protein': 'K<sub>v</sub>4.3',
+     'channel_protein': 'K_v 4.3',
      'gene': 'KCND3',
      'description': '(Fast) transient outward potassium current',
      'default_hill_coefficient': 1,
@@ -66,7 +66,7 @@ PREDEF_ION_CURRENTS = [
      'default_hill_coefficient': 1,
      'gene': 'SCN5A',
      'description': 'Late/Persistent sodium current',
-     'channel_protein': 'Na<sub>v</sub>1.5',
+     'channel_protein': 'Na_v 1.5',
      'default_saturation_level': 0,
      'default_spread_of_uncertainty': 0.2},
 ]

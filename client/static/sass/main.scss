@@ -12,10 +12,6 @@ code, input {
   width: 850px;
   margin: auto; 
 }
-#wide-data{
-  max-width: 2080px;
-  margin: auto;
-}
 
 /* support for historic browsers */
 header, section, footer, aside, nav, article, figure {
@@ -259,6 +255,9 @@ h1#entityname{
     font-size: 12px;
     text-align: left;
 }
+#ioncurrent-formset .disabled{
+    color:#989898;
+}
 
 #ioncurrent-formset input[type='number']{
     width: 45px;
@@ -332,6 +331,10 @@ div.dt-buttons{
     margin-top: 0.167em;
 }
 
+.progressbar{
+    margin-bottom: 10px;
+}
+
 .ui-progressbar-value{
     background: #009bbd;
 }
@@ -365,7 +368,7 @@ div.dt-buttons{
 }
 
 .graph-column{
-    width: 570px;
+    width: 400px;
 }
 
 .control-column{
@@ -449,8 +452,8 @@ fieldset ul {
 }
 
 .data-graph{
-    width:550px;
-    height:300px;
+    width:380px;
+    height:275px;
 }
 
 .graph-column fieldset{
@@ -472,4 +475,8 @@ fieldset ul {
 
 #qnet-colour{
     background-color: #edc240;
+}
+
+#simulations_table, #appredictversioninfo{
+    font-size:12px;
 }

@@ -30,7 +30,9 @@ const marked = require("./lib/marked.min.js"); // Markdown render
 const SimpleMDE = require('./lib/simplemde.js');  // Simple markdown editor
 const notifications = require('./lib/notifications.js');
 
-// set progressbar timeout, progressbars to update and get base url
+var graphRendered = false;
+
+// set progressbar timeout, progressbar to update and get base url
 var progressBarTimeout = 3000;
 var base_url = $(location).attr('href');
 var i = base_url.lastIndexOf('/simulations/');
@@ -162,6 +164,7 @@ function renderGraph(pk){
                 }
                 if (!$.isEmptyObject(confidencePercentages)){
                     $('#confidence-percentages').removeClass('hide-messages');
+                    $('#confidence-percentages').empty();
                     for (const [pct, series] of Object.entries(confidencePercentages)) {
                         $('#confidence-percentages').append(`<input type="checkbox" id="${pct}" class="confidence-checkbox" checked> ${pct}<br/>`);
                     }
@@ -290,51 +293,126 @@ function renderGraph(pk){
     });
 }
 
-function updateProgressbars(skipUpdate=false){
-    progressbars = [];
-    $('.progressbar').each(function(){
-        if($(this).text() != 'Completed'){
-            pk = $(this).attr('id').replace('progressbar-', '');
-            progressbars.push(pk);
-        }
-    });
+function setSimulationButtonVisibility(button, isvisble){
+    if(isvisble){
+        $(button).css('visibility', 'visible');
+        $(button).css('display', 'inline');
+    }else{
+        $(button).css('visibility', 'hidden');
+        $(button).css('display', 'none');
+    }
+}
 
-    if(progressbars.length > 0){
+function updateProgressbar(skipUpdate=false){
+    progressbar_id = undefined;
+    if($('.progressbar').length){
+        progressbar_id = $('.progressbar').first().attr('id').replace('progressbar-', '');
+    }
+    if($('#version_info_label').length == 0 && progressbar_id != undefined){
         $.ajax({type: 'GET',
-                url: `${base_url}/simulations/status/${skipUpdate}/${progressbars.join('/')}`,
+                url: `${base_url}/simulations/${progressbar_id}/version`,
+                success: function(html) {
+                    $('#version_info').html(html);
+                }
+        });
+
+    }
+
+    if(progressbar_id != undefined){
+        $.ajax({type: 'GET',
+                url: `${base_url}/simulations/status/${skipUpdate}/${progressbar_id}`,
                 dataType: 'json',
                 success: function(data) {
-                    progressbars = [];
                     data.forEach(function (simulation) {
                         bar = $(`#progressbar-${simulation['pk']}`);
                         // set label
                         bar.find('.progress-label').text(simulation['progress']); // set label
+                        // update icons
+                        setSimulationButtonVisibility(`#spreadsheetexport${simulation['pk']}`, simulation['status'] == 'SUCCESS');
+                        setSimulationButtonVisibility(`#restart${simulation['pk']}`, simulation['status'] == 'FAILED');
                         // update progress bar
                         if(simulation['status'] == 'SUCCESS'){
                             bar.progressbar('value', 100);
-                            if($('#traces-graph').length > 0){
+                            // show graph
+                            if($('#traces-graph').length > 0 && !graphRendered){
                                 renderGraph(simulation['pk']);
+                                graphRendered = true;
                             }
                         }else{ // convert into number
+                            graphRendered = false;
                             progress_number = simulation['progress'].replace('% completed', '');
+                            if(progress_number == 'Initialising..' || progress_number == 'Converting CellML...'){
+                                progress_number = 0;
+                            }
                             if(!isNaN(progress_number)){ // if the progress is actually a number we can use, use it to set progress on the progressbar
                                 bar.progressbar('value', parseInt(progress_number));
                             }
                         }
+                        setTimeout(updateProgressbar, progressBarTimeout);
                     })
-                    updateProgressBarTimeout = setTimeout(updateProgressbars, progressBarTimeout);
                 }
         });
     }
 }
 
+function updateProgressIcons(skipUpdate=false){
+    progressIcons = [];
+    $('.progressIcon').each(function(){
+        pk = $(this).attr('id').replace('progressIcon-', '');
+        progressIcons.push(pk);
+    });
+
+    if(progressIcons.length > 0){
+        $.ajax({type: 'GET',
+            url: `${base_url}/simulations/status/${skipUpdate}/${progressIcons.join('/')}`,
+            dataType: 'json',
+            success: function(data) {
+                data.forEach(function (simulation) {
+                    icon = $(`#progressIcon-${simulation['pk']}`);
+                    // update icons
+                    setSimulationButtonVisibility(`#spreadsheetexport${simulation['pk']}`, simulation['status'] == 'SUCCESS');
+                    setSimulationButtonVisibility(`#restart${simulation['pk']}`, simulation['status'] == 'FAILED');
+                    // update progress icons
+                    if(simulation['status'] == 'SUCCESS'){
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/finished.gif`);
+                    }else if(simulation['status'] == 'FAILED'){
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/failed.gif`);
+                    }else{
+                        $(`#progressIcon-${simulation['pk']}`).attr('src', `${base_url}/static/images/inprogress.gif`);
+                    }
+                });
+                updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
+            }
+        })
+    }
+}
+
+function update_cellml_selected(){
+    if ($('#id_cellml_file').length == 1){
+        has_currently = $('#id_cellml_file').parent().html().includes(' Currently: ') && !$('#cellml_file-clear_id').is(':checked');
+        cellml_file_selected = ($('#id_cellml_file').val().trim() != '' || has_currently);
+
+        $('#id_model_name_tag').prop('disabled', cellml_file_selected);
+        $('#id_ap_predict_model_call').prop('disabled', cellml_file_selected);
+    }
+}
+
+function update_required_pk_data(){
+        div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
+        required = div_2_vis && $('#id_PK_data').length == 1 && (!$('#id_PK_data').parent().html().includes(' Currently: ') || $('#PK_data-clear_id').is(':checked'));
+        $('#id_PK_data').attr('required', required);
+        $('#id_PK_data').attr('disabled', !div_2_vis);
+}
+
 $(document).ready(function(){
-    //init progress bars
+    //init progress bar
     $('.progressbar').each(function(){
         bar = $(this).progressbar();
     });
     //update progress bar now
-    updateProgressbars(true, false);
+    updateProgressbar(true);
+    //set update of progress icons
+    updateProgressIconTimeout = setTimeout(updateProgressIcons, progressBarTimeout);
 
 
     // add dismiss action to notifications
@@ -348,9 +426,9 @@ $(document).ready(function(){
 
     //Set cancel / close button action
     if(document.referrer.indexOf(window.location.host) == -1 || history.length <= 1){
-        $('#backbutton').attr("href", $('#home_link').attr("href"));
+        $('#backbutton').click(function(){window.location.href = $('#home_link').attr("href");});
     }else{
-       $('#backbutton').attr("href", "javascript:history.back();");
+       $('#backbutton').click(function(){history.back();});
     }
 
     // update ion current enabledness when model changes
@@ -469,11 +547,9 @@ $(document).ready(function(){
         $('#id_concentration-0-concentration').attr('required', div_1_vis);
 
         // update required for Pharmacokinetics
-        div_2_vis = $('#div_pk_or_concs_2').css('visibility') == 'visible'
-        $('#id_PK_data').attr('required', div_2_vis);
-        $('#id_PK_data').attr('disabled', !div_2_vis);
-
+        update_required_pk_data();
     })
+
     //initialise compound parems isplay
     $('.pk_or_concs').change();
 
@@ -521,16 +597,19 @@ $(document).ready(function(){
     } );
 
     // init data table for simulation results
-    $('#simulations_table').DataTable( {
-        stateSave: false,
-        order: [],
-        dom: 'lBfrtip',
-        stateSave: true,
-    });
+    var datatable = $('#simulations_table').removeAttr('width').DataTable( {
+        autoWidth: false,
+        scrollY: false,
+        scrollX: "850px",
+        paging: true,
+        fixedColumns: true,
+        order: [[1, 'desc']],
+    } );
+
     // when we paginate to a different set of simulations, stop waiting & ask for status right away
     $('.paginate_button').click(function(){
-        clearTimeout(updateProgressBarTimeout);
-        updateProgressbars(true, true)
+        clearTimeout(updateProgressIcons);
+        updateProgressIcons(true);
     });
 
     //Render markdown editor
@@ -592,4 +671,39 @@ $(document).ready(function(){
         resetQnet(false);  // reset the graph so that selected intervals are drawn
     });
 
+    // model_name_tag and ap_predict_model_call only enabled if no file is selected
+    $('#id_cellml_file').on('change', update_cellml_selected);
+    $('#cellml_file-clear_id').on('change', update_cellml_selected);
+
+    // update pk_data required when chnaged
+    $('#id_PK_data').on('change',update_required_pk_data);
+    $('#PK_data-clear_id').on('change',update_required_pk_data);
+
+   // initially model_name_tag and ap_predict_model_call disabled is there is a clear for the model
+   update_cellml_selected()
+
+   // set css for data tables rows for version info
+   $('#appredictversioninfo > tbody > tr:odd').each(function(){
+       $(this).addClass('even');
+   })
+   $('#appredictversioninfo > tbody > tr:even').each(function(){
+       $(this).addClass('odd');
+   })
+   // hook up show/hide buttons for version info
+   $('body').on('click', '#showappredictversioninfo', function() {
+       $('#appredictversioninfo').css('visibility', 'visible');
+       $('#appredictversioninfo').css('display', 'inline');
+       $('#hideappredictversioninfo').css('visibility', 'visible');
+       $('#hideappredictversioninfo').css('display', 'inline');
+       $('#showappredictversioninfo').css('visibility', 'hidden');
+       $('#showappredictversioninfo').css('display', 'none');
+   });
+   $('body').on('click', '#hideappredictversioninfo', function(){
+       $('#appredictversioninfo').css('visibility', 'hidden');
+       $('#appredictversioninfo').css('display', 'none');
+       $('#hideappredictversioninfo').css('visibility', 'hidden');
+       $('#hideappredictversioninfo').css('display', 'none');
+       $('#showappredictversioninfo').css('visibility', 'visible');
+       $('#showappredictversioninfo').css('display', 'inline');
+   });
 });

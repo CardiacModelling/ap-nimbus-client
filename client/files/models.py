@@ -1,9 +1,37 @@
 import os
+import re
 
 import django.db.models.deletion
+import httpx
 from django.conf import settings
 from django.db import models
 from django.dispatch import receiver
+
+
+class AppredictLookupTableManifest(models.Model):
+    manifest = models.TextField(default='')
+    response_text = models.TextField(default='')
+    date_modified = models.DateTimeField(auto_now=True)
+
+    def save_manifest(self, response_text):
+        if self.response_text != response_text:
+            self.response_text = response_text
+            matches = set(re.findall(r'(.*)_\dd_.*\n', response_text))
+            self.manifest = '\n'.join(matches)
+            self.save()
+
+    @classmethod
+    def get_manifest(cls):
+        if not AppredictLookupTableManifest.objects.exists():
+            AppredictLookupTableManifest.objects.create()
+        lut_manifest = AppredictLookupTableManifest.objects.first()
+        try:  # update lookup table manifest if changed
+            response = httpx.get(settings.APPREDICT_LOOKUP_TABLE_MANIFEST)
+            response.raise_for_status()
+            lut_manifest.save_manifest(response.text.strip())
+        except httpx.HTTPError:
+            pass  # using fallback
+        return lut_manifest.manifest.split('\n')
 
 
 class IonCurrent(models.Model):
@@ -49,12 +77,18 @@ class CellmlModel(models.Model):
     )
     name = models.CharField(max_length=255,
                             help_text="The name of the model, e.g. <em>O'Hara-Rudy</em>.")
+    model_name_tag = models.CharField(
+        max_length=255, null=True, blank=True,
+        help_text="Model name tag used for finding lookup tables.\n"
+                  "This is automatically populated when a cellml file is uploaded."
+                  "\nThis option is only available to admins."
+    )
     description = models.CharField(
         max_length=255, default='',
         help_text="A short description e.g. <em>human ventricular cell model (endocardial)</em>."
     )
     version = models.CharField(max_length=255, default='', blank=True,
-                               help_text="An (optional) version, e.g. <em>CiPA-v1.0</em>.")
+                               help_text="An (optional) version, e.g. <em>(endo)</em>.")
     year = models.PositiveIntegerField(
         blank=True,
         help_text="The year this specific model (version) was published e.g. <em>2017</em>."
@@ -70,9 +104,10 @@ class CellmlModel(models.Model):
     ap_predict_model_call = models.CharField(
         max_length=255, null=True, blank=True,
         help_text="call to pass to Ap Predict with --model parameter e.g. <em>1</em> or <em> "
-                  "shannon_wang_puglisi_weber_bers_2004</em>. This option is only available to admins and cannot be "
+                  "shannon_wang_puglisi_weber_bers_2004</em>. \nThis option is only available to admins and cannot be "
                   "combianed with uploading a cellml file."
     )
+
     cellml_file = models.FileField(blank=True, upload_to="",
                                    help_text="Please upload the cellml file here. Please note: the cellml file is "
                                              "expected to be annotated.")

@@ -36,6 +36,12 @@ urlpatterns = [
     ),
 
     re_path(
+        r'^(?P<pk>\d+)/version$',
+        views.SimulationVersionView.as_view(),
+        name='simulation_version',
+    ),
+
+    re_path(
         r'^(?P<pk>\d+)/delete$',
         views.SimulationDeleteView.as_view(),
         name='simulation_delete',

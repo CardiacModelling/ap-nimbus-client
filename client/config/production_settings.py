@@ -17,6 +17,11 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+APPREDICT_LOOKUP_TABLE_MANIFEST = os.environ.get(
+    'APPREDICT_LOOKUP_TABLE_MANIFEST',
+    'https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt'
+)
+
 # running in subfolder
 subfolder = os.environ.get('subfolder', None)
 FORCE_SCRIPT_NAME = '/%s/' % subfolder if subfolder else ''
@@ -175,7 +180,7 @@ FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHand
 
 # API location for AP manager
 AP_PREDICT_ENDPOINT = os.environ.get('AP_PREDICT_ENDPOINT', 'http://path_to_ap_manager')
-AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 300)
+AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000)
 
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get('HOSTING_INFO', '')

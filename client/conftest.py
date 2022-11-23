@@ -1,7 +1,10 @@
+import json
+import os
 import uuid
 
 import pytest
 from accounts.models import User
+from django.conf import settings
 from files.models import IonCurrent
 from model_bakery.recipe import Recipe, seq
 from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
@@ -127,6 +130,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
         author=user,
         predefined=True,
         name="O'Hara-Rudy-CiPA",
+        model_name_tag='ohara_rudy_cipa_v1_2017',
         description='human ventricular cell model (endocardial)',
         version='v1.0',
         year=2017,
@@ -141,6 +145,7 @@ def o_hara_model(cellml_model_recipe, user, ion_currents):
 
 @pytest.fixture
 def simulation_range(simulation_recipe, user, o_hara_model):
+    data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'STDOUT.txt')
     sim = simulation_recipe.make(notes='some notes',
                                  author=user,
                                  model=o_hara_model,
@@ -153,6 +158,17 @@ def simulation_range(simulation_recipe, user, o_hara_model):
                                  maximum_concentration=100,
                                  intermediate_point_count='4',
                                  intermediate_point_log_scale=True)
+
+    data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'STDOUT.txt')
+    with open(data_source_file, encoding='utf-8') as file:
+        sim.STDOUT = json.loads(file.read())
+
+    data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'version_info.txt')
+    with open(data_source_file, encoding='utf-8') as file:
+        sim.version_info = json.loads(file.read())
+    sim.save()
+    sim.refresh_from_db()
+
     vals = [4.37, 44.716, 70, 45.3, 41.8, 13.4, 52.1]
     params = [{'current': v,
                'hill_coefficient': c['default_hill_coefficient'],
@@ -193,3 +209,11 @@ def simulation_pkdata(simulation_recipe, user, o_hara_model):
                                   ion_units=Simulation.IonCurrentUnits.M,
                                   pk_or_concs=Simulation.PkOptions.pharmacokinetics,
                                   PK_data=f'{uuid.uuid4()}_pk_data.tsv')
+
+
+@pytest.fixture
+def manifest_contents():
+    manifest_file = os.path.join(settings.BASE_DIR, 'files', 'migrations', 'appredict_lookup_table_manifest.txt')
+    with open(manifest_file) as f:
+        return f.read().strip()
+

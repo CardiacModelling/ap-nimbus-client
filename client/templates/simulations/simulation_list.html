@@ -9,56 +9,55 @@
   <section id="simulationgrouplist">
     <h2>Your simulations</h2>
 
-{% endblock content %}
-
-{% block data %}
     <p><a href="{% url 'simulations:create_simulation' %}" class="pointer">Create a new simulation</a></p>
 
-    <table id="simulations_table" class="stripe row-border order-column">
+  <table class="stripe row-border order-column" id="simulations_table" style="width:100%; overflow-wrap: break-word;">
       <thead>
         <tr>
-          <th class="sim-title">Title</th>
-          <th class="sim-date">Date</th>
-          <th class="sim-model">Model</th>
-          <th class="sim-status">Status</th>
-          <th class="sim-action">Action</th>
-          <th colspan="2" class="pacing">Pacing</th>
-        {% ion_currents as all_currents %}
-          <th class="inhibitory-concentrations inhibitory-concentrations-header" colspan="{{ all_currents|length|add:1 }}">Ion Channel Current Inhibitory Concentrations</th>
-          <th class="compound-concentrations compound-concentrations-header" colspan="2">Compound Concentrations</th>
+          <th style="min-width: 250px; max-width: 250px; width: 250px;" id="title">Title</th>
+          <th style="min-width: 45px; max-width: 45px; width: 45px;">Date</th>
+          <th style="min-width: 148px; max-width: 148px; width: 148px;">Model</th>
+          <th style="min-width: 80px; max-width: 80px; width: 80px;">Action</th>
+
+{% ion_currents as all_currents %}
+          <th colspan="2"  style="min-width: 70px; max-width: 70px; width: 70px;">Pacing</th>
+          <th colspan="{{ all_currents|length|add:1 }}">Ion Channel Current Inhibitory Concentrations</th>
+          <th colspan="2" style="min-width: 68px; max-width: 68px; width: 68px;">Compound Concentrations</th>
         </tr>
         <tr>
-        <th colspan="5"></th>
-        <th class="sim-pacing-freq pacing">Freq.</td><th class="sim-pacing-time pacing">Max Time</th>
+        <th colspan="4"></th>
+        <th style="min-width: 34px; max-width: 35px; width: 35px;">Freq.</td><th  style="min-width: 35px; max-width: 35px; width: 35px;">Max Time</th>
+
         {% for cur in all_currents %}
-          <th class="sim-ion-current inhibitory-concentrations">{{ cur }}</th>
+          <th style="min-width: 40px; max-width: 40px;">{{ cur }}</th>
         {% endfor %}
-        <th class="sim-ion-current-units inhibitory-concentrations">Units</th>
-        <th class="sim-concentration-type compound-concentrations"></th><th class="sim-compound-concentrations compound-concentrations"></th>
+        <th>Units</th>
+        <th/><th/>
       </tr>
       </thead>
       <tbody>
       {% for object in object_list %}
       <tr>
-        <td class="sim-title"><a href="{% url 'simulations:simulation_result' object.pk %}">{{object.title}}</a></td>
-        <td class="sim-date">{{object.created_at}}</td>
-        <td class="sim-model"><a href="{% url 'files:model_detail' object.model.pk %}">{{object.model}}</a></td>
-        <td class="sim-status"><div id="progressbar-{{object.pk}}" class="progressbar"><div class="progress-label"></div></div></td>
-        <td class="sim-action">{% include "./simulation_header.html" %}</td>
-        <td class="sim-pacing-freq pacing">{{object.pacing_frequency}} <em>Hz</em></td><td class="sim-pacing-time pacing">{{object.maximum_pacing_time}} <em>min</em></td>
+        <td><img class="progressIcon" id="progressIcon-{{object.pk}}" {%if object.status == "SUCCESS" %}src="{% static 'images/finished.gif' %}" title="Simulation completed succesfully."{% elif object.status == "FAILED" %}src="{% static 'images/failed.gif' %}" title="Simulation failed!"{% else %}src="{% static 'images/inprogress.gif' %}" title="Simulation in progress."{% endif %}/>
+            <a href="{% url 'simulations:simulation_result' object.pk %}">{{object.title}}</a></td>
+        <td>{{object.created_at|date:"Y/m/d" }}</td>
+        <td><a href="{% url 'files:model_detail' object.model.pk %}">{{object.model}}</a></td>
+
+        <td>{% include "./simulation_header.html" with showView=True%} </td>
+        <td>{{object.pacing_frequency}} <em>Hz</em></td><td>{{object.maximum_pacing_time}} <em>mins</em></td>
         {% for cur in all_currents %}
         {% simulation_ion_current object cur as currentparam%}
-            <td class="sim-ion-current inhibitory-concentrations">{{ currentparam.current }}</td>
+            <td>{{ currentparam.current }}</td>
         {% endfor %}
-        <td class="sim-ion-current-units inhibitory-concentrations">{{object.ion_units}}<br/>({{object.ion_current_type}})</td>
-        <td class="sim-concentration-type compound-concentrations">{% short_field_name object.pk_or_concs %}</td>
+        <td>{{object.ion_units}}<br/>({{object.ion_current_type}})</td>
+        <td>{% short_field_name object.pk_or_concs %}</td>
         {%print_compound_concentrations object as inhconc %}
-        <td class="sim-compound-concentrations compound-concentrations" title="{{ inhconc.0 }}">{{ inhconc.1 }}</td>
+        <td title="{{ inhconc.0 }}">{{ inhconc.1 }}</td>
       </tr>
       {% endfor %}
       </tbody>
-    </table>
+  </table>
   </section>
 
-{% endblock data %}
+{% endblock content %}
 

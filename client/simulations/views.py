@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import io
+import re
 import sys
 from itertools import zip_longest
 from json.decoder import JSONDecodeError
@@ -9,6 +10,7 @@ from urllib.parse import urljoin
 import httpx
 import jsonschema
 import xlsxwriter
+import xmltodict
 from asgiref.sync import async_to_sync, sync_to_async
 from braces.views import UserFormKwargsMixin
 from django.conf import settings
@@ -256,7 +258,7 @@ class SimulationCreateView(LoginRequiredMixin, UserFormKwargsMixin, CreateView):
             visible_models = (CellmlModel.objects.filter(predefined=True) |
                               CellmlModel.objects.filter(predefined=False,
                                                          author=self.request.user)).values_list('pk', flat=True)
-            for curr in IonCurrent.objects.all():
+            for curr in IonCurrent.objects.all().order_by('pk'):
                 param = SimulationIonCurrentParam.objects.filter(simulation=self.pk, ion_current=curr).first()
                 initial.append({'current': param.current if param else None,
                                 'ion_current': curr,
@@ -342,6 +344,17 @@ class SimulationResultView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwar
     """
     model = Simulation
     template_name = 'simulations/simulation_result.html'
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+
+class SimulationVersionView(LoginRequiredMixin, UserPassesTestMixin, UserFormKwargsMixin, DetailView):
+    """
+    View viewing simulations details (and results).
+    """
+    model = Simulation
+    template_name = 'simulations/simulation_version.html'
 
     def test_func(self):
         return self.get_object().author == self.request.user
@@ -575,6 +588,57 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
                 row = time_keys.index(to_float(series['name'])) + 1
                 worksheet.write(row, column, to_float(series['value']))
 
+    def version_info(self, workbook, bold, sim):
+        worksheet = workbook.add_worksheet('ApPredict version information')
+        row = 0
+        if sim.version_info:
+            if 'versions' in sim.version_info:
+                if 'ProvenanceInfo' in sim.version_info['versions']:
+                    if 'Projects' in sim.version_info['versions']['ProvenanceInfo'] and\
+                            'Project' in sim.version_info['versions']['ProvenanceInfo']['Projects'] and\
+                            'Version' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project'] and\
+                            'Name' in sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']:
+                        worksheet.write(
+                            row, 0,
+                            sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Name'] + ' Version'
+                        )
+                        worksheet.write(
+                            row, 1,
+                            sim.version_info['versions']['ProvenanceInfo']['Projects']['Project']['Version']
+                        )
+                        row += 1
+                    if 'VersionString' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'Chaste Version')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['VersionString'])
+                        row += 1
+                    if 'BuildInformation' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'Build options')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['BuildInformation'])
+                        row += 1
+                    if 'BuilderUnameInfo' in sim.version_info['versions']['ProvenanceInfo']:
+                        worksheet.write(row, 0, 'OS info')
+                        worksheet.write(row, 1, sim.version_info['versions']['ProvenanceInfo']['BuilderUnameInfo'])
+                        row += 1
+                if 'Compiler' in sim.version_info['versions']:
+                    if 'NameAndVersion' in sim.version_info['versions']['Compiler']:
+                        worksheet.write(row, 0, 'Compiler')
+                        worksheet.write(row, 1, sim.version_info['versions']['Compiler']['NameAndVersion'])
+                        row += 1
+                    if 'Flags' in sim.version_info['versions']['Compiler']:
+                        worksheet.write(row, 0, 'Compiler flags')
+                        worksheet.write(row, 1, sim.version_info['versions']['Compiler']['Flags'])
+                        row += 1
+                if 'Libraries' in sim.version_info['versions'] and\
+                        isinstance(sim.version_info['versions']['Libraries'], dict):
+                    for key, value in sim.version_info['versions']['Libraries'].items():
+                        for lib, ver in value.items():
+                            worksheet.write(row, 0, lib)
+                            worksheet.write(row, 1, ver)
+                            row += 1
+            if 'appredict_args' in sim.version_info:
+                worksheet.write(row, 0, 'Ap Predict arguments')
+                worksheet.write(row, 1, sim.version_info['appredict_args'])
+
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
         buffer = io.BytesIO()
@@ -585,6 +649,7 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
         self.pkpd_results(workbook, bold, sim)
         self.voltage_traces(workbook, bold, sim)
         self.voltage_traces_plot(workbook, bold, sim)
+        self.version_info(workbook, bold, sim)
 
         workbook.close()
         buffer.seek(0)
@@ -647,6 +712,17 @@ class StatusSimulationView(View):
                     else:  # we didn't get any data after stopping, we must have stopped prematurely
                         await save_api_error(sim, ('Simulation stopped prematurely. '
                                                    '(No data available after simulation stopped).'))
+        if not sim.version_info:  # save STDOUT if not yet saved
+            sim.STDOUT = await get_from_api(client, 'STDOUT', sim)
+            sim.version_info = {}
+            if 'content' in sim.STDOUT:
+                match = re.search(r'ApPredict args :(.*)', sim.STDOUT['content'])
+                if match:
+                    sim.version_info['appredict_args'] = match.group(1)
+                match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.STDOUT['content'], re.DOTALL)
+                if match:
+                    sim.version_info['versions'] = xmltodict.parse(match.group(0))['ChasteBuildInfo']
+
         await sync_to_async(sim.save)()
 
     async def get(self, request, *args, **kwargs):

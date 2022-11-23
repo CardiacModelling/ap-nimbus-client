@@ -583,6 +583,24 @@ class TestSimulationResultView:
 
 
 @pytest.mark.django_db
+class TestSimulationVersionView:
+    def test_non_loged_in_cannot_see(self, user, client, simulation_range):
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 302
+
+    def test_non_owner_cannot_see(self, other_user, client, simulation_range):
+        client.login(username=other_user.email, password='password')
+        assert simulation_range.author != other_user
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 403
+
+    def test_owner_can_see(self, logged_in_user, client, cellml_model_recipe, simulation_range):
+        assert simulation_range.author == logged_in_user
+        response = client.get(f'/simulations/{simulation_range.pk}/version')
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 class TestSimulationDeleteView:
     def test_owner_can_delete(self, logged_in_user, client, simulation_range):
         assert Simulation.objects.count() == 1
@@ -669,7 +687,7 @@ class TestSpreadsheetSimulationView:
         assert os.path.isfile(response_file_path)
         assert os.path.isfile(check_file_path)
 
-        sheets = list(range(5))
+        sheets = list(range(6))
         response_df = pandas.read_excel(response_file_path, sheet_name=sheets, engine='openpyxl')
         check_df = pandas.read_excel(check_file_path, sheet_name=sheets, engine='openpyxl')
         for sheet in sheets:
@@ -677,9 +695,9 @@ class TestSpreadsheetSimulationView:
 
         # check we don't have extra sheets
         with pytest.raises(ValueError):
-            pandas.read_excel(response_file_path, sheet_name=5)
+            pandas.read_excel(response_file_path, sheet_name=6)
         with pytest.raises(ValueError):
-            pandas.read_excel(check_file_path, sheet_name=5)
+            pandas.read_excel(check_file_path, sheet_name=6)
 
     def test_non_owner(self, other_user, client, simulation_range):
         client.login(username=other_user.email, password='password')
@@ -711,6 +729,27 @@ class TestSpreadsheetSimulationView:
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
         assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
+
+    def test_wrong_version_info1(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'bla': 'bla'}
+        simulation_points.save()
+        simulation_points.refresh_from_db()
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
+
+    def test_wrong_version_info2(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'versions': 'bla'}
+        simulation_points.save()
+        simulation_points.refresh_from_db()
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
+
+    def test_wrong_version_info3(self, logged_in_user, client, simulation_points, tmp_path):
+        simulation_points.version_info = {'versions': {'ProvenanceInfo': 'bla', 'Compiler': 'bla', 'Libraries': 'bla'}}
+        simulation_points.save()
+        simulation_points.refresh_from_db()
+        response = client.get(f'/simulations/{simulation_points.pk}/spreadsheet')
+        self.check_xlsx_files(response, tmp_path, 'points_no_data.xlsx')
 
 
 @pytest.mark.django_db
@@ -849,18 +888,76 @@ class TestStatusSimulationView:
         async_to_sync(view.save_data)(None, 'messages', simulation_range)
         assert simulation_range.messages is None
 
-    def test_update_progress(self, logged_in_user, simulation_range):
+    def test_update_progress(self, logged_in_user, simulation_points):
+        def check_version_info(sim):
+            for command in ('STDOUT', 'version_info'):
+                assert getattr(sim, command)
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    assert json.loads(file.read()) == getattr(sim, command)
+
         view = StatusSimulationView()
+
+        assert not simulation_points.STDOUT
+        assert not simulation_points.version_info
 
         # mock get_from_api as multi level awaits in test won't work
         async def get_result(_, _2, sim):
             return {'success': ['Initialising...', '0% completed', '']}
+
+        async def get_result2(_, command, sim):
+            if command == 'STDOUT':
+                return {'success': True, 'content': 'blabla'}
+            return {'success': ['Initialising...', '0% completed', '25% completed', '']}
+
+        async def get_result3(_, command, sim):
+            if command == 'STDOUT':
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', 'STDOUT.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
+            return {'success': ['Initialising...', '0% completed', '50% completed', '']}
+
+        async def get_result4(_, command, sim):
+            assert command != 'STDOUT'
+            return {'success': ['Initialising...', '0% completed', '50% completed', '75% completed', '']}
+
+        # no 'content' in STDOUT
         views.get_from_api = get_result
-        async_to_sync(view.update_sim)(None, simulation_range)
-        assert simulation_range.progress == '0% completed'
-        assert simulation_range.status == Simulation.Status.RUNNING
-        assert not any((simulation_range.q_net, simulation_range.voltage_results,
-                        simulation_range.voltage_traces, simulation_range.messages))
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '0% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        assert simulation_points.STDOUT == {'success': ['Initialising...', '0% completed', '']}
+        assert simulation_points.version_info == {}
+
+        # stdout saved, but doesn't have a sensible content
+        views.get_from_api = get_result2
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '25% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        assert simulation_points.STDOUT == {'success': True, 'content': 'blabla'}
+        assert simulation_points.version_info == {}
+
+        # stdout saved properly
+        views.get_from_api = get_result3
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '50% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        check_version_info(simulation_points)
+
+        # stdout already saved so call skipped (not requested from api)
+        views.get_from_api = get_result4
+        async_to_sync(view.update_sim)(None, simulation_points)
+        assert simulation_points.progress == '75% completed'
+        assert simulation_points.status == Simulation.Status.RUNNING
+        assert not any((simulation_points.q_net, simulation_points.voltage_results,
+                        simulation_points.voltage_traces, simulation_points.messages))
+        check_version_info(simulation_points)
 
     def test_update_progress_timeout(self, logged_in_user, simulation_range, capsys):
         view = StatusSimulationView()
@@ -951,8 +1048,12 @@ class TestStatusSimulationView:
         async def get_result(_, command, sim):
             if command == 'progress_status':
                 return {'success': ['Initialising...', '0% completed', '']}
-            if command == 'STOP':
+            elif command == 'STOP':
                 return {'success': True}
+            elif command == 'STDOUT':
+                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
             else:
                 sim.status = Simulation.Status.FAILED
                 sim.progress = 'Failed'
@@ -986,17 +1087,20 @@ class TestStatusSimulationView:
 
         # mock get_from_api and save_data as multi level awaits in test won't work
         async def get_result(_, command, sim):
+            data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
             if command == 'progress_status':
                 return {'success': ['Initialising...', '0% completed', '']}
-            if command == 'STOP':
+            elif command == 'STOP':
                 self.stop_called = True
                 return {'success': True}
-            if command == 'received':
+            elif command == 'received':
                 assert self.stop_called
                 return {'success': True}
+            elif command == 'STDOUT':
+                with open(data_source_file, encoding='utf-8') as file:
+                    return json.loads(file.read())
             else:
-                data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
-                with open(data_source_file) as file:
+                with open(data_source_file, encoding='utf-8') as file:
                     return {'success': json.loads(file.read())}
 
         async def save_dat(_, _2, command, sim):
@@ -1011,8 +1115,8 @@ class TestStatusSimulationView:
         out, _ = capsys.readouterr()
         assert out == ''
         # check data has been saved to the simulation
-        for command in ('q_net', 'voltage_results', 'voltage_traces'):
+        for command in ('q_net', 'voltage_results', 'voltage_traces', 'STDOUT', 'version_info'):
             assert getattr(simulation_range, command)
             data_source_file = os.path.join(settings.BASE_DIR, 'simulations', 'tests', f'{command}.txt')
-            with open(data_source_file) as file:
+            with open(data_source_file, encoding='utf-8') as file:
                 assert json.loads(file.read()) == getattr(simulation_range, command)
