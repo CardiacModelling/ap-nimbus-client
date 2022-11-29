@@ -8,7 +8,6 @@ from django.conf import settings
 from files.models import IonCurrent
 from model_bakery.recipe import Recipe, seq
 from simulations.models import CompoundConcentrationPoint, Simulation, SimulationIonCurrentParam
-from datetime import datetime
 
 
 @pytest.fixture
