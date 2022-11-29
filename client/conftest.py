@@ -37,7 +37,7 @@ def user():
         email='test@example.com',
         full_name='Test User',
         institution='UCL',
-        password='password',
+        password='password'
     )
 
 
