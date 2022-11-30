@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM debian:bullseye-slim
 
 USER root
 ENV pythonpath /usr/local/lib/python3
@@ -10,6 +10,10 @@ WORKDIR /opt/django
 # install required components
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
+    python3 \
+    python3-dev \
+    python3-pip \
+    ca-certificates \
     git \
     build-essential \
     nginx \
@@ -20,8 +24,12 @@ RUN apt-get install -y --no-install-recommends \
     sudo && \
     rm -rf /var/lib/apt/lists/*
 
+# Update system to use Python3 by default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
 # get the client from git & install
-RUN git clone --recursive --branch master https://github.com/CardiacModelling/ap-nimbus-client.git
+RUN git clone --recursive --branch master --depth 1 https://github.com/CardiacModelling/ap-nimbus-client.git
 RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
@@ -34,6 +42,10 @@ RUN echo "appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi" >> /etc/sudoers
 
 # make sure appredict owns the django files
 RUN chown -R appredict:appredict /opt/django/
+
+#remove git
+RUN apt-get remove --purge git -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # create folder to link data volue
 USER appredict
