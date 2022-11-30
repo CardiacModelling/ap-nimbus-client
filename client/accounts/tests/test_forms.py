@@ -1,11 +1,14 @@
-
+import os
 from datetime import datetime
+from shutil import copyfile
 
 import pytest
 from accounts.admin import UserForm
 from accounts.forms import MyAccountForm, RegistrationForm
 from accounts.models import User
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.test.client import RequestFactory
 
 
@@ -154,6 +157,17 @@ class TestMyAccountForm:
 
 @pytest.mark.django_db
 class TestUserForm:
+    def upload_accounts(self, tmp_path, file_name):
+        test_file = os.path.join(settings.BASE_DIR, 'accounts', 'tests', file_name)
+        temp_file = os.path.join(tmp_path, file_name)
+        assert os.path.isfile(test_file), str(test_file)
+        copyfile(test_file, temp_file)
+        assert os.path.isfile(temp_file)
+
+        tempfile = TemporaryUploadedFile(file_name, 'text/plain', os.path.getsize(test_file), 'utf-8')
+        tempfile.file = open(temp_file, 'rb')
+        return tempfile
+
     def test_modify_user(self, user):
         data = {'email': 'new@email.com',
                 'full_name': 'new name',
@@ -216,7 +230,7 @@ class TestUserForm:
         form = UserForm(instance=user, data=data)
         assert not form.is_valid()
 
-    def test_change_password(self, user, client):
+    def test_change_password(self, user):
         assert not check_password('NewPassw0rd', user.password)
         data = {'email': 'test@test.com',
                 'institution': 'uon',
@@ -230,7 +244,7 @@ class TestUserForm:
         user.refresh_from_db()
         assert check_password('NewPassw0rd', user.password)
 
-    def test_passwords_do_not_match(self, user, client):
+    def test_passwords_do_not_match(self, user):
         data = {'email': 'test@test.com',
                 'institution': 'uon',
                 'full_name': 'testuser',
@@ -240,7 +254,7 @@ class TestUserForm:
         form = UserForm(instance=user, data=data)
         assert not form.is_valid()
 
-    def test_create_new_user(self, client):
+    def test_create_new_user(self):
         assert User.objects.count() == 0
         data = {'email': 'test@test.com',
                 'institution': 'uon',
@@ -251,6 +265,36 @@ class TestUserForm:
         data['password1'] = 'NewPassw0rd'
         data['password2'] = 'NewPassw0rd'
         form = UserForm(data=data)
-        assert form.is_valid(), str(form.errors)
+        assert form.is_valid()
         form.save()
         assert User.objects.count() == 1
+
+    def test_bulk_upload(self, tmp_path):
+        assert User.objects.count() == 0
+        # the upload skips existing users
+        User.objects.create(email='pierre.jordaan@novartis.com',
+                            full_name='pierre.jordaan',
+                            institution='novartis',
+                            password='pwd')
+        assert User.objects.filter(email='pierre.jordaan@novartis.com').exists()
+
+        tsv_upload = self.upload_accounts(tmp_path, 'accounts.tsv')
+        form = UserForm({}, {'tsv': tsv_upload})
+        assert form.is_valid()
+        form.save()
+        assert User.objects.count() == 3
+        assert User.objects.filter(email='pierre.jordaan@novartis.com').exists()
+        assert User.objects.filter(email='yawyisrael@gmail.com').exists()
+        assert User.objects.filter(email='bernard_christophe@hotmail.com').exists()
+
+    def test_bulk_upload_no_accounts(self, tmp_path):
+        tsv_upload = self.upload_accounts(tmp_path, 'accounts2.tsv')
+        form = UserForm({}, {'tsv': tsv_upload})
+        assert not form.is_valid()
+        assert 'TSV file did not contain (new) user accounts.' in str(form.errors)
+
+    def test_wrong_mime_type(self, tmp_path):
+        tsv_upload = self.upload_accounts(tmp_path, 'error-mimetype.tsv')
+        form = UserForm({}, {'tsv': tsv_upload})
+        assert not form.is_valid()
+        assert 'Invalid TSV file' in str(form.errors)
