@@ -34,6 +34,7 @@ LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('smtp_server', 'localhost')
 SERVER_EMAIL = os.environ.get('django_email_from_addr', os.environ['DJANGO_SUPERUSER_EMAIL'])
+DEFAULT_FROM_EMAIL = SERVER_EMAIL
 WELCOME_SUBJECT = os.environ.get('WELCOME_SUBJECT', '[AP Portal] Welcome')
 
 # Quick-start development settings - unsuitable for production
