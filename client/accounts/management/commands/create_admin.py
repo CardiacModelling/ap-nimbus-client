@@ -25,7 +25,7 @@ class Command(BaseCommand):
                                 is_active=True)
         else:
             user = User.objects.get(email=email)
-            user.institution=institution
+            user.institution = institution
             user.password = password
             user.is_superuser = True
             user.is_staff = True
