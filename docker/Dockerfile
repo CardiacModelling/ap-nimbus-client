@@ -55,6 +55,6 @@ RUN mkdir /opt/django/media
 CMD python /opt/django/ap-nimbus-client/docker/create_database.py; \
     python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput; \
     python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput; \
-    python /opt/django/ap-nimbus-client/client/manage.py  createsuperuser --noinput; \
+    python /opt/django/ap-nimbus-client/client/manage.py  create_admin; \
     sudo /etc/init.d/nginx restart; \
     sudo --preserve-env /usr/local/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict
