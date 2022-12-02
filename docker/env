@@ -9,6 +9,9 @@ DJANGO_SUPERUSER_EMAIL=
 # please pick a secure password for the superuser
 DJANGO_SUPERUSER_PASSWORD=
 
+# please replace with the name of your institution
+DJANGO_SUPERUSER_INSTITUTION=Nottingham
+
 # this is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
 subfolder=
 
