@@ -221,7 +221,8 @@ class SimulationForm(SimulationBaseForm):
 
     def clean(self):
         super().clean()
-        if self.cleaned_data['maximum_concentration'] == 0 and self.cleaned_data['pk_or_concs'] == 'compound_concentration_range':
+        if self.cleaned_data['maximum_concentration'] == 0 \
+                and self.cleaned_data['pk_or_concs'] == 'compound_concentration_range':
             raise forms.ValidationError('Ensure the concentration is greater than 0.')
         return self.cleaned_data
 
