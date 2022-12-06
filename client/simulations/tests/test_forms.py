@@ -150,6 +150,12 @@ class TestSimulationForm_and_SimulationEditForm:
         assert not form.is_valid()
 
     @pytest.mark.django_db
+    def test_maximum_concentration_not_zero(self, range_data, user):
+        range_data['maximum_concentration'] = 0.0
+        form = SimulationForm(user=user, data=range_data)
+        assert not form.is_valid()
+
+    @pytest.mark.django_db
     def test_PK_data(self, range_data, user, tmp_path):
         assert Simulation.objects.count() == 0
         sample = self.upload_file(tmp_path, 'sample.tsv')

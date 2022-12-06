@@ -219,6 +219,12 @@ class SimulationForm(SimulationBaseForm):
         for _, field in self.fields.items():
             field.widget.attrs['title'] = field.help_text
 
+    def clean(self):
+        super().clean()
+        if self.cleaned_data['maximum_concentration'] == 0 and self.cleaned_data['pk_or_concs'] == 'compound_concentration_range':
+            raise forms.ValidationError('Ensure the concentration is greater than 0.')
+        return self.cleaned_data
+
 
 class SimulationEditForm(SimulationBaseForm):
     """
