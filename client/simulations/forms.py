@@ -36,7 +36,7 @@ class IonCurrentForm(forms.ModelForm):
 
         self.fields['saturation_level'].widget.attrs = {'min': 0.0, 'step': 'any'}
 
-        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0000000000001, 'max': 2.0, 'step': 'any',
+        self.fields['spread_of_uncertainty'].widget.attrs = {'min': 0.0, 'max': 2.0, 'step': 'any',
                                                              'class': 'spread_of_uncertainty'}
 
         for _, field in self.fields.items():
@@ -207,13 +207,13 @@ class SimulationForm(SimulationBaseForm):
 
         self.fields['pacing_frequency'].widget.attrs = {'min': 0.05, 'max': 5.0, 'step': 'any', 'required': 'required'}
 
-        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0000000000001, 'max': 120.0, 'step': 'any',
+        self.fields['maximum_pacing_time'].widget.attrs = {'min': 0.0, 'max': 120.0, 'step': 'any',
                                                            'required': 'required'}
 
         self.fields['pk_or_concs'].widget = forms.RadioSelect(attrs={'class': 'pk_or_concs'},
                                                               choices=self.fields['pk_or_concs'].choices)
-        self.fields['minimum_concentration'].widget.attrs = {'min': 0, 'step': 'any'}
-        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0000000000001, 'step': 'any'}
+        self.fields['minimum_concentration'].widget.attrs = {'min': 0.0, 'step': 'any'}
+        self.fields['maximum_concentration'].widget.attrs = {'min': 0.0, 'step': 'any'}
         self.fields['PK_data'].widget.attrs = {'accept': ('.txt,.tsv')}
 
         for _, field in self.fields.items():
