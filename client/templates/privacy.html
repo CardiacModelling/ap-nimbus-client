@@ -23,8 +23,8 @@
 <h2>What information do we store?</h2>
 
 <p>
-  We store the information about you that you supply when you <a href="{% url 'accounts:register' %}">register</a>,
-  or when you <a href="{% url 'accounts:myaccount' %}">make changes to your account</a>.
+  We store the information about you that you supply when you {% if not user.is_authenticated %}<a href="{% url 'accounts:register' %}">{%endif%}register{% if user.is_authenticated %}</a>{%endif%},
+  or when you {% if user.is_authenticated %}<a href="{% url 'accounts:myaccount' %}">{%endif%}make changes to your account{% if user.is_authenticated %}</a>{%endif%}.
   We also store any files that you upload (CellML models and PK files) to the ActionPotential-Portal, and the results of experiments run using these.
   Please also be aware that any text you write with simulations as notes will be stored and is visible to system administrators through the admin interface.
 </p>

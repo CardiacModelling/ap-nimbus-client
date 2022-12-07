@@ -14,7 +14,7 @@
 <p>
   This particular version is a redevelopment of the original portal, and it has been designed to run in a series of docker containers, which provides a convenient way to install a local instance. See <a href="https://github.com/CardiacModelling/ap-nimbus-client">instructions on github</a> for more details.
   <br/>
-  We are inviting users to register their interest by <a href="{% url 'accounts:register' %}">registering for an account</a>. For information about privacy and security see our <a href="{% url 'privacy' %}">privacy policy</a>.
+  We are inviting users to register their interest by {% if not user.is_authenticated %}<a href="{% url 'accounts:register' %}">{%endif%}registering for an account{% if user.is_authenticated %}</a>{%endif%}. For information about privacy and security see our <a href="{% url 'privacy' %}">privacy policy</a>.
   Any queries or feedback you may have for us will be gratefully received, please <a href="{% url 'contact' %}">contact the team</a> to let us know.
 </p>
 <p>
