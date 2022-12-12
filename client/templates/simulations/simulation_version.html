@@ -24,7 +24,8 @@
                         {%endif%}
             
                     {%endif%}
-                    {% if object.version_info.appredict_args %}<tr><td>Ap Predict arguments</td><td>{{object.version_info.appredict_args}}</td></tr>{%endif%}
+                    {% if object.version_info.appredict_args %}<tr><td>Ap Predict arguments</td><td><pre>{{object.version_info.appredict_args}}</pre></td></tr>{%endif%}
+                    {% if object.version_info.python_versions %}<tr><td>Python versions for chaste_codegen</td><td><pre>{{object.version_info.python_versions}}</pre></td></tr>{%endif%}
                 {%endif%}
             </table>
        </div>

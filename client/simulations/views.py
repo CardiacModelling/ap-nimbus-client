@@ -638,6 +638,10 @@ class SpreadsheetSimulationView(LoginRequiredMixin, UserPassesTestMixin, UserFor
             if 'appredict_args' in sim.version_info:
                 worksheet.write(row, 0, 'Ap Predict arguments')
                 worksheet.write(row, 1, sim.version_info['appredict_args'])
+                row += 1
+            if 'python_versions' in sim.version_info:
+                worksheet.write(row, 0, 'Python packages versions for chaste_codegen')
+                worksheet.write(row, 1, sim.version_info['python_versions'])
 
     def get(self, request, *args, **kwargs):
         sim = self.get_object()
@@ -715,10 +719,14 @@ class StatusSimulationView(View):
         if not sim.version_info:  # save STDOUT if not yet saved
             sim.STDOUT = await get_from_api(client, 'STDOUT', sim)
             sim.version_info = {}
+
             if 'content' in sim.STDOUT:
+                match = re.search(r'(.+)\$CHASTE_TEST_OUTPUT', sim.STDOUT['content'], flags=re.DOTALL)
+                if match:
+                    sim.version_info['python_versions'] = match.group(1)
                 match = re.search(r'ApPredict args :(.*)', sim.STDOUT['content'])
                 if match:
-                    sim.version_info['appredict_args'] = match.group(1)
+                    sim.version_info['appredict_args'] = match.group(1).replace('--', '\n--').replace(' \n--', '--', 1)
                 match = re.search(r'<ChasteBuildInfo>.*</ChasteBuildInfo>', sim.STDOUT['content'], re.DOTALL)
                 if match:
                     sim.version_info['versions'] = xmltodict.parse(match.group(0))['ChasteBuildInfo']

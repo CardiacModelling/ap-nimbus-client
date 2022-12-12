@@ -727,7 +727,6 @@ class TestSpreadsheetSimulationView:
 
     def test_all_data(self, logged_in_user, client, sim_all_data, tmp_path):
         response = client.get(f'/simulations/{sim_all_data.pk}/spreadsheet')
-        assert response.status_code == 200
         self.check_xlsx_files(response, tmp_path, 'all_data.xlsx')
 
     def test_wrong_version_info1(self, logged_in_user, client, simulation_points, tmp_path):
