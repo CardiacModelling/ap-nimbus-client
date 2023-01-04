@@ -39,7 +39,7 @@ PREDEF_MODELS = [
      'version': '(ventricular)',
      'ap_predict_model_call': '7'},
 
-    {'name': r"O'Hara-Rudy CiPA v1",
+    {'name': r"O'Hara-Rudy CiPA",
      'model_name_tag': 'ohara_rudy_cipa_v1_2017',
      'version': '(endo)',
      'ap_predict_model_call': '8'},
