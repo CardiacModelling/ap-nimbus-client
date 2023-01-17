@@ -28,7 +28,9 @@ django_email_from_addr=
 DJANGO_PORT=8000
 
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
+# PGPASSWORD is used by django while POSTGRES_PASSWORD is used by the postgress database, so these should have the same value
 #PYTHONUNBUFFERED=1
+POSTGRES_PASSWORD=
 PGPASSWORD=
 PGDATABASE=django_ap_nimbus_client
 PGPORT=5432
