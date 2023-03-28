@@ -42,3 +42,6 @@ AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080
 
 #Supply a brief sentence about where this instance is hosted (in html format, without newlines
 HOSTING_INFO=""
+
+# Status timeout, after this time the portal assumes something has gone wrong and stops trying to get a status update
+AP_PREDICT_STATUS_TIMEOUT=1000
