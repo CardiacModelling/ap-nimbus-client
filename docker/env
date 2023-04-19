@@ -44,7 +44,7 @@ AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080
 HOSTING_INFO=""
 
 # Mailto link for contacting maintiners
-CONTACT_MAILTO="mailto:"
+CONTACT_MAILTO=mailto:
 
 # Contact text for contacting maintiners
 CONTACT_TEXT=""
