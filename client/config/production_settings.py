@@ -186,6 +186,12 @@ AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000)
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
 
+# Mailto link for contacting maintiners
+CONTACT_MAILTO = os.environ.get('CONTACT_MAILTO', '')
+
+# Contact text for contacting maintiners
+CONTACT_TEXT = os.environ.get('CONTACT_TEXT', '')
+
 # prevent unwated HTTP access
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = False
