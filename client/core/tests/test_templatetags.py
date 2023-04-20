@@ -1,5 +1,10 @@
 import pytest
-from core.templatetags.ap_nimubs import can_edit, hosting_info, contact_mailto, contact_text
+from core.templatetags.ap_nimubs import (
+    can_edit,
+    contact_mailto,
+    contact_text,
+    hosting_info,
+)
 from django.conf import settings
 
 
