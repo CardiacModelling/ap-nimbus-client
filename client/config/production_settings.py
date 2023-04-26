@@ -186,6 +186,9 @@ AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000)
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
 
+#A brief statement that will be shown at the start of the privacy notice
+PIVACY_NOTICE = os.environ.get('PIVACY_NOTICE', '').replace('\\n', '<br/>')
+
 # Mailto link for contacting maintiners
 CONTACT_MAILTO = os.environ.get('CONTACT_MAILTO', '')
 

@@ -43,6 +43,9 @@ AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080
 #Supply a brief sentence about where this instance is hosted (in html format, without newlines
 HOSTING_INFO=""
 
+#A brief statement that will be shown at the start of the privacy notice
+PIVACY_NOTICE=""
+
 # Mailto link for contacting maintiners
 CONTACT_MAILTO=mailto:
 
