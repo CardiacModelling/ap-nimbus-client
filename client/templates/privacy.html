@@ -7,7 +7,9 @@
 <h1>Privacy notice</h1>
 
 <p>
-{% privacy_notice %}
+{% autoescape off %}
+  {% privacy_notice %}
+{% endautoescape %}
 </p>
 
 <p>
@@ -32,8 +34,11 @@
 </p>
 
 <h2>Web hosting</h2>
-<p>{% hosting_info %}</p>
-
+<p>
+{% autoescape off %}
+  {% hosting_info %}
+{% endautoescape %}
+</p>
 <h2>Who can see this information?</h2>
 
 <p>
