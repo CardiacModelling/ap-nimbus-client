@@ -24,3 +24,8 @@ def contact_mailto():
 @register.simple_tag(takes_context=False)
 def contact_text():
     return settings.CONTACT_TEXT
+
+
+@register.simple_tag(takes_context=False)
+def privacy_notice():
+    return settings.PIVACY_NOTICE

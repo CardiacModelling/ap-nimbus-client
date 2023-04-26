@@ -4,6 +4,7 @@ from core.templatetags.ap_nimubs import (
     contact_mailto,
     contact_text,
     hosting_info,
+    privacy_notice,
 )
 from django.conf import settings
 
@@ -30,3 +31,8 @@ def test_contact_mailto():
 @pytest.mark.django_db
 def test_contact_text():
     return contact_text() == settings.CONTACT_TEXT
+
+
+@pytest.mark.django_db
+def test_privacy_notice():
+    return privacy_notice() == settings.PIVACY_NOTICE

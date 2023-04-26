@@ -48,7 +48,7 @@ RUN apt-get remove --purge git -y && \
     rm -rf /var/lib/apt/lists/*
 
 # create folder to link data volue
-USER appredict
+#USER appredict
 RUN mkdir /opt/django/media
 
 # create database, migrate, deploy static files and (re-)start nginx and uwsgi
