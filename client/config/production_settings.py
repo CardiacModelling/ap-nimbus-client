@@ -181,7 +181,7 @@ FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHand
 
 # API location for AP manager
 AP_PREDICT_ENDPOINT = os.environ.get('AP_PREDICT_ENDPOINT', 'http://path_to_ap_manager')
-AP_PREDICT_STATUS_TIMEOUT = os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000)
+AP_PREDICT_STATUS_TIMEOUT = int(os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000))
 
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
