@@ -35,4 +35,4 @@ def test_contact_text():
 
 @pytest.mark.django_db
 def test_privacy_notice():
-    return privacy_notice() == settings.PIVACY_NOTICE
+    return privacy_notice() == settings.PRIVACY_NOTICE
