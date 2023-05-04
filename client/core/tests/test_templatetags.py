@@ -1,5 +1,5 @@
 import pytest
-from core.templatetags.ap_nimubs import (
+from core.templatetags.ap_nimbus import (
     can_edit,
     contact_mailto,
     contact_text,
@@ -35,4 +35,4 @@ def test_contact_text():
 
 @pytest.mark.django_db
 def test_privacy_notice():
-    return privacy_notice() == settings.PIVACY_NOTICE
+    return privacy_notice() == settings.PRIVACY_NOTICE

@@ -28,4 +28,4 @@ def contact_text():
 
 @register.simple_tag(takes_context=False)
 def privacy_notice():
-    return settings.PIVACY_NOTICE
+    return settings.PRIVACY_NOTICE
