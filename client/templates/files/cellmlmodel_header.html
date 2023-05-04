@@ -1,5 +1,5 @@
 {% load static %}
-{% load ap_nimubs %}
+{% load ap_nimbus %}
 
 {% if object.id %}
 <a href="{% url 'files:model_detail' object.id %}"><h1 id="entityname">Annotated CellML model: {{ object.name }}.</h1></a>
