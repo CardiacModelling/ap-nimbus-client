@@ -36,9 +36,10 @@ RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites
 
 # allow appredict to control uwsgi and nginx
 WORKDIR /opt/django/ap-nimbus-client/client
-RUN echo "Defaults!/usr/local/bin/uwsgi setenv" >> /etc/sudoers
-RUN echo "appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx" >> /etc/sudoers
-RUN echo "appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi" >> /etc/sudoers
+RUN echo '\nDefaults!/usr/local/bin/uwsgi setenv\n\
+appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx\n\
+appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi\n\
+appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log\n' >> /etc/sudoers
 
 # make sure appredict owns the django files
 RUN chown -R appredict:appredict /opt/django/
