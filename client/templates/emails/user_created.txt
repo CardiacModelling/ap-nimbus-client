@@ -1,14 +1,17 @@
 Dear {{ user.full_name }},
-welcome to the AP portal.
+
+Welcome to the AP portal.
 
 This web portal provides a user-interface, results database and results presentation for the Nottingham 'Action Potential Prediction' (ApPredict) open source cardiac electrophysiology simulator, for changes to the action potential under drug block of multiple ion channels.
 
 We have registered your details as follows.
-Email address: {{ user.email }}
-Full name: {{ user.full_name }}
-Institution: {{ user.institution }}
+
+Email address : {{ user.email }}
+Full name : {{ user.full_name }}
+Institution : {{ user.institution }}
 
 Privacy information and general terms can be found on: {{ protocol }}://{{ domain }}{% url 'privacy' %}
 
-best regads,
+Best regards,
+
 {{ admin_names }}
