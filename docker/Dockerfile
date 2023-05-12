@@ -31,15 +31,14 @@ RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 # get the client from git & install
 RUN git clone --recursive --branch master --depth 1 https://github.com/CardiacModelling/ap-nimbus-client.git
 RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
-RUN rm /etc/nginx/sites-enabled/*
-RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
+RUN rm /etc/nginx/sites-enabled/* && \
+    ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
 
 # allow appredict to control uwsgi and nginx
 WORKDIR /opt/django/ap-nimbus-client/client
 RUN echo '\nDefaults!/usr/local/bin/uwsgi setenv\n\
 appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx\n\
-appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi\n\
-appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log\n' >> /etc/sudoers
+appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi\n' >> /etc/sudoers
 
 # make sure appredict owns the django files
 RUN chown -R appredict:appredict /opt/django/

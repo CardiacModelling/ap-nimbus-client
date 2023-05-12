@@ -133,3 +133,5 @@ env.dev
 # allow lib and build in static files
 !client/static/build
 !/client/static/js/lib
+
+docker/fragments/nginx/

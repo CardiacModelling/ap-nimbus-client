@@ -54,3 +54,9 @@ CONTACT_TEXT=""
 
 # Status timeout, after this time the portal assumes something has gone wrong and stops trying to get a status update
 AP_PREDICT_STATUS_TIMEOUT=1000
+
+# Django logs, as ingested by client/config/production_settings.py
+# Log file location : Defaults to /opt/django/media/django.log
+#LOGGING_FILE_DJANGO=
+# Log level : Values constrained to DEBUG/INFO/WARNING/ERROR/CRITICAL. Defaults to INFO
+#LOGGING_LEVEL_DJANGO=DEBUG

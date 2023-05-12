@@ -201,3 +201,28 @@ SESSION_COOKIE_SECURE = False
 
 # unlimited persistent connections
 CONN_MAX_AGE = None
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+	'simple': {
+            'format': '%(levelname)s %(message)s'
+        }
+    },
+    'handlers': {
+        'file': {
+            'level': os.environ.get('LOGGING_LEVEL_DJANGO', 'INFO'),
+            'class': 'logging.FileHandler',
+            'filename': os.environ.get('LOGGING_FILE_DJANGO', '/opt/django/media/django.log'),
+            'formatter': 'verbose'
+        }
+    },
+    'root': {
+	'handlers': ['file'],
+        'level': os.environ.get('LOGGING_LEVEL_DJANGO', 'INFO')
+    }
+}

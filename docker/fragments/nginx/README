@@ -1,0 +1,5 @@
+# This directory is for allowing the use of the `include` directive in client_nginx.conf
+# From the outset, this directory can contain at least the following file(s) :
+#   1. logexcludeaddr_nginx.conf
+#
+# See https://ap-nimbus.readthedocs.io/en/latest/ for more information.
