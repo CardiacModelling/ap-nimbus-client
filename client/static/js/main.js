@@ -212,7 +212,7 @@ function renderGraph(pk){
                     pkpd_resultsOptions = {legend: {show: true, container: $('#legendContainerpkpd_results').get(0)},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
-                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Timepoint (h)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Timepoint (h)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'ADP90 (ms)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    selection: {mode: "xy"}
                     };
