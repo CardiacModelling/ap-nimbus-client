@@ -186,10 +186,8 @@ function renderGraph(pk){
                                 xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
-			    if ($('#intermediate_point_log_scale_set').length > 0){
-					adp90Options['xaxis']['mode'] = 'log';
                 };
-				if($('#intermediate_point_log_scale_set').length > 0){
+		if($('#intermediate_point_log_scale_set').length > 0){
                     adp90Options['xaxis']['mode'] = 'log';
                 };
                 if('adp90_y_scale' in graphData){  // if we are given a scale, apply it
