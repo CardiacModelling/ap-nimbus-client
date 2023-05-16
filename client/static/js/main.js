@@ -535,12 +535,10 @@ $(document).ready(function(){
         $('#id_minimum_concentration').attr('required', div_0_vis);
         $('#id_maximum_concentration').attr('required', div_0_vis);
         $('#id_intermediate_point_count').attr('required', div_0_vis);
-        $('#id_intermediate_point_log_scale').attr('required', div_0_vis);
 
         $('#id_minimum_concentration').attr('disabled', !div_0_vis);
         $('#id_maximum_concentration').attr('disabled', !div_0_vis);
         $('#id_intermediate_point_count').attr('disabled', !div_0_vis);
-        $('#id_intermediate_point_log_scale').attr('disabled', !div_0_vis);
 
         // ensabled for input of concentration points, to disable checking duplicate when we're not using it and set required on 1st
         div_1_vis = $('#div_pk_or_concs_1').css('visibility') == 'visible'
