@@ -207,6 +207,7 @@ function renderGraph(pk){
 
                 if(graphData['pkpd_results'].length > 0){
                     // show graph, so we can draw
+					$('#pkpd_results').prop('disabled', false);
                     $('#pkpd_results').click();
 
                     pkpd_resultsOptions = {legend: {show: true, container: $('#legendContainerpkpd_results').get(0)},
@@ -234,6 +235,7 @@ function renderGraph(pk){
 
                 if(graphData['qnet'].length > 0){
                     // show graph, so we can draw
+					$('#qnet').prop('disabled', false);
                     $('#qnet').click();
 
                     qnetOptions = {legend: {show: false},
@@ -288,6 +290,7 @@ function renderGraph(pk){
                 });
 
                 // now select adp90 graph
+				$('#adp90').prop('disabled', false);
                 $('#adp90').click();
             }
     });
