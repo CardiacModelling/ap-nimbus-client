@@ -183,9 +183,11 @@ function renderGraph(pk){
                 })
                 adp90Options = {legend: {show: false},
                                 grid: {hoverable: true, clickable: true},
-                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
+                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
+			    if ($('#intermediate_point_log_scale_set').length > 0){
+					adp90Options['xaxis']['mode'] = 'log';
                 };
                 if('adp90_y_scale' in graphData){  // if we are given a scale, apply it
                     $.extend(adp90Options['yaxis'], adp90Options['yaxis'], graphData['adp90_y_scale'] );
