@@ -204,7 +204,6 @@ function renderGraph(pk){
                 $('#adp90-graph').bind('plotselected', (event, ranges) => zoom(ranges, adp90Options, (opts) => plotQnet('#adp90-graph', 'adp90', adp90Options)));
                 $('#adp90-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
                 $('#adp90-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'Δ APD90: ', ' %', '#hoverdata'));
-				$('#qnet').show();
 
                 if(graphData['pkpd_results'].length > 0){
                     // show graph, so we can draw
@@ -253,6 +252,7 @@ function renderGraph(pk){
                     $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
+					
 					$('#qnet').show();
                 }
                 plotTraces(tracesOptions);
