@@ -253,7 +253,7 @@ function renderGraph(pk){
                     $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
-					$('#qnet').show();
+//					$('#qnet').show();
                 }else{
                     // hide qnet button
                     $('#qnet').hide();
@@ -292,6 +292,7 @@ function renderGraph(pk){
 
                 // now select adp90 graph
                 $('#adp90').click();
+				$('#adp90').show();
             }
     });
 }
