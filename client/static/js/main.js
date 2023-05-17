@@ -187,7 +187,7 @@ function renderGraph(pk){
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
                 };
-		if($('#intermediate_point_log_scale_set').length > 0){
+                if($('#intermediate_point_log_scale_set').length > 0){
                     adp90Options['xaxis']['mode'] = 'log';
                 };
                 if('adp90_y_scale' in graphData){  // if we are given a scale, apply it
@@ -243,10 +243,14 @@ function renderGraph(pk){
                     qnetOptions = {legend: {show: false},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
-                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'qNet (C/F)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    selection: {mode: "xy"}
                     };
+                    if($('#intermediate_point_log_scale_set').length > 0){
+                        qnetOptions['xaxis']['mode'] = 'log';
+                    };
+					
                     if('qnet_y_scale' in graphData){  // if we are given a scale, apply it
                         $.extend(qnetOptions['yaxis'], qnetOptions['yaxis'], graphData['qnet_y_scale'] );
                     }
