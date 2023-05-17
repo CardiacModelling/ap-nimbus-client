@@ -183,9 +183,12 @@ function renderGraph(pk){
                 })
                 adp90Options = {legend: {show: false},
                                 grid: {hoverable: true, clickable: true},
-                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
+                                xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05, },
                                 yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'Δ APD90 (%)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                 selection: {mode: "xy"}
+                };
+                if($('#intermediate_point_log_scale_set').length > 0){
+                    adp90Options['xaxis']['mode'] = 'log';
                 };
                 if('adp90_y_scale' in graphData){  // if we are given a scale, apply it
                     $.extend(adp90Options['yaxis'], adp90Options['yaxis'], graphData['adp90_y_scale'] );
@@ -227,6 +230,7 @@ function renderGraph(pk){
                     $('#pkpd_results-graph').bind('plotselected', (event, ranges) => zoom(ranges, pkpd_resultsOptions, (opts) => plotQnet('#pkpd_results-graph', 'pkpd_results', pkpd_resultsOptions)));
                     $('#pkpd_results-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
                     $('#pkpd_results-graph').mouseout((event)=>hoverOut('Timepoint: ', ' h', 'ADP90: ', ' ms', '#hoverdata'));
+					$('#pkpd_results').show();
                 }else{
                     // hide qnet button
                     $('#pkpd_results').hide();
@@ -239,10 +243,14 @@ function renderGraph(pk){
                     qnetOptions = {legend: {show: false},
                                    series: {lines: {show: true, lineWidth: 2}, points: {show: true}},
                                    grid: {hoverable: true, clickable: true},
-                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', mode: "log", showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
+                                   xaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'bottom', axisLabel: 'Concentration (μM)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    yaxis: {axisLabelUseCanvas: true, axisLabelPadding: 10, position: 'left', axisLabel: 'qNet (C/F)', showTicks: false, showTickLabels: "all", autoscaleMargin: 0.05},
                                    selection: {mode: "xy"}
                     };
+                    if($('#intermediate_point_log_scale_set').length > 0){
+                        qnetOptions['xaxis']['mode'] = 'log';
+                    };
+					
                     if('qnet_y_scale' in graphData){  // if we are given a scale, apply it
                         $.extend(qnetOptions['yaxis'], qnetOptions['yaxis'], graphData['qnet_y_scale'] );
                     }
@@ -251,9 +259,7 @@ function renderGraph(pk){
                     $('#qnet-graph').bind('plotselected', (event, ranges) => zoom(ranges, qnetOptions, (opts) => plotQnet('#qnet-graph', 'qnet', qnetOptions)));
                     $('#qnet-graph').bind('plothover', (event, pos, item) => hover(event, pos, item, 'Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
                     $('#qnet-graph').mouseout((event)=>hoverOut('Conc.: ', ' µM', 'qNet: ', ' C/F', '#hoverdata'));
-                }else{
-                    // hide qnet button
-                    $('#qnet').hide();
+                    $('#qnet').show();
                 }
                 plotTraces(tracesOptions);
                 // make sure the legend does not get replotted
@@ -289,6 +295,7 @@ function renderGraph(pk){
 
                 // now select adp90 graph
                 $('#adp90').click();
+				$('#adp90').show();
             }
     });
 }
@@ -534,12 +541,10 @@ $(document).ready(function(){
         $('#id_minimum_concentration').attr('required', div_0_vis);
         $('#id_maximum_concentration').attr('required', div_0_vis);
         $('#id_intermediate_point_count').attr('required', div_0_vis);
-        $('#id_intermediate_point_log_scale').attr('required', div_0_vis);
 
         $('#id_minimum_concentration').attr('disabled', !div_0_vis);
         $('#id_maximum_concentration').attr('disabled', !div_0_vis);
         $('#id_intermediate_point_count').attr('disabled', !div_0_vis);
-        $('#id_intermediate_point_log_scale').attr('disabled', !div_0_vis);
 
         // ensabled for input of concentration points, to disable checking duplicate when we're not using it and set required on 1st
         div_1_vis = $('#div_pk_or_concs_1').css('visibility') == 'visible'
