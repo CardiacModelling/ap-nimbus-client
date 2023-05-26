@@ -23,11 +23,3 @@ class Command(BaseCommand):
                                 is_superuser=True,
                                 is_staff=True,
                                 is_active=True)
-        else:
-            user = User.objects.get(email=email)
-            user.institution = institution
-            user.password = password
-            user.is_superuser = True
-            user.is_staff = True
-            user.is_active = True
-            user.save()
