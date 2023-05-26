@@ -147,18 +147,19 @@ def create_admin(apps, schema_editor):
     # version than this migration expects. We use the historical version.
     User = apps.get_model('accounts', 'User')
     email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
-    full_name = os.environ.get('DJANGO_SUPERUSER_USERNAME', email)
-    institution = os.environ.get('DJANGO_SUPERUSER_INSTITUTION', 'unknown')
-    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
-    User.objects.create(
-            email=email,
-            full_name=full_name,
-            institution=institution,
-            password=make_password(password),
-            is_superuser=True,
-            is_staff=True,
-            is_active=True,
-    )
+    if not User.objects.filter(email=email).exists():
+        full_name = os.environ.get('DJANGO_SUPERUSER_USERNAME', email)
+        institution = os.environ.get('DJANGO_SUPERUSER_INSTITUTION', 'unknown')
+        password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+        User.objects.create(
+                email=email,
+                full_name=full_name,
+                institution=institution,
+                password=make_password(password),
+                is_superuser=True,
+                is_staff=True,
+                is_active=True,
+        )
 
 
 def create_predefined_currents(apps, schema_editor):
