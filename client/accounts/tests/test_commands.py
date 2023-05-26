@@ -17,8 +17,7 @@ def test_create_admin():
     user = User.objects.get(email='x@y.com')
     assert user.institution == 'notts'
     assert check_password('password', user.password)
-    
+
     assert User.objects.filter(email='x@y.com').count() == 1
     call_command('create_admin')
     assert User.objects.filter(email='x@y.com').count() == 1
-    
