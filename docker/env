@@ -4,9 +4,9 @@
 DJANGO_SECRET_KEY=
 
 # please replace the email by the address of your first superuser, which will be able to long into django as admin
+# Also include a password
+Please note that the password will NOT be reset in case the superuser already exists. If you have lust the superuse password, you can use the normal reset functionality
 DJANGO_SUPERUSER_EMAIL=
-
-# please pick a secure password for the superuser
 DJANGO_SUPERUSER_PASSWORD=
 
 # please replace with the name of your institution
