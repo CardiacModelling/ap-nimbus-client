@@ -3,14 +3,14 @@
 # please pick a secret key a long random string is ideal
 DJANGO_SECRET_KEY=
 
-# please replace the email by the address of your first superuser, which will be able to long into django as admin
-# Also include a password
-Please note that the password will NOT be reset in case the superuser already exists. If you have lust the superuse password, you can use the normal reset functionality
+# Please provide the full set of Django superuser details below prior to application initiation, to
+# allow this sole superuser to log in on first boot.
+# If you wish to change the Django superuser after application initialisation, please read the
+# information in https://ap-nimbus.readthedocs.io/en/latest/running/client-direct/index.html#environment-variables
 DJANGO_SUPERUSER_EMAIL=
+DJANGO_SUPERUSER_FULLNAME=
 DJANGO_SUPERUSER_PASSWORD=
-
-# please replace with the name of your institution
-DJANGO_SUPERUSER_INSTITUTION=Nottingham
+DJANGO_SUPERUSER_INSTITUTION=
 
 # this is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
 subfolder=

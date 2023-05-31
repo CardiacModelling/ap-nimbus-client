@@ -148,7 +148,7 @@ def create_admin(apps, schema_editor):
     User = apps.get_model('accounts', 'User')
     email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
     if not User.objects.filter(email=email).exists():
-        full_name = os.environ.get('DJANGO_SUPERUSER_USERNAME', email)
+        full_name = os.environ.get('DJANGO_SUPERUSER_FULLNAME', email)
         institution = os.environ.get('DJANGO_SUPERUSER_INSTITUTION', 'unknown')
         password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
         User.objects.create(
