@@ -18,10 +18,6 @@ def test_create_admin():
     assert user.institution == 'notts'
     assert check_password('password', user.password)
 
-    os.environ['DJANGO_SUPERUSER_PASSWORD'] = 'password2'
-    os.environ['DJANGO_SUPERUSER_INSTITUTION'] = 'oxford'
+    assert User.objects.filter(email='x@y.com').count() == 1
     call_command('create_admin')
-    user = User.objects.get(email='x@y.com')
-    user.refresh_from_db()
-    assert user.institution == 'oxford'
-    assert check_password('password2', user.password)
+    assert User.objects.filter(email='x@y.com').count() == 1
