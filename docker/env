@@ -24,9 +24,6 @@ smtp_server=
 # this email address is used as the from address in any emails sent by the client
 django_email_from_addr=
 
-# port to run django on
-DJANGO_PORT=8000
-
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
 # PGPASSWORD is used by django while POSTGRES_PASSWORD is used by the postgress database, so these should have the same value
 #PYTHONUNBUFFERED=1
