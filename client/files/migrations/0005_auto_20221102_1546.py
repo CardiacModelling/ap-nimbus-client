@@ -16,7 +16,7 @@ PREDEF_MODELS = [
 
     {'name': 'Mahajan et al.',
      'model_name_tag': 'MahajanShiferaw2008_units',
-     'version': '',
+     'version': '(endo)',
      'ap_predict_model_call': '3'},
 
     {'name': 'Hund, Rudy',
@@ -29,7 +29,7 @@ PREDEF_MODELS = [
      'version': '(epi)',
      'ap_predict_model_call': '5'},
 
-    {'name': r"O'Hara-Rudy",
+    {'name': r"O'Hara et al.",
      'model_name_tag': 'ohara_rudy_2011_endo',
      'version': '(endo)',
      'ap_predict_model_call': '6'},
@@ -53,6 +53,7 @@ def correct_predefined_models(apps, schema_editor):
         model.name = predef_model['name']
         model.model_name_tag = predef_model['model_name_tag']
         model.version = predef_model['version']
+        model.save()
 
 
 class Migration(migrations.Migration):
