@@ -31,7 +31,7 @@ POSTGRES_PASSWORD=
 PGPASSWORD=
 PGDATABASE=django_ap_nimbus_client
 PGPORT=5432
-PGHOST=ap-nimbus-postgres
+PGHOST=name-postgres
 PGUSER=postgres
 
 # Location of the AP predict endpoint (usually in your docker network, but could be set to be elsewhere)
