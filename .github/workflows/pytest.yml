@@ -30,9 +30,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip wheel
-        pip install flake8 pytest pytest-django
-        pip install -r requirements/requirements.txt
-        pip install -r requirements/dev.txt
+        python -m pip install flake8 pytest pytest-django
+        python -m pip install -r requirements/requirements.txt
+        python -m pip install -r requirements/dev.txt
+    - name: List installed dependency versions
+      run: |
+        python -m pip list
     - name: Lint with flake8
       run: |
         python -m flake8 client
