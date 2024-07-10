@@ -30,5 +30,5 @@ jobs:
           pull: true
           push: true
           tags: |
-            cardiacmodelling/ap-nimbus-client:2.0.0
-            cardiacmodelling/ap-nimbus-client:latest
+            cardiacmodelling/ap-nimbus-client-direct:2.0.0
+            cardiacmodelling/ap-nimbus-client-direct:latest
