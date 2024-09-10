@@ -25,7 +25,7 @@
         </li>
     {% else %}
       <li><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a></li>
-      {% if not AUTH_USE_LDAP %}
+      {% if not AP_PREDICT_LDAP %}
         <li><a href="{% url 'accounts:register' %}">Register</a></li>
       {% endif %}
     {% endif %}

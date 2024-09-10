@@ -21,7 +21,7 @@ class RegistrationForm(auth_forms.UserCreationForm):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        if settings.AUTH_USE_LDAP:
+        if settings.AP_PREDICT_LDAP:
             self.add_error(None, 'Registration is disabled when using LDAP')
         return super().clean()
 

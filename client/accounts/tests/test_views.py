@@ -69,12 +69,12 @@ def test_register(client, settings):
 
     assert not User.objects.filter(email=data['email']).exists()
 
-    settings.AUTH_USE_LDAP = True
+    settings.AP_PREDICT_LDAP = True
     response = client.post('/accounts/register/', data=data)
     assert 'Registration is disabled when using LDAP' in str(response.content)
     assert not User.objects.filter(email=data['email'])
 
-    settings.AUTH_USE_LDAP = False
+    settings.AP_PREDICT_LDAP = False
     client.post('/accounts/register/', data=data)
     assert User.objects.filter(email=data['email']).exists()
     assert len(mail.outbox) == num_mails + 1

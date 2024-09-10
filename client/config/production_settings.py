@@ -204,8 +204,8 @@ SESSION_COOKIE_SECURE = False
 # unlimited persistent connections
 CONN_MAX_AGE = None
 
-AUTH_USE_LDAP = bool(int(os.environ.get("AUTH_USE_LDAP", "0")))
-if AUTH_USE_LDAP:
+AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP", "0")))
+if AP_PREDICT_LDAP:
     AUTHENTICATION_BACKENDS = [
         "django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
@@ -217,8 +217,6 @@ if AUTH_USE_LDAP:
     user_group = os.environ.get("AUTH_LDAP_USER_GROUP", None)
     admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP", None)
     group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH", None)
-
-    
 
     if group_search is not None:
         AUTH_LDAP_GROUP_SEARCH = LDAPSearch(

@@ -4,5 +4,5 @@ from django.conf import settings
 def common(request):
     return {
         'INFO_MESSAGES': messages.get_messages(request), 
-        'AUTH_USE_LDAP': settings.AUTH_USE_LDAP
+        'AP_PREDICT_LDAP': settings.AP_PREDICT_LDAP
     }
