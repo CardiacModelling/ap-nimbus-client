@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 from .production_settings import *  # noqa
 from .production_settings import BASE_DIR
@@ -8,6 +11,16 @@ from .production_settings import BASE_DIR
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "OPTIONS": {
+            # 'timeout': 20,
+        },
+    }
+}
 
 TEMPLATES = [
     {
@@ -25,5 +38,19 @@ TEMPLATES = [
         },
     },
 ]
+
+LOGGING = {
+   "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+}
 
 

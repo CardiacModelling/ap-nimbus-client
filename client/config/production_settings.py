@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 import os
 from pathlib import Path
+import ldap
+from django_auth_ldap.config import LDAPSearch, GroupOfNamesType, LDAPSearchUnion
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -201,3 +203,51 @@ SESSION_COOKIE_SECURE = False
 
 # unlimited persistent connections
 CONN_MAX_AGE = None
+
+AUTH_USE_LDAP = bool(int(os.environ.get("AUTH_USE_LDAP", "0")))
+if AUTH_USE_LDAP:
+    AUTHENTICATION_BACKENDS = [
+        "django_auth_ldap.backend.LDAPBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+    AUTH_LDAP_SERVER_URI = os.environ.get(
+        "AUTH_LDAP_SERVER_URI", "ldap://ldap.forumsys.com:389"
+    )
+
+    user_group = os.environ.get("AUTH_LDAP_USER_GROUP", None)
+    admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP", None)
+    group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH", None)
+
+    
+
+    if group_search is not None:
+        AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+            group_search, ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+        )
+        AUTH_LDAP_GROUP_TYPE = GroupOfNamesType()
+
+    if user_group is not None and group_search is not None:
+        AUTH_LDAP_REQUIRE_GROUP = user_group
+
+    if admin_group is not None and group_search is not None:
+        AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+            "is_staff": admin_group,
+            "is_superuser": admin_group,
+        }
+
+    AUTH_LDAP_BIND_DN = os.environ.get(
+        "AUTH_LDAP_BIND_DN", "cn=read-only-admin,dc=example,dc=com"
+    )
+    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD", "password")
+    search_base = os.environ.get(
+        "AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com"
+    )
+    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(uid=%(user)s)")
+    searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
+    for base_index in [2, 3, 4, 5]:
+        search_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}", None)
+        if search_base is not None:
+            searches.append(
+                LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)
+            )
+    AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(*searches)
