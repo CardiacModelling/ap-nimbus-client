@@ -51,3 +51,36 @@ CONTACT_TEXT=""
 
 # Status timeout, after this time the portal assumes something has gone wrong and stops trying to get a status update
 AP_PREDICT_STATUS_TIMEOUT=1000
+
+# LDAP settings (set AP_PREDICT_LDAP=1 to enable, none of the other settings are required if this is not set)
+AP_PREDICT_LDAP=0
+
+# LDAP server URI
+AUTH_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389
+
+# distinguished name of an authorized user
+AUTH_LDAP_BIND_DN=cn=read-only-admin,dc=example,dc=com
+
+# password for the authorized user
+AUTH_LDAP_BIND_PASSWORD=password
+
+# where to perform the search
+AUTH_LDAP_SEARCH_BASE=dc=example,dc=com
+
+# additional search bases (optional)
+AUTH_LDAP_SEARCH_BASE2=
+AUTH_LDAP_SEARCH_BASE3=
+AUTH_LDAP_SEARCH_BASE4=
+AUTH_LDAP_SEARCH_BASE5=
+
+# search filter based on authenticated username
+AUTH_LDAP_SEARCH_FILTER=uid=%(user)s
+
+# LDAP group search (optional, e.g. ou=mathematicians,dc=example,dc=com). An LDAPSearch object that identifies the set of relevant group objects
+AUTH_LDAP_GROUP_SEARCH=
+
+# Users must be in this group to be able to log in (optional, e.g. cn=users,ou=mathematicians,dc=example,dc=com)
+AUTH_LDAP_USER_GROUP=
+
+# Users in this group will log in as superusers (optional, e.g. cn=admin,ou=mathematicians,dc=example,dc=com)
+AUTH_LDAP_ADMIN_GROUP=
