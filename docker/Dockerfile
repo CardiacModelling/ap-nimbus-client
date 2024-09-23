@@ -21,7 +21,7 @@ RUN apt-get install -y --no-install-recommends \
     uwsgi \
     uwsgi-plugin-python3 \
     libpcre3-dev \
-    libldap2-dev libsasl2-dev slapd ldap-utils
+    libldap2-dev libsasl2-dev \
     sudo && \
     rm -rf /var/lib/apt/lists/*
 
