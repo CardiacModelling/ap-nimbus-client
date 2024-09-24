@@ -3,6 +3,7 @@ services:
     image: ap-nimbus-client-direct
     depends_on:
       - name-postgres
+      - name-app-manager
     build:
       context: ../ 
       dockerfile: ./docker/Dockerfile
