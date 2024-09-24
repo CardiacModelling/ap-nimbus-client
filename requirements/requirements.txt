@@ -10,3 +10,4 @@ jsonschema==4.22.0
 xmltodict==0.13.0
 numpy>=1.24.4,<2.0
 django-auth-ldap==4.8.0
+python-dotenv==1.0.1

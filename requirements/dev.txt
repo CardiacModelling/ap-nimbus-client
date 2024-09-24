@@ -8,4 +8,3 @@ pytest-httpx>=0.22.0,<0.30
 pytest-asyncio==0.23.7
 openpyxl==3.1.4
 pandas>=1.5.2,<2.3
-python-dotenv==1.0.1
