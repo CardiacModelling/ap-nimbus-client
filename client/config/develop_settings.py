@@ -12,14 +12,16 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-        "OPTIONS": {
-            # 'timeout': 20,
-        },
-    }
+AP_PREDICT_SQLITE = bool(int(os.environ.get("AP_PREDICT_SQLITE", "0")))
+if AP_PREDICT_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+            "OPTIONS": {
+                # 'timeout': 20,
+            },
+        }
 }
 
 TEMPLATES = [

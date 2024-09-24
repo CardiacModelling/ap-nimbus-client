@@ -1,0 +1,25 @@
+services:
+  name-client:
+    image: ap-nimbus-client-direct
+    build:
+      context: ./ 
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    volumes:
+      - volume-client:/opt/django/media
+    env_file:
+     - .env
+  name-postgres:
+    image: postgres:14.1-bullseye
+    restart: unless-stopped
+    volumes:
+      - volume-postgres:/var/lib/postgresql/data
+    env_file:
+     - .env
+
+
+volumes:
+  volume-client:
+  volume-postgres:
