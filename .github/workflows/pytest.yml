@@ -29,6 +29,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        apt-get update
+        apt-get install -y libldap2-dev libsasl2-dev
         python -m pip install --upgrade pip wheel
         python -m pip install flake8 pytest pytest-django
         python -m pip install -r requirements/requirements.txt
