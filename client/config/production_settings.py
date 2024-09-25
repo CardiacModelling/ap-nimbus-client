@@ -13,112 +13,120 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
+import ldap
+from django_auth_ldap.config import GroupOfNamesType, LDAPSearch, LDAPSearchUnion
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 APPREDICT_LOOKUP_TABLE_MANIFEST = os.environ.get(
-    'APPREDICT_LOOKUP_TABLE_MANIFEST',
-    'https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt'
+    "APPREDICT_LOOKUP_TABLE_MANIFEST",
+    "https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt",
 )
 
 # running in subfolder
-subfolder = os.environ.get('subfolder', None)
-FORCE_SCRIPT_NAME = '/%s/' % subfolder if subfolder else ''
-AUTH_USER_MODEL = 'accounts.User'
+subfolder = os.environ.get("subfolder", None)
+FORCE_SCRIPT_NAME = "/%s/" % subfolder if subfolder else ""
+AUTH_USER_MODEL = "accounts.User"
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME
-LOGIN_URL = ('%s/accounts/login/' % FORCE_SCRIPT_NAME).replace('//', '/')
+LOGIN_URL = ("%s/accounts/login/" % FORCE_SCRIPT_NAME).replace("//", "/")
 
 # email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('smtp_server', 'localhost')
-SERVER_EMAIL = os.environ.get('django_email_from_addr', os.environ['DJANGO_SUPERUSER_EMAIL'])
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("smtp_server", "localhost")
+SERVER_EMAIL = os.environ.get(
+    "django_email_from_addr", os.environ["DJANGO_SUPERUSER_EMAIL"]
+)
 DEFAULT_FROM_EMAIL = SERVER_EMAIL
-WELCOME_SUBJECT = os.environ.get('WELCOME_SUBJECT', '[AP Portal] Welcome')
+WELCOME_SUBJECT = os.environ.get("WELCOME_SUBJECT", "[AP Portal] Welcome")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 
 # Application definition
 
 DJANGO_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
 LOCAL_APPS = [
-    'core',
-    'accounts',
-    'files',
-    'simulations',
+    "core",
+    "accounts",
+    "files",
+    "simulations",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 # Cache templates for production
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': False,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'core.context_processors.common',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": False,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "core.context_processors.common",
             ],
-            'loaders': [
-                ('django.template.loaders.cached.Loader', [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                ]),
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                    ],
+                ),
             ],
         },
     },
 ]
 
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['PGDATABASE'],
-        'USER': os.environ['PGUSER'],
-        'PASSWORD': os.environ['PGPASSWORD'],
-        'HOST': os.environ['PGHOST'],
-        'PORT': os.environ['PGPORT'],
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["PGDATABASE"],
+        "USER": os.environ["PGUSER"],
+        "PASSWORD": os.environ["PGPASSWORD"],
+        "HOST": os.environ["PGHOST"],
+        "PORT": os.environ["PGPORT"],
     }
 }
 
@@ -128,16 +136,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -145,9 +153,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = False
 
@@ -157,43 +165,43 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = ('%s/static/' % FORCE_SCRIPT_NAME).replace('//', '/')
-STATIC_ROOT = '/opt/django/staticfiles'
+STATIC_URL = ("%s/static/" % FORCE_SCRIPT_NAME).replace("//", "/")
+STATIC_ROOT = "/opt/django/staticfiles"
 STATICFILES_DIRS = [
-    str(BASE_DIR / 'static'),
+    str(BASE_DIR / "static"),
 ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Use forwarded headers for anything that requires a hostname.
 USE_X_FORWARDED_HOST = True
 
 
 # Media files (Uploaded files)
-MEDIA_URL = FORCE_SCRIPT_NAME + 'media/'
-MEDIA_ROOT = '/opt/django/media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + "media/"
+MEDIA_ROOT = "/opt/django/media/"
 
 # Force using temporary fiile for upload
-FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
+FILE_UPLOAD_HANDLERS = ["django.core.files.uploadhandler.TemporaryFileUploadHandler"]
 
 # API location for AP manager
-AP_PREDICT_ENDPOINT = os.environ.get('AP_PREDICT_ENDPOINT', 'http://path_to_ap_manager')
-AP_PREDICT_STATUS_TIMEOUT = int(os.environ.get('AP_PREDICT_STATUS_TIMEOUT', 1000))
+AP_PREDICT_ENDPOINT = os.environ.get("AP_PREDICT_ENDPOINT", "http://path_to_ap_manager")
+AP_PREDICT_STATUS_TIMEOUT = int(os.environ.get("AP_PREDICT_STATUS_TIMEOUT", 1000))
 
 # Hosting information for the privacy policy
-HOSTING_INFO = os.environ.get('HOSTING_INFO', '')
+HOSTING_INFO = os.environ.get("HOSTING_INFO", "")
 
 # A brief statement that will be shown at the start of the privacy notice
-PRIVACY_NOTICE = os.environ.get('PRIVACY_NOTICE', '').replace('\\n', '<br/>')
+PRIVACY_NOTICE = os.environ.get("PRIVACY_NOTICE", "").replace("\\n", "<br/>")
 
 # Mailto link for contacting maintiners
-CONTACT_MAILTO = os.environ.get('CONTACT_MAILTO', '')
+CONTACT_MAILTO = os.environ.get("CONTACT_MAILTO", "")
 
 # Contact text for contacting maintiners
-CONTACT_TEXT = os.environ.get('CONTACT_TEXT', '')
+CONTACT_TEXT = os.environ.get("CONTACT_TEXT", "")
 
 # prevent unwated HTTP access
 CSRF_COOKIE_SECURE = True
@@ -201,3 +209,48 @@ SESSION_COOKIE_SECURE = False
 
 # unlimited persistent connections
 CONN_MAX_AGE = None
+
+AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP", "0")))
+if AP_PREDICT_LDAP:
+    AUTHENTICATION_BACKENDS = [
+        "django_auth_ldap.backend.LDAPBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+    AUTH_LDAP_SERVER_URI = os.environ.get(
+        "AUTH_LDAP_SERVER_URI", "ldap://ldap.forumsys.com:389"
+    )
+    AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
+
+    user_group = os.environ.get("AUTH_LDAP_USER_GROUP", None)
+    admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP", None)
+    group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH", None)
+
+    if group_search is not None:
+        AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+            group_search, ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+        )
+        AUTH_LDAP_GROUP_TYPE = GroupOfNamesType()
+
+    if user_group is not None and group_search is not None:
+        AUTH_LDAP_REQUIRE_GROUP = user_group
+
+    if admin_group is not None and group_search is not None:
+        AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+            "is_staff": admin_group,
+            "is_superuser": admin_group,
+        }
+
+    AUTH_LDAP_BIND_DN = os.environ.get(
+        "AUTH_LDAP_BIND_DN", "cn=read-only-admin,dc=example,dc=com"
+    )
+    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD", "password")
+    search_base = os.environ.get(
+        "AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com"
+    )
+    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(uid=%(user)s)")
+    searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
+    for base_index in [2, 3, 4, 5]:
+        search_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}", None)
+        if search_base is not None:
+            searches.append(LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter))
+    AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(*searches)

@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth import forms as auth_forms
 
 from .emails import send_user_creation_email
@@ -18,6 +19,11 @@ class RegistrationForm(auth_forms.UserCreationForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
+
+    def clean(self):
+        if settings.AP_PREDICT_LDAP:
+            self.add_error(None, 'Registration is disabled when using LDAP')
+        return super().clean()
 
     def save(self, commit=True):
         user = super().save(commit=commit)

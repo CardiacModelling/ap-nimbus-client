@@ -1,0 +1,34 @@
+services:
+  name-client:
+    image: ap-nimbus-client-direct
+    depends_on:
+      - name-postgres
+      - name-app-manager
+    build:
+      context: ../ 
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    volumes:
+      - volume-client:/opt/django/media
+    env_file:
+      - ../.env
+  name-app-manager:
+    image: cardiacmodelling/ap-nimbus-app-manager:1.0.0
+    restart: unless-stopped
+    volumes:
+      - volume-app-manager:/home/appredict/apps/app-manager
+  name-postgres:
+    image: postgres:14.1-bullseye
+    restart: unless-stopped
+    volumes:
+      - volume-postgres:/var/lib/postgresql/data
+    env_file:
+      - ../.env
+
+
+volumes:
+  volume-client:
+  volume-postgres:
+  volume-app-manager:
