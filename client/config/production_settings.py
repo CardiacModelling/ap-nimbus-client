@@ -12,8 +12,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 import os
 from pathlib import Path
+
 import ldap
-from django_auth_ldap.config import LDAPSearch, GroupOfNamesType, LDAPSearchUnion
+from django_auth_ldap.config import GroupOfNamesType, LDAPSearch, LDAPSearchUnion
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

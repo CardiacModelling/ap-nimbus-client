@@ -1,9 +1,9 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth import forms as auth_forms
 
 from .emails import send_user_creation_email
 from .models import User
-from django.conf import settings
 
 
 class RegistrationForm(auth_forms.UserCreationForm):
