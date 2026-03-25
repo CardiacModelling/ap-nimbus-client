@@ -2,33 +2,50 @@ services:
   name-client:
     image: ap-nimbus-client-direct
     depends_on:
-      - name-postgres
-      - name-app-manager
+      name-postgres:
+        condition: service_healthy
+      name-app-manager:
+        condition: service_started
     build:
-      context: ../ 
+      context: ../
       dockerfile: ./docker/Dockerfile
     ports:
       - "80:80"
     restart: unless-stopped
     volumes:
-      - volume-client:/opt/django/media
+      - volume-ap-nimbus-client:/opt/django/media
     env_file:
       - ../.env
+    networks:
+      - ap-nimbus-network
+
   name-app-manager:
-    image: cardiacmodelling/ap-nimbus-app-manager:1.0.0
+    image: cardiacmodelling/ap-nimbus-app-manager:2.0.0
     restart: unless-stopped
     volumes:
-      - volume-app-manager:/home/appredict/apps/app-manager
+      - volume-ap-nimbus-app-manager:/home/appredict/apps/app-manager
+    networks:
+      - ap-nimbus-network
+
   name-postgres:
     image: postgres:14.1-bullseye
     restart: unless-stopped
     volumes:
-      - volume-postgres:/var/lib/postgresql/data
+      - volume-ap-nimbus-postgres:/var/lib/postgresql/data
     env_file:
       - ../.env
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ap-nimbus-network
 
 volumes:
-  volume-client:
-  volume-postgres:
-  volume-app-manager:
+  volume-ap-nimbus-client:
+  volume-ap-nimbus-postgres:
+  volume-ap-nimbus-app-manager:
+
+networks:
+  ap-nimbus-network:
