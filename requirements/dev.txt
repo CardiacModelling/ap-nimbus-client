@@ -6,5 +6,6 @@ pytest-django==4.8.0
 model-bakery==1.18.1
 pytest-httpx>=0.22.0,<0.30
 pytest-asyncio==0.23.7
+fakeldap==0.6.6
 openpyxl==3.1.4
 pandas>=1.5.2,<2.3
