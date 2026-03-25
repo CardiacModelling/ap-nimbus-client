@@ -1,12 +1,12 @@
+from unittest.mock import patch
+
+import ldap
 import pytest
 from accounts.models import User
 from django.contrib.auth import authenticate
 from django.test import override_settings
 from django_auth_ldap.config import LDAPSearch
 from fakeldap import MockLDAP
-from unittest.mock import patch
-
-import ldap
 
 
 @pytest.fixture
