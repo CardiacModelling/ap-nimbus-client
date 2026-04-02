@@ -217,7 +217,7 @@ if AP_PREDICT_LDAP:
         "django.contrib.auth.backends.ModelBackend",
     ]
     AUTH_LDAP_SERVER_URI = os.environ.get(
-        "AUTH_LDAP_SERVER_URI", "ldap://ldap.forumsys.com:389"
+        "AUTH_LDAP_SERVER_URI", "ldaps://ldap.forumsys.com:636"
     )
     AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
 

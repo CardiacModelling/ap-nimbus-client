@@ -56,7 +56,7 @@ AP_PREDICT_STATUS_TIMEOUT=1000
 AP_PREDICT_LDAP=0
 
 # LDAP server URI
-AUTH_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389
+AUTH_LDAP_SERVER_URI=ldaps://ldap.forumsys.com:636
 
 # distinguished name of an authorized user
 AUTH_LDAP_BIND_DN=cn=read-only-admin,dc=example,dc=com
