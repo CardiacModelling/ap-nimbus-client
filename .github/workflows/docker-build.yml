@@ -3,32 +3,27 @@ name: docker-build
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  docker:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
+  build:
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      context: ./docker/
+      output: image
+      push: true
+      platforms: linux/amd64,linux/arm64
+      distribute: true
+      sign: auto
+      meta-images: cardiacmodelling/ap-nimbus-client-direct
+      meta-tags: |
+        type=semver,pattern={{version}},value=2.0.0
+    secrets:
+      registry-auths: |
+        - registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./docker/
-          pull: true
-          push: true
-          tags: |
-            cardiacmodelling/ap-nimbus-client-direct:2.0.0
-            cardiacmodelling/ap-nimbus-client-direct:latest
