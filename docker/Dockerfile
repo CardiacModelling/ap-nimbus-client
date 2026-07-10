@@ -1,4 +1,18 @@
+# Building the image locally:
+# docker build -t cardiacmodelling/ap-nimbus-client-direct:local ./docker
+
+# Starting a container:
+# 1. Create an env file (see docker/env for a template)
+# 2. Create a network
+#    docker network create ap-nimbus-network
+# 3. Start a postgres container
+#    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file env -p 5432:5432 postgres:14.1-bullseye
+# 4. Start the client container
+#    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file env cardiacmodelling/ap-nimbus-client-direct:local
+
 FROM debian:bullseye-slim
+
+LABEL version="2.0.0"
 
 USER root
 ENV pythonpath /usr/local/lib/python3
