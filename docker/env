@@ -55,8 +55,13 @@ AP_PREDICT_STATUS_TIMEOUT=1000
 # LDAP settings (set AP_PREDICT_LDAP=1 to enable, none of the other settings are required if this is not set)
 AP_PREDICT_LDAP=0
 
+# The values below are demo credentials only. You must override at least
+# these settings with your own directory's values: AUTH_LDAP_SERVER_URI,
+# AUTH_LDAP_BIND_DN, AUTH_LDAP_BIND_PASSWORD and AUTH_LDAP_SEARCH_BASE.
+
 # LDAP server URI
-AUTH_LDAP_SERVER_URI=ldaps://ldap.forumsys.com:636
+# Plain ldap:// is only used here for demonstration. Prefer using ldaps:// instead to encrypt credentials.
+AUTH_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389
 
 # distinguished name of an authorized user
 AUTH_LDAP_BIND_DN=cn=read-only-admin,dc=example,dc=com

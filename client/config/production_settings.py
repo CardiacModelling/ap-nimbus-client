@@ -216,7 +216,9 @@ if AP_PREDICT_LDAP:
         "django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
     ]
-    AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI") or "ldaps://ldap.forumsys.com:636"
+    # Plain ldap:// is only used here for demonstration. Production
+    # deployments should override this with an ldaps:// URI for encryption.
+    AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI") or "ldap://ldap.forumsys.com:389"
     AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
 
     user_group = os.environ.get("AUTH_LDAP_USER_GROUP") or None
