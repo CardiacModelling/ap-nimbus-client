@@ -1,167 +1,157 @@
 import importlib
+import os
 import sys
+from unittest.mock import patch
 
-import fakeldap
 import ldap
 import pytest
+from config import production_settings
 from django.test import override_settings
+from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
+
+_REQUIRED_SETTINGS_ENV = {
+    "DJANGO_SUPERUSER_EMAIL": "django@test.com",
+    "DJANGO_SECRET_KEY": "django very secret key, honest",
+    "PGDATABASE": "django",
+    "PGUSER": "client",
+    "PGPASSWORD": "not-so-secret django db password",
+    "PGHOST": "localhost",
+    "PGPORT": "5432",
+}
+
+_LDAP_OPTIONAL_KEYS = {
+    "AUTH_LDAP_GROUP_SEARCH",
+    "AUTH_LDAP_USER_GROUP",
+    "AUTH_LDAP_ADMIN_GROUP",
+    "AUTH_LDAP_SEARCH_BASE2",
+    "AUTH_LDAP_SEARCH_BASE3",
+    "AUTH_LDAP_SEARCH_BASE4",
+    "AUTH_LDAP_SEARCH_BASE5",
+}
 
 
-@pytest.fixture
-def ldap_settings(request, monkeypatch):
+def _import_settings_with_env(env_overrides):
     module_name = "config.production_settings"
     original_module = sys.modules.get(module_name)
-    ldap_env = getattr(request, "param", {})
 
-    ldap_keys = [
-        "AP_PREDICT_LDAP",
-        "AUTHENTICATION_BACKENDS",
-        "AUTH_LDAP_SERVER_URI",
-        "AUTH_LDAP_USER_ATTR_MAP",
-        "AUTH_LDAP_GROUP_SEARCH",
-        "AUTH_LDAP_GROUP_TYPE",
-        "AUTH_LDAP_REQUIRE_GROUP",
-        "AUTH_LDAP_USER_FLAGS_BY_GROUP",
-        "AUTH_LDAP_BIND_DN",
-        "AUTH_LDAP_BIND_PASSWORD",
-        "AUTH_LDAP_USER_SEARCH",
-    ]
-
-    monkeypatch.setenv("AP_PREDICT_LDAP", "1")
-    for key, value in ldap_env.items():
-        monkeypatch.setenv(key, value)
-
-    sys.modules.pop(module_name, None)
+    scoped_env = dict(_REQUIRED_SETTINGS_ENV)
+    scoped_env.update(env_overrides)
 
     try:
-        production = importlib.import_module(module_name)
-        ldap_overrides = {key: getattr(production, key) for key in ldap_keys if hasattr(production, key)}
+        with patch.dict(os.environ, scoped_env, clear=False):
+            for key in _LDAP_OPTIONAL_KEYS:
+                if key not in scoped_env:
+                    os.environ.pop(key, None)
 
-        with override_settings(**ldap_overrides):
-            yield
+            sys.modules.pop(module_name, None)
+            return importlib.import_module(module_name)
     finally:
         sys.modules.pop(module_name, None)
         if original_module is not None:
             sys.modules[module_name] = original_module
 
 
-@pytest.fixture
-def mock_ldap(ldap_settings, mocker):
-    # Set up a mock LDAP directory
-    user_dn = "uid=ldapuser,ou=mathematicians,dc=example,dc=com"
-    nogroupuser_dn = "uid=nogroupuser,ou=mathematicians,dc=example,dc=com"
-    group_dn = "cn=statisticians,ou=mathematicians,dc=example,dc=com"
-    directory = {
-        "cn=read-only-admin,dc=example,dc=com": {
-            "userPassword": ["password"],
-            "cn": ["read-only-admin"],
-        },
-        user_dn: {
-            "uid": ["ldapuser"],
-            "mail": ["ldapuser@example.com"],
-            "cn": ["Ldap User"],
-            "sn": ["User"],
-            "givenName": ["Ldap"],
-            "userPassword": ["ldapuserpassword"],
-        },
-        nogroupuser_dn: {
-            "uid": ["nogroupuser"],
-            "mail": ["nogroupuser@example.com"],
-            "cn": ["Nogroup User"],
-            "sn": ["User"],
-            "givenName": ["Nogroup"],
-            "userPassword": ["nogroupuserpassword"],
-        },
-        group_dn: {
-            "cn": ["statisticians"],
-            "member": [user_dn],
-            "objectClass": ["groupOfNames"],
-        },
+def _build_ldap_overrides(custom_params=None):
+    """Build LDAP override settings from environment and custom params."""
+    custom_params = custom_params or {}
+
+    # Get LDAP config from environment, with sensible defaults for local testing
+    ldap_server_uri = os.environ.get("AUTH_LDAP_SERVER_URI", "ldap://localhost:1389")
+    ldap_bind_dn = os.environ.get("AUTH_LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
+    ldap_bind_password = os.environ.get("AUTH_LDAP_BIND_PASSWORD", "admin")
+    ldap_search_base = os.environ.get("AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com")
+    ldap_search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(uid=%(user)s)")
+
+    # Build the overrides dict from production_settings
+    overrides = {
+        "AP_PREDICT_LDAP": True,
+        "AUTHENTICATION_BACKENDS": (
+            production_settings.AUTHENTICATION_BACKENDS
+            if hasattr(production_settings, "AUTHENTICATION_BACKENDS")
+            else [
+                "django_auth_ldap.backend.LDAPBackend",
+                "django.contrib.auth.backends.ModelBackend",
+            ]
+        ),
+        "AUTH_LDAP_SERVER_URI": ldap_server_uri,
+        "AUTH_LDAP_USER_ATTR_MAP": (
+            production_settings.AUTH_LDAP_USER_ATTR_MAP
+            if hasattr(production_settings, "AUTH_LDAP_USER_ATTR_MAP")
+            else {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
+        ),
+        # Without a user search the LDAPBackend cannot locate users, so the login
+        # tests would fail against a real server. Settings load with LDAP disabled
+        # under DJANGO_SETTINGS_MODULE, so this must be supplied explicitly here.
+        "AUTH_LDAP_USER_SEARCH": LDAPSearch(ldap_search_base, ldap.SCOPE_SUBTREE, ldap_search_filter),
+        "AUTH_LDAP_BIND_DN": ldap_bind_dn,
+        "AUTH_LDAP_BIND_PASSWORD": ldap_bind_password,
     }
-    _mock_ldap = fakeldap.MockLDAP(directory)
 
-    # Set up synchronous search to return entries based on the directory
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=("ou=mathematicians,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(uid=ldapuser)", None, 0),
-        value=[(user_dn, directory[user_dn])],
-    )
+    # Apply custom parameter overrides
+    # Handle AUTH_LDAP_GROUP_SEARCH: if a string is provided, convert to LDAPSearch
+    if "AUTH_LDAP_GROUP_SEARCH" in custom_params:
+        group_search_base = custom_params["AUTH_LDAP_GROUP_SEARCH"]
+        if isinstance(group_search_base, str):
+            overrides["AUTH_LDAP_GROUP_SEARCH"] = LDAPSearch(
+                group_search_base, ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+            )
+            overrides["AUTH_LDAP_GROUP_TYPE"] = GroupOfNamesType()
+        else:
+            overrides["AUTH_LDAP_GROUP_SEARCH"] = group_search_base
 
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=("ou=mathematicians,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(uid=nogroupuser)", None, 0),
-        value=[(nogroupuser_dn, directory[nogroupuser_dn])],
-    )
+    # Handle AUTH_LDAP_USER_GROUP: map it to AUTH_LDAP_REQUIRE_GROUP
+    if "AUTH_LDAP_USER_GROUP" in custom_params:
+        overrides["AUTH_LDAP_REQUIRE_GROUP"] = custom_params["AUTH_LDAP_USER_GROUP"]
 
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=("ou=mathematicians,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(uid=nosuchuser)", None, 0),
-        value=[],
-    )
+    # Apply remaining custom params
+    for key, value in custom_params.items():
+        if key not in ("AUTH_LDAP_GROUP_SEARCH", "AUTH_LDAP_USER_GROUP"):
+            overrides[key] = value
 
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=("ou=mathematicians,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)", None, 0),
-        value=[(group_dn, directory[group_dn])],
-    )
+    return overrides
 
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=(
-            "ou=mathematicians,dc=example,dc=com",
-            ldap.SCOPE_SUBTREE,
-            "(&(objectClass=groupOfNames)(member=uid=ldapuser,ou=mathematicians,dc=example,dc=com))",
-            None,
-            0,
-        ),
-        value=[(group_dn, directory[group_dn])],
-    )
 
-    _mock_ldap.set_return_value(
-        api_name="search_s",
-        arguments=(
-            "ou=mathematicians,dc=example,dc=com",
-            ldap.SCOPE_SUBTREE,
-            "(&(objectClass=groupOfNames)(member=uid=nogroupuser,ou=mathematicians,dc=example,dc=com))",
-            None,
-            0,
-        ),
-        value=[],
-    )
+@pytest.fixture
+def ldap_settings(request):
+    """Fixture that applies LDAP settings overrides."""
+    custom_params = getattr(request, "param", {})
+    overrides = _build_ldap_overrides(custom_params)
 
-    _mock_ldap.set_return_value(
-        api_name="compare_s",
-        arguments=(group_dn, "member", user_dn.encode()),
-        value=1,
-    )
+    with override_settings(**overrides):
+        yield
 
-    _mock_ldap.set_return_value(
-        api_name="compare_s",
-        arguments=(group_dn, "member", nogroupuser_dn.encode()),
-        value=0,
-    )
 
-    # Set up asynchronous search to return the same entries
-    async_results = {}
+@pytest.fixture
+def ldap_connection(ldap_settings, settings):
+    connection = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
+    try:
+        connection.simple_bind_s(settings.AUTH_LDAP_BIND_DN, settings.AUTH_LDAP_BIND_PASSWORD)
+    except Exception as exc:
+        # In CI the LDAP service is expected to be up, so a connection failure is a
+        # real error rather than a reason to silently drop coverage. Only skip when
+        # running locally without a server.
+        if os.environ.get("CI"):
+            raise
+        pytest.skip(f"LDAP integration tests require a running LDAP server: {exc}")
 
-    def _search(base, scope, filterstr, attrlist=None):
-        msgid = 1
-        async_results[msgid] = _mock_ldap.search_s(base, scope, filterstr, attrlist)
-        return msgid
+    try:
+        yield connection
+    finally:
+        connection.unbind_s()
 
-    def _result(msgid, all=1, timeout=None):
-        return (ldap.RES_SEARCH_RESULT, async_results.get(msgid, []))
 
-    _mock_ldap.search = _search
-    _mock_ldap.result = _result
-
-    # Patch ldap.initialize to return our MockLDAP instead of a real LDAPObject
-    mocker.patch("django_auth_ldap.backend.ldap.initialize", return_value=_mock_ldap)
-    yield _mock_ldap
+def _decode_ldap_values(values):
+    decoded = []
+    for value in values:
+        if isinstance(value, bytes):
+            decoded.append(value.decode())
+        else:
+            decoded.append(value)
+    return decoded
 
 
 @pytest.mark.django_db
-def test_ldap_user_login(client, mock_ldap):
+def test_ldap_user_login(client, ldap_connection):
     assert client.login(username="ldapuser", password="ldapuserpassword")
     assert client.login(username="nogroupuser", password="nogroupuserpassword")
     assert not client.login(username="ldapuser", password="wrongpassword")
@@ -174,19 +164,34 @@ def test_ldap_user_login(client, mock_ldap):
     [{"AUTH_LDAP_GROUP_SEARCH": "ou=mathematicians,dc=example,dc=com"}],
     indirect=True,
 )
-def test_ldap_group_search(mock_ldap, settings):
+def test_ldap_group_search(ldap_connection, settings):
     assert settings.AUTH_LDAP_GROUP_SEARCH.base_dn == "ou=mathematicians,dc=example,dc=com"
-    group_results = settings.AUTH_LDAP_GROUP_SEARCH.execute(mock_ldap)
-    assert group_results == [
-        (
-            "cn=statisticians,ou=mathematicians,dc=example,dc=com",
-            {
-                "cn": ["statisticians"],
-                "member": ["uid=ldapuser,ou=mathematicians,dc=example,dc=com"],
-                "objectClass": ["groupOfNames"],
-            },
-        )
-    ]
+    group_results = settings.AUTH_LDAP_GROUP_SEARCH.execute(ldap_connection)
+
+    assert len(group_results) == 1
+    group_dn, group_attrs = group_results[0]
+    assert group_dn == "cn=statisticians,ou=mathematicians,dc=example,dc=com"
+    assert "statisticians" in _decode_ldap_values(group_attrs["cn"])
+    assert "uid=ldapuser,ou=mathematicians,dc=example,dc=com" in _decode_ldap_values(group_attrs["member"])
+
+
+def test_ldap_admin_group_search():
+    module = _import_settings_with_env(
+        {
+            "AP_PREDICT_LDAP": "1",
+            "AUTH_LDAP_GROUP_SEARCH": "ou=mathematicians,dc=example,dc=com",
+            "AUTH_LDAP_USER_GROUP": "cn=statisticians,ou=mathematicians,dc=example,dc=com",
+            "AUTH_LDAP_ADMIN_GROUP": "cn=statisticians,ou=mathematicians,dc=example,dc=com",
+        }
+    )
+
+    assert module.AUTH_LDAP_GROUP_SEARCH.base_dn == "ou=mathematicians,dc=example,dc=com"
+    assert isinstance(module.AUTH_LDAP_GROUP_TYPE, GroupOfNamesType)
+    assert module.AUTH_LDAP_REQUIRE_GROUP == "cn=statisticians,ou=mathematicians,dc=example,dc=com"
+    assert module.AUTH_LDAP_USER_FLAGS_BY_GROUP == {
+        "is_staff": "cn=statisticians,ou=mathematicians,dc=example,dc=com",
+        "is_superuser": "cn=statisticians,ou=mathematicians,dc=example,dc=com",
+    }
 
 
 @pytest.mark.django_db
@@ -200,7 +205,27 @@ def test_ldap_group_search(mock_ldap, settings):
     ],
     indirect=True,
 )
-def test_ldap_user_group_login(client, mock_ldap, settings):
+def test_ldap_user_group_login(client, ldap_connection, settings):
     assert settings.AUTH_LDAP_REQUIRE_GROUP == "cn=statisticians,ou=mathematicians,dc=example,dc=com"
     assert client.login(username="ldapuser", password="ldapuserpassword")
     assert not client.login(username="nogroupuser", password="nogroupuserpassword")
+
+
+def test_production_settings_ldap_disabled_path():
+    module = _import_settings_with_env({"AP_PREDICT_LDAP": "0"})
+
+    assert module.AP_PREDICT_LDAP is False
+    assert not hasattr(module, "AUTH_LDAP_USER_SEARCH")
+
+
+def test_ldap_search_base_branch():
+    module = _import_settings_with_env(
+        {
+            "AP_PREDICT_LDAP": "1",
+            "AUTH_LDAP_SEARCH_BASE2": "ou=alternate,dc=example,dc=com",
+        }
+    )
+
+    search_bases = [search.base_dn for search in module.AUTH_LDAP_USER_SEARCH.searches]
+    assert "ou=mathematicians,dc=example,dc=com" in search_bases
+    assert "ou=alternate,dc=example,dc=com" in search_bases
