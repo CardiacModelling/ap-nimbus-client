@@ -184,7 +184,7 @@ USE_X_FORWARDED_HOST = True
 MEDIA_URL = FORCE_SCRIPT_NAME + "media/"
 MEDIA_ROOT = "/opt/django/media/"
 
-# Force using temporary fiile for upload
+# Force using temporary file for upload
 FILE_UPLOAD_HANDLERS = ["django.core.files.uploadhandler.TemporaryFileUploadHandler"]
 
 # API location for AP manager
@@ -197,13 +197,13 @@ HOSTING_INFO = os.environ.get("HOSTING_INFO", "")
 # A brief statement that will be shown at the start of the privacy notice
 PRIVACY_NOTICE = os.environ.get("PRIVACY_NOTICE", "").replace("\\n", "<br/>")
 
-# Mailto link for contacting maintiners
+# Mailto link for contacting maintainers
 CONTACT_MAILTO = os.environ.get("CONTACT_MAILTO", "")
 
-# Contact text for contacting maintiners
+# Contact text for contacting maintainers
 CONTACT_TEXT = os.environ.get("CONTACT_TEXT", "")
 
-# prevent unwated HTTP access
+# prevent unwanted HTTP access
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = False
 
