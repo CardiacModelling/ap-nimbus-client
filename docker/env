@@ -74,7 +74,7 @@ AUTH_LDAP_SEARCH_BASE4=
 AUTH_LDAP_SEARCH_BASE5=
 
 # search filter based on authenticated username
-AUTH_LDAP_SEARCH_FILTER=uid=%(user)s
+AUTH_LDAP_SEARCH_FILTER=(uid=%(user)s)
 
 # LDAP group search (optional, e.g. ou=mathematicians,dc=example,dc=com). An LDAPSearch object that identifies the set of relevant group objects
 AUTH_LDAP_GROUP_SEARCH=
