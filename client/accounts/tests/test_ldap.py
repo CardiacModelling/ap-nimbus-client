@@ -9,6 +9,7 @@ from config import production_settings
 from django.test import override_settings
 from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
 
+
 _REQUIRED_SETTINGS_ENV = {
     "DJANGO_SUPERUSER_EMAIL": "django@test.com",
     "DJANGO_SECRET_KEY": "django very secret key, honest",
