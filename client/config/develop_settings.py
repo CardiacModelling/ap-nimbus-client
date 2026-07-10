@@ -9,6 +9,7 @@ from .production_settings import *  # noqa
 from .production_settings import BASE_DIR  # noqa
 
 
+# Store uploaded files in pwd for local dev
 MEDIA_ROOT = "."
 
 
