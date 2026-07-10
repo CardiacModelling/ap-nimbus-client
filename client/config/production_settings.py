@@ -210,20 +210,18 @@ SESSION_COOKIE_SECURE = False
 # unlimited persistent connections
 CONN_MAX_AGE = None
 
-AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP", "0")))
+AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP") or "0"))
 if AP_PREDICT_LDAP:
     AUTHENTICATION_BACKENDS = [
         "django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
     ]
-    AUTH_LDAP_SERVER_URI = os.environ.get(
-        "AUTH_LDAP_SERVER_URI", "ldaps://ldap.forumsys.com:636"
-    )
+    AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI") or "ldaps://ldap.forumsys.com:636"
     AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
 
-    user_group = os.environ.get("AUTH_LDAP_USER_GROUP", None)
-    admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP", None)
-    group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH", None)
+    user_group = os.environ.get("AUTH_LDAP_USER_GROUP") or None
+    admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP") or None
+    group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH") or None
 
     if group_search is not None:
         AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
@@ -240,17 +238,13 @@ if AP_PREDICT_LDAP:
             "is_superuser": admin_group,
         }
 
-    AUTH_LDAP_BIND_DN = os.environ.get(
-        "AUTH_LDAP_BIND_DN", "cn=read-only-admin,dc=example,dc=com"
-    )
-    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD", "password")
-    search_base = os.environ.get(
-        "AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com"
-    )
-    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(uid=%(user)s)")
+    AUTH_LDAP_BIND_DN = os.environ.get("AUTH_LDAP_BIND_DN") or "cn=read-only-admin,dc=example,dc=com"
+    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD") or "password"
+    search_base = os.environ.get("AUTH_LDAP_SEARCH_BASE") or "ou=mathematicians,dc=example,dc=com"
+    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "(uid=%(user)s)"
     searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
     for base_index in [2, 3, 4, 5]:
-        search_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}", None)
+        search_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or None
         if search_base is not None:
             searches.append(LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter))
     AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(*searches)
