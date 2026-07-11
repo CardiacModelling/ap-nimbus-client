@@ -239,9 +239,9 @@ if AP_PREDICT_LDAP:
     AUTH_LDAP_SERVER_URI = os.environ["AUTH_LDAP_SERVER_URI"]
     AUTH_LDAP_USER_ATTR_MAP = {"full_name": "cn", "email": "mail"}
 
-    user_group = os.environ.get("AUTH_LDAP_USER_GROUP") or None
-    admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP") or None
-    group_search = os.environ.get("AUTH_LDAP_GROUP_SEARCH") or None
+    user_group = (os.environ.get("AUTH_LDAP_USER_GROUP") or "").strip() or None
+    admin_group = (os.environ.get("AUTH_LDAP_ADMIN_GROUP") or "").strip() or None
+    group_search = (os.environ.get("AUTH_LDAP_GROUP_SEARCH") or "").strip() or None
 
     if group_search is not None:
         AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
@@ -262,10 +262,10 @@ if AP_PREDICT_LDAP:
     AUTH_LDAP_BIND_PASSWORD = os.environ["AUTH_LDAP_BIND_PASSWORD"]
     search_base = os.environ["AUTH_LDAP_SEARCH_BASE"]
     # Default to matching on the mail attribute as users log in with their email.
-    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "(mail=%(user)s)"
+    search_filter = (os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "").strip() or "(mail=%(user)s)"
     searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
     for base_index in [2, 3, 4, 5]:
-        extra_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or None
+        extra_base = (os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or "").strip() or None
         if extra_base is not None:
             searches.append(LDAPSearch(extra_base, ldap.SCOPE_SUBTREE, search_filter))
     AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(*searches)

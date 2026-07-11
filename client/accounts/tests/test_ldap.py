@@ -245,23 +245,24 @@ def test_ldap_search_base_branch():
     assert "ou=alternate,dc=example,dc=com" in search_bases
 
 
-def test_ldap_empty_optional_env_is_treated_as_unset():
-    # Present-but-empty vars (e.g. docker-compose env_file lines like
-    # `AUTH_LDAP_GROUP_SEARCH=`) must be treated as unset, not configured.
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_ldap_blank_optional_env_is_treated_as_unset(blank):
+    # Present-but-blank vars (empty like a docker-compose `AUTH_LDAP_GROUP_SEARCH=`
+    # line, or whitespace-only) must be treated as unset, not configured.
     module = _import_settings_with_env(
         {
             "AP_PREDICT_LDAP": "1",
-            "AUTH_LDAP_GROUP_SEARCH": "",
-            "AUTH_LDAP_USER_GROUP": "",
-            "AUTH_LDAP_ADMIN_GROUP": "",
-            "AUTH_LDAP_SEARCH_BASE2": "",
+            "AUTH_LDAP_GROUP_SEARCH": blank,
+            "AUTH_LDAP_USER_GROUP": blank,
+            "AUTH_LDAP_ADMIN_GROUP": blank,
+            "AUTH_LDAP_SEARCH_BASE2": blank,
         }
     )
 
     assert not hasattr(module, "AUTH_LDAP_GROUP_SEARCH")
     assert not hasattr(module, "AUTH_LDAP_REQUIRE_GROUP")
     assert not hasattr(module, "AUTH_LDAP_USER_FLAGS_BY_GROUP")
-    # The empty extra base must not add an (invalid) empty-base search.
+    # The blank extra base must not add an (invalid) empty-base search.
     search_bases = [search.base_dn for search in module.AUTH_LDAP_USER_SEARCH.searches]
     assert search_bases == ["ou=mathematicians,dc=example,dc=com"]
 
