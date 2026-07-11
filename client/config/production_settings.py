@@ -214,11 +214,11 @@ CONN_MAX_AGE = None
 AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP") or "0"))
 if AP_PREDICT_LDAP:
     # Check for required ldap settings. These must be supplied explicitly.
-    # Example values (illustrative only, do not use):
+    # Example values (demo only, do not use):
     #   AUTH_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389 (use ldaps:// in production)
     #   AUTH_LDAP_BIND_DN=cn=read-only-admin,dc=example,dc=com
     #   AUTH_LDAP_BIND_PASSWORD=password
-    #   AUTH_LDAP_SEARCH_BASE=ou=mathematicians,dc=example,dc=com
+    #   AUTH_LDAP_SEARCH_BASE=dc=example,dc=com
     required_ldap_env = (
         "AUTH_LDAP_SERVER_URI",
         "AUTH_LDAP_BIND_DN",
@@ -237,7 +237,7 @@ if AP_PREDICT_LDAP:
         "django.contrib.auth.backends.ModelBackend",
     ]
     AUTH_LDAP_SERVER_URI = os.environ["AUTH_LDAP_SERVER_URI"]
-    AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
+    AUTH_LDAP_USER_ATTR_MAP = {"full_name": "cn", "email": "mail"}
 
     user_group = os.environ.get("AUTH_LDAP_USER_GROUP") or None
     admin_group = os.environ.get("AUTH_LDAP_ADMIN_GROUP") or None
@@ -261,8 +261,8 @@ if AP_PREDICT_LDAP:
     AUTH_LDAP_BIND_DN = os.environ["AUTH_LDAP_BIND_DN"]
     AUTH_LDAP_BIND_PASSWORD = os.environ["AUTH_LDAP_BIND_PASSWORD"]
     search_base = os.environ["AUTH_LDAP_SEARCH_BASE"]
-    # Optional; a filter format string is a safe default (it names no directory).
-    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "(uid=%(user)s)"
+    # Default to matching on the mail attribute as users log in with their email.
+    search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "(mail=%(user)s)"
     searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
     for base_index in [2, 3, 4, 5]:
         extra_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or None

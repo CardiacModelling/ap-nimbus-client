@@ -77,7 +77,9 @@ AUTH_LDAP_SEARCH_BASE3=
 AUTH_LDAP_SEARCH_BASE4=
 AUTH_LDAP_SEARCH_BASE5=
 
-# Search filter based on authenticated username (optional, defaults to (uid=%(user)s))
+# Search filter based on the identifier the user logs in with (optional).
+# Defaults to (mail=%(user)s) since the client uses email. Can be overridden,
+# for example with (uid=%(user)s) if the directory only has uid.
 AUTH_LDAP_SEARCH_FILTER=
 
 # LDAP group search (optional, e.g. ou=mathematicians,dc=example,dc=com). An LDAPSearch object that identifies the set of relevant group objects

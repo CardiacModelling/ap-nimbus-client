@@ -73,7 +73,7 @@ def _build_ldap_overrides(custom_params=None):
     ldap_bind_dn = os.environ.get("AUTH_LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
     ldap_bind_password = os.environ.get("AUTH_LDAP_BIND_PASSWORD", "admin")
     ldap_search_base = os.environ.get("AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com")
-    ldap_search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(uid=%(user)s)")
+    ldap_search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(mail=%(user)s)")
 
     # Build the overrides dict from production_settings
     overrides = {
@@ -90,7 +90,7 @@ def _build_ldap_overrides(custom_params=None):
         "AUTH_LDAP_USER_ATTR_MAP": (
             production_settings.AUTH_LDAP_USER_ATTR_MAP
             if hasattr(production_settings, "AUTH_LDAP_USER_ATTR_MAP")
-            else {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
+            else {"full_name": "cn", "email": "mail"}
         ),
         # Without a user search the LDAPBackend cannot locate users, so the login
         # tests would fail against a real server. Settings load with LDAP disabled
@@ -165,10 +165,11 @@ def _decode_ldap_values(values):
 
 @pytest.mark.django_db
 def test_ldap_user_login(client, ldap_connection):
-    assert client.login(username="ldapuser", password="ldapuserpassword")
-    assert client.login(username="nogroupuser", password="nogroupuserpassword")
-    assert not client.login(username="ldapuser", password="wrongpassword")
-    assert not client.login(username="nosuchuser", password="ldapuserpassword")
+    # Users log in with their email (the mail attribute), matching USERNAME_FIELD.
+    assert client.login(username="ldapuser@example.com", password="ldapuserpassword")
+    assert client.login(username="nogroupuser@example.com", password="nogroupuserpassword")
+    assert not client.login(username="ldapuser@example.com", password="wrongpassword")
+    assert not client.login(username="nosuchuser@example.com", password="ldapuserpassword")
 
 
 @pytest.mark.django_db
@@ -220,8 +221,8 @@ def test_ldap_admin_group_search():
 )
 def test_ldap_user_group_login(client, ldap_connection, settings):
     assert settings.AUTH_LDAP_REQUIRE_GROUP == "cn=statisticians,ou=mathematicians,dc=example,dc=com"
-    assert client.login(username="ldapuser", password="ldapuserpassword")
-    assert not client.login(username="nogroupuser", password="nogroupuserpassword")
+    assert client.login(username="ldapuser@example.com", password="ldapuserpassword")
+    assert not client.login(username="nogroupuser@example.com", password="nogroupuserpassword")
 
 
 def test_production_settings_ldap_disabled_path():
