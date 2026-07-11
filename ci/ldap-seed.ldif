@@ -1,0 +1,26 @@
+dn: ou=mathematicians,dc=example,dc=com
+objectClass: organizationalUnit
+ou: mathematicians
+
+dn: uid=ldapuser,ou=mathematicians,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: ldapuser
+cn: Ldap User
+sn: User
+givenName: Ldap
+mail: ldapuser@example.com
+userPassword: ldapuserpassword
+
+dn: uid=nogroupuser,ou=mathematicians,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: nogroupuser
+cn: Nogroup User
+sn: User
+givenName: Nogroup
+mail: nogroupuser@example.com
+userPassword: nogroupuserpassword
+
+dn: cn=statisticians,ou=mathematicians,dc=example,dc=com
+objectClass: groupOfNames
+cn: statisticians
+member: uid=ldapuser,ou=mathematicians,dc=example,dc=com
