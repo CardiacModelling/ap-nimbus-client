@@ -21,9 +21,9 @@ from django_auth_ldap.config import GroupOfNamesType, LDAPSearch, LDAPSearchUnio
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-APPREDICT_LOOKUP_TABLE_MANIFEST = os.environ.get(
-    "APPREDICT_LOOKUP_TABLE_MANIFEST",
-    "https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt",
+APPREDICT_LOOKUP_TABLE_MANIFEST = (
+    (os.environ.get("APPREDICT_LOOKUP_TABLE_MANIFEST") or "").strip()
+    or "https://cardiac.nottingham.ac.uk/lookup_tables/appredict_lookup_table_manifest.txt"
 )
 
 # running in subfolder
@@ -36,12 +36,10 @@ LOGIN_URL = ("%s/accounts/login/" % FORCE_SCRIPT_NAME).replace("//", "/")
 
 # email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.environ.get("smtp_server", "localhost")
-SERVER_EMAIL = os.environ.get(
-    "django_email_from_addr", os.environ["DJANGO_SUPERUSER_EMAIL"]
-)
+EMAIL_HOST = (os.environ.get("smtp_server") or "").strip() or "localhost"
+SERVER_EMAIL = (os.environ.get("django_email_from_addr") or "").strip() or os.environ["DJANGO_SUPERUSER_EMAIL"]
 DEFAULT_FROM_EMAIL = SERVER_EMAIL
-WELCOME_SUBJECT = os.environ.get("WELCOME_SUBJECT", "[AP Portal] Welcome")
+WELCOME_SUBJECT = (os.environ.get("WELCOME_SUBJECT") or "").strip() or "[AP Portal] Welcome"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -52,7 +50,7 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = ((os.environ.get("ALLOWED_HOSTS") or "").strip() or "*").split(",")
 
 
 # Application definition
@@ -189,8 +187,8 @@ MEDIA_ROOT = "/opt/django/media/"
 FILE_UPLOAD_HANDLERS = ["django.core.files.uploadhandler.TemporaryFileUploadHandler"]
 
 # API location for AP manager
-AP_PREDICT_ENDPOINT = os.environ.get("AP_PREDICT_ENDPOINT", "http://path_to_ap_manager")
-AP_PREDICT_STATUS_TIMEOUT = int(os.environ.get("AP_PREDICT_STATUS_TIMEOUT", 1000))
+AP_PREDICT_ENDPOINT = (os.environ.get("AP_PREDICT_ENDPOINT") or "").strip() or "http://path_to_ap_manager"
+AP_PREDICT_STATUS_TIMEOUT = int((os.environ.get("AP_PREDICT_STATUS_TIMEOUT") or "").strip() or 1000)
 
 # Hosting information for the privacy policy
 HOSTING_INFO = os.environ.get("HOSTING_INFO", "")
@@ -211,7 +209,7 @@ SESSION_COOKIE_SECURE = False
 # unlimited persistent connections
 CONN_MAX_AGE = None
 
-AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP") or "0"))
+AP_PREDICT_LDAP = bool(int((os.environ.get("AP_PREDICT_LDAP") or "").strip() or "0"))
 if AP_PREDICT_LDAP:
     # Check for required ldap settings. These must be supplied explicitly.
     # Example values (demo only, do not use):

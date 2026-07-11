@@ -18,7 +18,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-AP_PREDICT_SQLITE = bool(int(os.environ.get("AP_PREDICT_SQLITE", "0")))
+AP_PREDICT_SQLITE = bool(int((os.environ.get("AP_PREDICT_SQLITE") or "").strip() or "0"))
 if AP_PREDICT_SQLITE:
     DATABASES = {
         "default": {

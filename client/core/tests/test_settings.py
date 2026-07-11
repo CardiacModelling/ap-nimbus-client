@@ -3,6 +3,8 @@ import os
 import sys
 from unittest.mock import patch
 
+import pytest
+
 
 _REQUIRED_SETTINGS_ENV = {
     "DJANGO_SUPERUSER_EMAIL": "django@test.com",
@@ -15,15 +17,13 @@ _REQUIRED_SETTINGS_ENV = {
 }
 
 
-def _import_develop_settings(env_overrides=None):
-    """Re-import config.develop_settings under a controlled environment.
+def _import_settings(module_name, env_overrides=None):
+    """Re-import a settings module under a controlled environment.
 
-    The test suite runs under config.production_settings, so develop_settings is
-    otherwise never imported. Importing it here (mirroring the production_settings
-    approach in test_ldap) exercises the module without changing the active
-    Django configuration.
+    The suite runs under config.production_settings; re-importing a settings module
+    here with a scoped environment exercises it without changing the active Django
+    configuration.
     """
-    module_name = "config.develop_settings"
     original_module = sys.modules.get(module_name)
 
     scoped_env = dict(_REQUIRED_SETTINGS_ENV)
@@ -37,6 +37,10 @@ def _import_develop_settings(env_overrides=None):
         sys.modules.pop(module_name, None)
         if original_module is not None:
             sys.modules[module_name] = original_module
+
+
+def _import_develop_settings(env_overrides=None):
+    return _import_settings("config.develop_settings", env_overrides)
 
 
 def test_develop_settings_defaults():
@@ -58,3 +62,47 @@ def test_develop_settings_sqlite_backend():
     assert module.AP_PREDICT_SQLITE is True
     assert module.DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
     assert module.DATABASES["default"]["NAME"].endswith("db.sqlite3")
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_production_blank_env_falls_back_to_defaults(blank):
+    # Present-but-blank vars (empty like the docker/env template, or whitespace-only)
+    # must use their default rather than an empty/invalid value; int() vars must not raise.
+    # ALLOWED_HOSTS is included: a blank value must not become [""] (DisallowedHost).
+    module = _import_settings(
+        "config.production_settings",
+        {
+            "ALLOWED_HOSTS": blank,
+            "smtp_server": blank,
+            "django_email_from_addr": blank,
+            "WELCOME_SUBJECT": blank,
+            "APPREDICT_LOOKUP_TABLE_MANIFEST": blank,
+            "AP_PREDICT_ENDPOINT": blank,
+            "AP_PREDICT_STATUS_TIMEOUT": blank,
+        },
+    )
+
+    assert module.ALLOWED_HOSTS == ["*"]
+    assert module.EMAIL_HOST == "localhost"
+    # Falls back to DJANGO_SUPERUSER_EMAIL (from _REQUIRED_SETTINGS_ENV).
+    assert module.SERVER_EMAIL == "django@test.com"
+    assert module.DEFAULT_FROM_EMAIL == "django@test.com"
+    assert module.WELCOME_SUBJECT == "[AP Portal] Welcome"
+    assert module.APPREDICT_LOOKUP_TABLE_MANIFEST.startswith("https://")
+    assert module.AP_PREDICT_ENDPOINT == "http://path_to_ap_manager"
+    assert module.AP_PREDICT_STATUS_TIMEOUT == 1000
+
+
+def test_production_allowed_hosts_parses_comma_separated():
+    # A real (non-blank) value is still split into a host list.
+    module = _import_settings(
+        "config.production_settings", {"ALLOWED_HOSTS": "example.com,www.example.com"}
+    )
+    assert module.ALLOWED_HOSTS == ["example.com", "www.example.com"]
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_develop_blank_env_falls_back_to_defaults(blank):
+    # int("") / int("  ") would raise; a blank AP_PREDICT_SQLITE must behave as "off".
+    module = _import_develop_settings({"AP_PREDICT_SQLITE": blank})
+    assert module.AP_PREDICT_SQLITE is False
