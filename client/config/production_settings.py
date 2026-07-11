@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import ldap
+from django.core.exceptions import ImproperlyConfigured
 from django_auth_ldap.config import GroupOfNamesType, LDAPSearch, LDAPSearchUnion
 
 
@@ -212,13 +213,30 @@ CONN_MAX_AGE = None
 
 AP_PREDICT_LDAP = bool(int(os.environ.get("AP_PREDICT_LDAP") or "0"))
 if AP_PREDICT_LDAP:
+    # Check for required ldap settings. These must be supplied explicitly.
+    # Example values (illustrative only, do not use):
+    #   AUTH_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389 (use ldaps:// in production)
+    #   AUTH_LDAP_BIND_DN=cn=read-only-admin,dc=example,dc=com
+    #   AUTH_LDAP_BIND_PASSWORD=password
+    #   AUTH_LDAP_SEARCH_BASE=ou=mathematicians,dc=example,dc=com
+    required_ldap_env = (
+        "AUTH_LDAP_SERVER_URI",
+        "AUTH_LDAP_BIND_DN",
+        "AUTH_LDAP_BIND_PASSWORD",
+        "AUTH_LDAP_SEARCH_BASE",
+    )
+    missing_ldap_env = [name for name in required_ldap_env if not (os.environ.get(name) or "").strip()]
+    if missing_ldap_env:
+        raise ImproperlyConfigured(
+            "AP_PREDICT_LDAP is enabled but these required LDAP settings are missing or empty: "
+            + ", ".join(missing_ldap_env)
+        )
+
     AUTHENTICATION_BACKENDS = [
         "django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
     ]
-    # Plain ldap:// is only used here for demonstration. Production
-    # deployments should override this with an ldaps:// URI for encryption.
-    AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI") or "ldap://ldap.forumsys.com:389"
+    AUTH_LDAP_SERVER_URI = os.environ["AUTH_LDAP_SERVER_URI"]
     AUTH_LDAP_USER_ATTR_MAP = {"first_name": "givenName", "last_name": "sn", "full_name": "cn"}
 
     user_group = os.environ.get("AUTH_LDAP_USER_GROUP") or None
@@ -240,13 +258,14 @@ if AP_PREDICT_LDAP:
             "is_superuser": admin_group,
         }
 
-    AUTH_LDAP_BIND_DN = os.environ.get("AUTH_LDAP_BIND_DN") or "cn=read-only-admin,dc=example,dc=com"
-    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD") or "password"
-    search_base = os.environ.get("AUTH_LDAP_SEARCH_BASE") or "ou=mathematicians,dc=example,dc=com"
+    AUTH_LDAP_BIND_DN = os.environ["AUTH_LDAP_BIND_DN"]
+    AUTH_LDAP_BIND_PASSWORD = os.environ["AUTH_LDAP_BIND_PASSWORD"]
+    search_base = os.environ["AUTH_LDAP_SEARCH_BASE"]
+    # Optional; a filter format string is a safe default (it names no directory).
     search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "(uid=%(user)s)"
     searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
     for base_index in [2, 3, 4, 5]:
-        search_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or None
-        if search_base is not None:
-            searches.append(LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter))
+        extra_base = os.environ.get(f"AUTH_LDAP_SEARCH_BASE{base_index}") or None
+        if extra_base is not None:
+            searches.append(LDAPSearch(extra_base, ldap.SCOPE_SUBTREE, search_filter))
     AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(*searches)

@@ -6,6 +6,7 @@ from unittest.mock import patch
 import ldap
 import pytest
 from config import production_settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
 
@@ -30,12 +31,23 @@ _LDAP_OPTIONAL_KEYS = {
     "AUTH_LDAP_SEARCH_BASE5",
 }
 
+# production_settings now requires these to be set explicitly when LDAP is enabled
+# (no demo defaults), so provide them for import tests that enable LDAP.
+_REQUIRED_LDAP_ENV = {
+    "AUTH_LDAP_SERVER_URI": "ldap://localhost:1389",
+    "AUTH_LDAP_BIND_DN": "cn=admin,dc=example,dc=com",
+    "AUTH_LDAP_BIND_PASSWORD": "admin",
+    "AUTH_LDAP_SEARCH_BASE": "ou=mathematicians,dc=example,dc=com",
+}
+
 
 def _import_settings_with_env(env_overrides):
     module_name = "config.production_settings"
     original_module = sys.modules.get(module_name)
 
     scoped_env = dict(_REQUIRED_SETTINGS_ENV)
+    if (env_overrides.get("AP_PREDICT_LDAP") or "0") not in ("0", ""):
+        scoped_env.update(_REQUIRED_LDAP_ENV)
     scoped_env.update(env_overrides)
 
     try:
@@ -251,3 +263,13 @@ def test_ldap_empty_optional_env_is_treated_as_unset():
     # The empty extra base must not add an (invalid) empty-base search.
     search_bases = [search.base_dn for search in module.AUTH_LDAP_USER_SEARCH.searches]
     assert search_bases == ["ou=mathematicians,dc=example,dc=com"]
+
+
+@pytest.mark.parametrize(
+    "missing", ["AUTH_LDAP_SERVER_URI", "AUTH_LDAP_BIND_DN", "AUTH_LDAP_BIND_PASSWORD", "AUTH_LDAP_SEARCH_BASE"]
+)
+def test_ldap_enabled_without_required_env_fails_fast(missing):
+    # Enabling LDAP without an explicit value for a required setting must raise at
+    # import (startup) rather than falling back to a demo default.
+    with pytest.raises(ImproperlyConfigured):
+        _import_settings_with_env({"AP_PREDICT_LDAP": "1", missing: ""})
