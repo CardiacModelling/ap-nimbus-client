@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# isort: off
 from .production_settings import *  # noqa
 from .production_settings import BASE_DIR  # noqa
+# isort: on
 
 
 # Store uploaded files in pwd for local dev
