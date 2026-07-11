@@ -82,7 +82,9 @@ AUTH_LDAP_SEARCH_BASE5=
 # for example with (uid=%(user)s) if the directory only has uid.
 AUTH_LDAP_SEARCH_FILTER=
 
-# LDAP group search (optional, e.g. ou=mathematicians,dc=example,dc=com). An LDAPSearch object that identifies the set of relevant group objects
+# LDAP group search base DN (optional, e.g. ou=mathematicians,dc=example,dc=com).
+# Used to build the LDAPSearch for groupOfNames objects.
+# Set this to enable the user/admin group rules below.
 AUTH_LDAP_GROUP_SEARCH=
 
 # Users must be in this group to be able to log in (optional, e.g. cn=users,ou=mathematicians,dc=example,dc=com)
