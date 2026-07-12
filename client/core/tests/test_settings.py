@@ -94,9 +94,11 @@ def test_production_blank_env_falls_back_to_defaults(blank):
 
 
 def test_production_allowed_hosts_parses_comma_separated():
-    # A real (non-blank) value is still split into a host list.
+    # A real (non-blank) value is split into a host list; surrounding spaces and
+    # empty items (e.g. a trailing comma) are stripped so no host has leading
+    # whitespace or is "" (which would never match and could trigger DisallowedHost).
     module = _import_settings(
-        "config.production_settings", {"ALLOWED_HOSTS": "example.com,www.example.com"}
+        "config.production_settings", {"ALLOWED_HOSTS": "example.com, www.example.com,"}
     )
     assert module.ALLOWED_HOSTS == ["example.com", "www.example.com"]
 
