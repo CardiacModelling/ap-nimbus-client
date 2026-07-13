@@ -275,3 +275,24 @@ def test_ldap_enabled_without_required_env_fails_fast(missing):
     # import (startup) rather than falling back to a demo default.
     with pytest.raises(ImproperlyConfigured):
         _import_settings_with_env({"AP_PREDICT_LDAP": "1", missing: ""})
+
+
+def test_ldap_required_env_is_stripped_when_assigned():
+    # Whitespace fat-fingered into an env file passes validation (which strips before
+    # checking), so the assigned structural values must be stripped too. The bind
+    # password is deliberately preserved verbatim, as edge whitespace may be significant.
+    module = _import_settings_with_env(
+        {
+            "AP_PREDICT_LDAP": "1",
+            "AUTH_LDAP_SERVER_URI": "  ldap://localhost:1389  ",
+            "AUTH_LDAP_BIND_DN": "  cn=admin,dc=example,dc=com  ",
+            "AUTH_LDAP_BIND_PASSWORD": "  admin  ",
+            "AUTH_LDAP_SEARCH_BASE": "  ou=mathematicians,dc=example,dc=com  ",
+        }
+    )
+
+    assert module.AUTH_LDAP_SERVER_URI == "ldap://localhost:1389"
+    assert module.AUTH_LDAP_BIND_DN == "cn=admin,dc=example,dc=com"
+    assert module.AUTH_LDAP_BIND_PASSWORD == "  admin  "
+    search_bases = [search.base_dn for search in module.AUTH_LDAP_USER_SEARCH.searches]
+    assert search_bases == ["ou=mathematicians,dc=example,dc=com"]

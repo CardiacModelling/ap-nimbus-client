@@ -235,7 +235,7 @@ if AP_PREDICT_LDAP:
         "django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
     ]
-    AUTH_LDAP_SERVER_URI = os.environ["AUTH_LDAP_SERVER_URI"]
+    AUTH_LDAP_SERVER_URI = os.environ["AUTH_LDAP_SERVER_URI"].strip()
     AUTH_LDAP_USER_ATTR_MAP = {"full_name": "cn", "email": "mail"}
 
     user_group = (os.environ.get("AUTH_LDAP_USER_GROUP") or "").strip() or None
@@ -257,9 +257,10 @@ if AP_PREDICT_LDAP:
             "is_superuser": admin_group,
         }
 
-    AUTH_LDAP_BIND_DN = os.environ["AUTH_LDAP_BIND_DN"]
+    AUTH_LDAP_BIND_DN = os.environ["AUTH_LDAP_BIND_DN"].strip()
+    # Do not strip the bind password: leading/trailing characters may be significant in a secret.
     AUTH_LDAP_BIND_PASSWORD = os.environ["AUTH_LDAP_BIND_PASSWORD"]
-    search_base = os.environ["AUTH_LDAP_SEARCH_BASE"]
+    search_base = os.environ["AUTH_LDAP_SEARCH_BASE"].strip()
     # Default to matching on the mail attribute as users log in with their email.
     search_filter = (os.environ.get("AUTH_LDAP_SEARCH_FILTER") or "").strip() or "(mail=%(user)s)"
     searches = [LDAPSearch(search_base, ldap.SCOPE_SUBTREE, search_filter)]
