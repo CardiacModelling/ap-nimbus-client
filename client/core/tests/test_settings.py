@@ -93,6 +93,21 @@ def test_production_blank_env_falls_back_to_defaults(blank):
     assert module.AP_PREDICT_STATUS_TIMEOUT == 1000
 
 
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_production_blank_subfolder_is_treated_as_unset(blank):
+    # A blank/whitespace subfolder must not become part of the URL prefix
+    # (e.g. FORCE_SCRIPT_NAME "/   /"); it should be treated as unset.
+    module = _import_settings("config.production_settings", {"subfolder": blank})
+    assert module.subfolder is None
+    assert module.FORCE_SCRIPT_NAME == ""
+
+
+def test_production_subfolder_is_stripped():
+    module = _import_settings("config.production_settings", {"subfolder": "  app  "})
+    assert module.subfolder == "app"
+    assert module.FORCE_SCRIPT_NAME == "/app/"
+
+
 def test_production_allowed_hosts_parses_comma_separated():
     # A real (non-blank) value is split into a host list; surrounding spaces and
     # empty items (e.g. a trailing comma) are stripped so no host has leading

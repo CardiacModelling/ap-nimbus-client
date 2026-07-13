@@ -27,7 +27,7 @@ APPREDICT_LOOKUP_TABLE_MANIFEST = (
 )
 
 # running in subfolder
-subfolder = os.environ.get("subfolder", None)
+subfolder = (os.environ.get("subfolder") or "").strip() or None
 FORCE_SCRIPT_NAME = "/%s/" % subfolder if subfolder else ""
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
