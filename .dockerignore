@@ -6,7 +6,6 @@
 *.env
 
 # Virtual environments
-.venv
 .venv*
 venv
 env/
@@ -23,7 +22,10 @@ env/
 .coverage
 *.sqlite3
 
-# Backups and editor cruft
-backup
+# Logs and editor cruft
 *.log
 .DS_Store
+
+# backup/ is intentionally NOT excluded: it holds version-controlled backup
+# scripts that should be included in the image. Backups are written outside the
+# repo, so there is nothing generated in backup/.
