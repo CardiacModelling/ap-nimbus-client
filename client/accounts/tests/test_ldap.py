@@ -19,6 +19,9 @@ _REQUIRED_SETTINGS_ENV = {
     "PGPASSWORD": "not-so-secret django db password",
     "PGHOST": "localhost",
     "PGPORT": "5432",
+    # Default LDAP off so a caller that omits AP_PREDICT_LDAP can't inherit an ambient
+    # AP_PREDICT_LDAP=1 (patch.dict uses clear=False). Callers enabling LDAP pass "1".
+    "AP_PREDICT_LDAP": "0",
 }
 
 _LDAP_OPTIONAL_KEYS = {
@@ -228,6 +231,15 @@ def test_ldap_user_group_login(client, ldap_connection, settings):
 def test_production_settings_ldap_disabled_path():
     module = _import_settings_with_env({"AP_PREDICT_LDAP": "0"})
 
+    assert module.AP_PREDICT_LDAP is False
+    assert not hasattr(module, "AUTH_LDAP_USER_SEARCH")
+
+
+def test_import_helper_is_hermetic_against_ambient_ldap_toggle():
+    # A caller that omits AP_PREDICT_LDAP must not inherit an ambient AP_PREDICT_LDAP=1
+    # (patch.dict uses clear=False); the base scoped env forces it off.
+    with patch.dict(os.environ, {"AP_PREDICT_LDAP": "1"}, clear=False):
+        module = _import_settings_with_env({})
     assert module.AP_PREDICT_LDAP is False
     assert not hasattr(module, "AUTH_LDAP_USER_SEARCH")
 
