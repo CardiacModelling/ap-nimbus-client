@@ -74,7 +74,9 @@ def test_register(client):
     # scopes the toggle and restores it on block exit, even if an assertion fails.
     with override_settings(AP_PREDICT_LDAP=True):
         response = client.post('/accounts/register/', data=data)
-    assert 'Registration is disabled when using LDAP' in str(response.content)
+    # The invalid form is re-rendered with the disabling error (HTTP 200, no redirect).
+    assert response.status_code == 200
+    assert 'Registration is disabled when using LDAP' in response.content.decode()
     assert not User.objects.filter(email=data['email']).exists()
 
     with override_settings(AP_PREDICT_LDAP=False):
