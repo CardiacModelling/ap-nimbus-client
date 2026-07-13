@@ -14,6 +14,10 @@ _REQUIRED_SETTINGS_ENV = {
     "PGPASSWORD": "not-so-secret django db password",
     "PGHOST": "localhost",
     "PGPORT": "5432",
+    # Force LDAP off so an ambient AP_PREDICT_LDAP=1 (patch.dict uses clear=False)
+    # can't enable the LDAP block and raise ImproperlyConfigured. Tests that exercise
+    # the LDAP path live in test_ldap.py and set this explicitly.
+    "AP_PREDICT_LDAP": "0",
 }
 
 
@@ -41,6 +45,15 @@ def _import_settings(module_name, env_overrides=None):
 
 def _import_develop_settings(env_overrides=None):
     return _import_settings("config.develop_settings", env_overrides)
+
+
+def test_import_is_hermetic_against_ambient_ldap_toggle():
+    # An ambient AP_PREDICT_LDAP=1 must not leak into the re-import (patch.dict uses
+    # clear=False); otherwise the LDAP block would enable and raise ImproperlyConfigured
+    # for the missing required LDAP env, making this module non-hermetic.
+    with patch.dict(os.environ, {"AP_PREDICT_LDAP": "1"}, clear=False):
+        module = _import_settings("config.production_settings")
+    assert module.AP_PREDICT_LDAP is False
 
 
 def test_develop_settings_defaults():
