@@ -6,6 +6,7 @@ import pytest
 from django.conf import settings
 from django.http import FileResponse
 from django.test import override_settings
+from django.urls import reverse
 
 
 @pytest.mark.django_db
@@ -56,3 +57,24 @@ def test_is_author(logged_in_user, client, simulation_pkdata, tmp_path):
         with open(response_file_path, 'wb') as file:
             file.write(b''.join(response.streaming_content))
         assert filecmp.cmp(pkd_test_dest_file, response_file_path, shallow=False)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('page,surrounding_text', [
+    ('home', 'registering for an account'),
+    ('privacy', 'you supply when you'),
+])
+def test_register_link_hidden_when_ldap_enabled(client, page, surrounding_text):
+    # Registration can never succeed under LDAP, so the UI must not link to it.
+    register_url = reverse('accounts:register')
+
+    with override_settings(AP_PREDICT_LDAP=False):
+        shown = client.get(reverse(page)).content.decode()
+    assert register_url in shown
+    assert surrounding_text in shown
+
+    with override_settings(AP_PREDICT_LDAP=True):
+        hidden = client.get(reverse(page)).content.decode()
+    # The dead register link is gone, but the surrounding sentence text remains.
+    assert register_url not in hidden
+    assert surrounding_text in hidden
