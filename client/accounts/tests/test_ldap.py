@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import ldap
 import pytest
-from config import production_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
@@ -78,23 +77,19 @@ def _build_ldap_overrides(custom_params=None):
     ldap_search_base = os.environ.get("AUTH_LDAP_SEARCH_BASE", "ou=mathematicians,dc=example,dc=com")
     ldap_search_filter = os.environ.get("AUTH_LDAP_SEARCH_FILTER", "(mail=%(user)s)")
 
-    # Build the overrides dict from production_settings
+    # Build the overrides needed to run with LDAP enabled. These mirror the LDAP block
+    # in production_settings but are inlined so this module stays hermetic: importing
+    # production_settings at collection time would raise if AP_PREDICT_LDAP=1 is set
+    # without the required LDAP env. Reading them from the live settings object is not
+    # an option either, as they are only present there when LDAP is enabled at startup.
     overrides = {
         "AP_PREDICT_LDAP": True,
-        "AUTHENTICATION_BACKENDS": (
-            production_settings.AUTHENTICATION_BACKENDS
-            if hasattr(production_settings, "AUTHENTICATION_BACKENDS")
-            else [
-                "django_auth_ldap.backend.LDAPBackend",
-                "django.contrib.auth.backends.ModelBackend",
-            ]
-        ),
+        "AUTHENTICATION_BACKENDS": [
+            "django_auth_ldap.backend.LDAPBackend",
+            "django.contrib.auth.backends.ModelBackend",
+        ],
         "AUTH_LDAP_SERVER_URI": ldap_server_uri,
-        "AUTH_LDAP_USER_ATTR_MAP": (
-            production_settings.AUTH_LDAP_USER_ATTR_MAP
-            if hasattr(production_settings, "AUTH_LDAP_USER_ATTR_MAP")
-            else {"full_name": "cn", "email": "mail"}
-        ),
+        "AUTH_LDAP_USER_ATTR_MAP": {"full_name": "cn", "email": "mail"},
         # Without a user search the LDAPBackend cannot locate users, so the login
         # tests would fail against a real server. Settings load with LDAP disabled
         # under DJANGO_SETTINGS_MODULE, so this must be supplied explicitly here.
