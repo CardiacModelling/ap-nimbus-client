@@ -1,0 +1,31 @@
+# Keep secrets, local state and bulky dirs out of the Docker build context.
+# The build context is the repo root (see docker/docker-compose.yaml).
+
+# Secrets / local environment
+.env
+*.env
+
+# Virtual environments
+.venv*
+venv
+env/
+
+# Version control and CI
+.git
+.gitignore
+.github
+
+# Python caches and coverage
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.coverage
+*.sqlite3
+
+# Logs and editor cruft
+*.log
+.DS_Store
+
+# backup/ is intentionally NOT excluded: it holds version-controlled backup
+# scripts that should be included in the image. Backups are written outside the
+# repo, so there is nothing generated in backup/.

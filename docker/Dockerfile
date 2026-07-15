@@ -1,14 +1,14 @@
-# Building the image locally:
-# docker build -t cardiacmodelling/ap-nimbus-client-direct:local ./docker
+# Building the image locally (run from the repository root):
+# docker build -t cardiacmodelling/ap-nimbus-client-direct:local -f docker/Dockerfile .
 
 # Starting a container:
 # 1. Create an env file (see docker/env for a template)
 # 2. Create a network
 #    docker network create ap-nimbus-network
 # 3. Start a postgres container
-#    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file env -p 5432:5432 postgres:14.1-bullseye
+#    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file docker/env -p 5432:5432 postgres:14.1-bullseye
 # 4. Start the client container
-#    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file env cardiacmodelling/ap-nimbus-client-direct:local
+#    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file docker/env cardiacmodelling/ap-nimbus-client-direct:local
 
 FROM debian:bullseye-slim
 
@@ -35,6 +35,7 @@ RUN apt-get install -y --no-install-recommends \
     uwsgi \
     uwsgi-plugin-python3 \
     libpcre3-dev \
+    libldap2-dev libsasl2-dev \
     sudo && \
     rm -rf /var/lib/apt/lists/*
 
@@ -42,8 +43,7 @@ RUN apt-get install -y --no-install-recommends \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
-# get the client from git & install
-RUN git clone --recursive --branch master --depth 1 https://github.com/CardiacModelling/ap-nimbus-client.git
+COPY . /opt/django/ap-nimbus-client
 RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/

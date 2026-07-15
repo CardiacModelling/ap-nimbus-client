@@ -1,6 +1,7 @@
 import pytest
 from accounts.models import User
 from django.core import mail
+from django.test import override_settings
 from django.urls import reverse
 
 
@@ -69,7 +70,17 @@ def test_register(client):
 
     assert not User.objects.filter(email=data['email']).exists()
 
-    client.post('/accounts/register/', data=data)
+    # Registration is disabled while LDAP is the auth source. override_settings
+    # scopes the toggle and restores it on block exit, even if an assertion fails.
+    with override_settings(AP_PREDICT_LDAP=True):
+        response = client.post('/accounts/register/', data=data)
+    # The invalid form is re-rendered with the disabling error (HTTP 200, no redirect).
+    assert response.status_code == 200
+    assert 'Registration is disabled when using LDAP' in response.content.decode()
+    assert not User.objects.filter(email=data['email']).exists()
+
+    with override_settings(AP_PREDICT_LDAP=False):
+        client.post('/accounts/register/', data=data)
     assert User.objects.filter(email=data['email']).exists()
     assert len(mail.outbox) == num_mails + 1
     assert User.objects.get(email=data['email']).is_authenticated

@@ -13,7 +13,8 @@ jobs:
       contents: read
       id-token: write
     with:
-      context: ./docker/
+      context: .
+      file: docker/Dockerfile
       output: image
       push: true
       platforms: linux/amd64,linux/arm64

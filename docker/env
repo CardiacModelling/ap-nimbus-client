@@ -1,6 +1,6 @@
-# The environment variable used by the docker components for AP Nimbus (claudified AP predict) are listed below. They are listed as VAR=VALUE pairs (without any spaces)
+# The environment variable used by the docker components for AP Nimbus (cloudified AP predict) are listed below. They are listed as VAR=VALUE pairs (without any spaces)
 
-# please pick a secret key a long random string is ideal
+# Please pick a secret key; a long random string is ideal.
 DJANGO_SECRET_KEY=
 
 # Please provide the full set of Django superuser details below prior to application initiation, to
@@ -12,20 +12,20 @@ DJANGO_SUPERUSER_FULLNAME=
 DJANGO_SUPERUSER_PASSWORD=
 DJANGO_SUPERUSER_INSTITUTION=
 
-# this is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
+# This is intended for situations where the client is running behind a proxy and a subfolder is forwarded to it. This variable will ensure the urls used will correctly contain the relevant subfolder
 subfolder=
 
-# allowd hosts django should be allowed to serve web pages for (comma separated). In production this should probably be set to the public facing hostnae of your webpage to prevent security issues wuch as web cache poisoning. If left empty any host will be allowed ('*')
+# Allowed hosts django should be allowed to serve web pages for (comma separated). In production this should probably be set to the public facing hostname of your webpage to prevent security issues such as web cache poisoning. If left empty any host will be allowed ('*')
 ALLOWED_HOSTS=
 
-# set the smtp server used to send emails from
+# Set the smtp server used to send emails from
 smtp_server=
 
-# this email address is used as the from address in any emails sent by the client
+# This email address is used as the from address in any emails sent by the client
 django_email_from_addr=
 
 # Database variable, values below assume you are running a postgres container with name ap_nimbus_postgres in the docker network
-# PGPASSWORD is used by django while POSTGRES_PASSWORD is used by the postgress database, so these should have the same value
+# PGPASSWORD is used by django while POSTGRES_PASSWORD is used by the postgres database, so these should have the same value
 #PYTHONUNBUFFERED=1
 POSTGRES_PASSWORD=
 PGPASSWORD=
@@ -35,19 +35,60 @@ PGHOST=name-postgres
 PGUSER=postgres
 
 # Location of the AP predict endpoint (usually in your docker network, but could be set to be elsewhere)
-AP_PREDICT_ENDPOINT=http://ap-nimbus-network:8080
+AP_PREDICT_ENDPOINT=http://name-app-manager:8080
 
-#Supply a brief sentence about where this instance is hosted (in html format, without newlines
-HOSTING_INFO=""
+# Supply a brief sentence about where this instance is hosted (in html format, without newlines)
+HOSTING_INFO=
 
-#A brief statement that will be shown at the start of the privacy notice
-PRIVACY_NOTICE=""
+# A brief statement that will be shown at the start of the privacy notice
+PRIVACY_NOTICE=
 
-# Mailto link for contacting maintiners
+# Mailto link for contacting maintainers
 CONTACT_MAILTO=mailto:
 
-# Contact text for contacting maintiners
-CONTACT_TEXT=""
+# Contact text for contacting maintainers
+CONTACT_TEXT=
 
 # Status timeout, after this time the portal assumes something has gone wrong and stops trying to get a status update
 AP_PREDICT_STATUS_TIMEOUT=1000
+
+# LDAP settings (set AP_PREDICT_LDAP=1 to enable, none of the other settings are required if this is not set)
+AP_PREDICT_LDAP=0
+
+# When AP_PREDICT_LDAP=1 some of the settings below are required as indicated.
+# The example values in the comments are for illustration only.
+
+# LDAP server URI (required, e.g. ldap://ldap.forumsys.com:389).
+# Prefer using ldaps:// to encrypt credentials.
+AUTH_LDAP_SERVER_URI=
+
+# Distinguished name of an authorized (bind) user (required, e.g. cn=read-only-admin,dc=example,dc=com)
+AUTH_LDAP_BIND_DN=
+
+# Password for the authorized (bind) user (required, e.g. "password" for the forumsys demo)
+AUTH_LDAP_BIND_PASSWORD=
+
+# Where to perform the search (required, e.g. dc=example,dc=com)
+AUTH_LDAP_SEARCH_BASE=
+
+# Additional search bases (optional)
+AUTH_LDAP_SEARCH_BASE2=
+AUTH_LDAP_SEARCH_BASE3=
+AUTH_LDAP_SEARCH_BASE4=
+AUTH_LDAP_SEARCH_BASE5=
+
+# Search filter based on the identifier the user logs in with (optional).
+# Defaults to (mail=%(user)s) since the client uses email. Can be overridden,
+# for example with (uid=%(user)s) if the directory only has uid.
+AUTH_LDAP_SEARCH_FILTER=
+
+# LDAP group search base DN (optional, e.g. ou=mathematicians,dc=example,dc=com).
+# Used to build the LDAPSearch for groupOfNames objects.
+# Set this to enable the user/admin group rules below.
+AUTH_LDAP_GROUP_SEARCH=
+
+# Users must be in this group to be able to log in (optional, e.g. cn=users,ou=mathematicians,dc=example,dc=com)
+AUTH_LDAP_USER_GROUP=
+
+# Users in this group will log in as superusers (optional, e.g. cn=admin,ou=mathematicians,dc=example,dc=com)
+AUTH_LDAP_ADMIN_GROUP=

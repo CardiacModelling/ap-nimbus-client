@@ -3,6 +3,15 @@ on: [pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      ldap:
+        image: osixia/openldap:1.5.0
+        env:
+          LDAP_ORGANISATION: Example Inc.
+          LDAP_DOMAIN: example.com
+          LDAP_ADMIN_PASSWORD: admin
+        ports:
+          - 1389:389
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
@@ -29,10 +38,24 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get install -y libldap2-dev libsasl2-dev libmagic1 ldap-utils
         python3 -m pip install --upgrade pip wheel
         python3 -m pip install flake8 pytest pytest-django
         python3 -m pip install -r requirements/requirements.txt
         python3 -m pip install -r requirements/dev.txt
+    - name: Seed LDAP test directory
+      run: |
+        for i in {1..20}; do
+          if ldapwhoami -x -H ldap://localhost:1389 -D "cn=admin,dc=example,dc=com" -w admin; then
+            break
+          fi
+          sleep 2
+        done
+
+        ldapadd -x -H ldap://localhost:1389 -D "cn=admin,dc=example,dc=com" -w admin -f ci/ldap-seed.ldif
+
+        ldapsearch -x -H ldap://localhost:1389 -D "cn=admin,dc=example,dc=com" -w admin -b "ou=mathematicians,dc=example,dc=com" "(uid=ldapuser)"
     - name: List installed dependency versions
       run: |
         python3 -m pip list
@@ -53,6 +76,7 @@ jobs:
         PGHOST: localhost
         PGPORT: 5432
         DJANGO_SECRET_KEY: 'django very secret key, honest'
+
     - uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
