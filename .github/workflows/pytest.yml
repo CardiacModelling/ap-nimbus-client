@@ -77,6 +77,6 @@ jobs:
         PGPORT: 5432
         DJANGO_SECRET_KEY: 'django very secret key, honest'
 
-    - uses: codecov/codecov-action@v6
+    - uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
