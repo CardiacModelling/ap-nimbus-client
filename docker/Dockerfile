@@ -10,7 +10,7 @@
 # 4. Start the client container
 #    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file docker/env cardiacmodelling/ap-nimbus-client-direct:local
 
-# NOTE: When upgrading an existing deployment with an older postgres major,
+# NOTE: When upgrading an existing deployment with an older postgres major
 # version, migrate the data first (pg_dump from the old server, restore into a
 # new volume). Don't reuse the old data volume directly. A newer Postgres will
 # not start on a data directory initialised by an older major version.
