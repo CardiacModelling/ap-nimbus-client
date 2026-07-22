@@ -28,7 +28,7 @@ services:
       - ap-nimbus-network
 
   name-postgres:
-    image: postgres:14.1-bullseye
+    image: postgres:17.10-trixie
     restart: unless-stopped
     volumes:
       - volume-ap-nimbus-postgres:/var/lib/postgresql/data
