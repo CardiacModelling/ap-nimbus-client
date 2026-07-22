@@ -10,66 +10,67 @@
 # 4. Start the client container
 #    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file docker/env cardiacmodelling/ap-nimbus-client-direct:local
 
-FROM debian:bullseye-slim
+FROM debian:trixie-slim
 
 LABEL version="2.0.0"
 
 USER root
-ENV pythonpath /usr/local/lib/python3
 RUN useradd -ms /bin/bash appredict
 
 RUN mkdir /opt/django
 WORKDIR /opt/django
 
-# install required components
+# Install required components
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     python3 \
     python3-dev \
-    python3-pip \
+    python3-venv \
     ca-certificates \
     git \
     build-essential \
     nginx \
     libmagic-dev \
-    uwsgi \
-    uwsgi-plugin-python3 \
-    libpcre3-dev \
-    libldap2-dev libsasl2-dev \
+    libpcre2-dev \
+    libldap2-dev \
+    libsasl2-dev \
     sudo && \
     rm -rf /var/lib/apt/lists/*
 
-# Update system to use Python3 by default
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+# Install Python dependencies into a dedicated virtualenv
+RUN python3 -m venv /opt/venv
+
+# Put the venv first on PATH so bare python/pip/uwsgi resolve to it
+ENV PATH="/opt/venv/bin:$PATH"
 
 COPY . /opt/django/ap-nimbus-client
-RUN python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
+RUN python -m pip install --upgrade pip && \
+    python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
 
-# allow appredict to control uwsgi and nginx
+# Allow appredict to control uwsgi and nginx
 WORKDIR /opt/django/ap-nimbus-client/client
-RUN echo '\nDefaults!/usr/local/bin/uwsgi setenv\n\
+RUN echo '\nDefaults!/opt/venv/bin/uwsgi setenv\n\
 appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx\n\
-appredict ALL=(ALL) NOPASSWD: /usr/local/bin/uwsgi\n\
+appredict ALL=(ALL) NOPASSWD: /opt/venv/bin/uwsgi\n\
 appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log\n' >> /etc/sudoers
 
-# make sure appredict owns the django files
+# Make sure appredict owns the django files
 RUN chown -R appredict:appredict /opt/django/
 
-#remove git
+# Remove git
 RUN apt-get remove --purge git -y && \
     rm -rf /var/lib/apt/lists/*
 
-# create folder to link data volue
+# Create folder to link data volume
 USER appredict
 RUN mkdir /opt/django/media
 
-# create database, migrate, deploy static files and (re-)start nginx and uwsgi
+# Create database, migrate, deploy static files and (re-)start nginx and uwsgi
 CMD python /opt/django/ap-nimbus-client/docker/create_database.py; \
     python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput; \
     python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput; \
     python /opt/django/ap-nimbus-client/client/manage.py  create_admin; \
     sudo /etc/init.d/nginx restart; \
-    sudo --preserve-env /usr/local/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict
+    sudo --preserve-env /opt/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict
