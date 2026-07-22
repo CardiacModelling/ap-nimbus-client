@@ -7,6 +7,9 @@
 #    docker network create ap-nimbus-network
 # 3. Start a postgres container
 #    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file docker/env -p 5432:5432 postgres:17.10-trixie
+#    NOTE: Postgres 17 will not start on a data directory initialised by an older major version. When
+#    upgrading an existing deployment, migrate the data first (pg_dump from the old server, restore
+#    into a fresh 17 volume), don't reuse the old data volume directly.
 # 4. Start the client container
 #    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file docker/env cardiacmodelling/ap-nimbus-client-direct:local
 
