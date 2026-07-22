@@ -53,23 +53,15 @@ RUN printf '%s\n' \
     'Defaults!/opt/venv/bin/uwsgi setenv' \
     'appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx' \
     'appredict ALL=(ALL) NOPASSWD: /opt/venv/bin/uwsgi' \
-    'appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log' \
     > /etc/sudoers.d/appredict && \
     chmod 0440 /etc/sudoers.d/appredict && \
     visudo -cf /etc/sudoers.d/appredict
+
+RUN chmod +x /opt/django/ap-nimbus-client/docker/entrypoint.sh
 
 # Create folder to link data volume
 USER appredict
 RUN mkdir /opt/django/media
 
-# Create database, migrate, deploy static files and (re-)start nginx and uwsgi.
-# Using the CMD json form means SIGTERM from `docker stop` reaches uwsgi for
-# a graceful shutdown instead of being swallowed by the shell.
-CMD ["/bin/sh", "-c", \
-     "python /opt/django/ap-nimbus-client/docker/create_database.py && \
-      python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput && \
-      python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput && \
-      python /opt/django/ap-nimbus-client/client/manage.py create_admin && \
-      sudo /etc/init.d/nginx restart && \
-      exec sudo --preserve-env /opt/venv/bin/uwsgi \
-      --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini"]
+# The entrypoint runs startup tasks and hands off to uwsgi
+CMD ["/opt/django/ap-nimbus-client/docker/entrypoint.sh"]
