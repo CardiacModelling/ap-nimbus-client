@@ -17,17 +17,15 @@ LABEL version="2.0.0"
 USER root
 RUN useradd -ms /bin/bash appredict
 
-RUN mkdir /opt/django
+RUN mkdir /opt/django && chown appredict:appredict /opt/django
 WORKDIR /opt/django
 
 # Install required components
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-dev \
     python3-venv \
     ca-certificates \
-    git \
     build-essential \
     nginx \
     libmagic-dev \
@@ -43,9 +41,9 @@ RUN python3 -m venv /opt/venv
 # Put the venv first on PATH so bare python/pip/uwsgi resolve to it
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY . /opt/django/ap-nimbus-client
-RUN python -m pip install --upgrade pip && \
-    python -m pip install -r /opt/django/ap-nimbus-client/requirements/requirements.txt
+COPY --chown=appredict:appredict . /opt/django/ap-nimbus-client
+RUN python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r /opt/django/ap-nimbus-client/requirements/requirements.txt
 RUN rm /etc/nginx/sites-enabled/*
 RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites-enabled/
 
@@ -56,21 +54,18 @@ appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx\n\
 appredict ALL=(ALL) NOPASSWD: /opt/venv/bin/uwsgi\n\
 appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log\n' >> /etc/sudoers
 
-# Make sure appredict owns the django files
-RUN chown -R appredict:appredict /opt/django/
-
-# Remove git
-RUN apt-get remove --purge git -y && \
-    rm -rf /var/lib/apt/lists/*
-
 # Create folder to link data volume
 USER appredict
 RUN mkdir /opt/django/media
 
-# Create database, migrate, deploy static files and (re-)start nginx and uwsgi
-CMD python /opt/django/ap-nimbus-client/docker/create_database.py; \
-    python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput; \
-    python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput; \
-    python /opt/django/ap-nimbus-client/client/manage.py  create_admin; \
-    sudo /etc/init.d/nginx restart; \
-    sudo --preserve-env /opt/venv/bin/uwsgi --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict
+# Create database, migrate, deploy static files and (re-)start nginx and uwsgi.
+# Using the CMD json form means SIGTERM from `docker stop` reaches uwsgi for
+# a graceful shutdown instead of being swallowed by the shell.
+CMD ["/bin/sh", "-c", \
+     "python /opt/django/ap-nimbus-client/docker/create_database.py && \
+      python /opt/django/ap-nimbus-client/client/manage.py migrate --noinput && \
+      python /opt/django/ap-nimbus-client/client/manage.py collectstatic --noinput && \
+      python /opt/django/ap-nimbus-client/client/manage.py create_admin && \
+      sudo /etc/init.d/nginx restart && \
+      exec sudo --preserve-env /opt/venv/bin/uwsgi \
+      --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict"]
