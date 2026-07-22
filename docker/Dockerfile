@@ -49,10 +49,14 @@ RUN ln -s /opt/django/ap-nimbus-client/docker/client_nginx.conf /etc/nginx/sites
 
 # Allow appredict to control uwsgi and nginx
 WORKDIR /opt/django/ap-nimbus-client/client
-RUN echo '\nDefaults!/opt/venv/bin/uwsgi setenv\n\
-appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx\n\
-appredict ALL=(ALL) NOPASSWD: /opt/venv/bin/uwsgi\n\
-appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log\n' >> /etc/sudoers
+RUN printf '%s\n' \
+    'Defaults!/opt/venv/bin/uwsgi setenv' \
+    'appredict ALL=(ALL) NOPASSWD: /etc/init.d/nginx' \
+    'appredict ALL=(ALL) NOPASSWD: /opt/venv/bin/uwsgi' \
+    'appredict ALL=(ALL) NOPASSWD: /bin/cat /opt/django/media/uwsgi.log, /usr/bin/tail -f /opt/django/media/uwsgi.log' \
+    > /etc/sudoers.d/appredict && \
+    chmod 0440 /etc/sudoers.d/appredict && \
+    visudo -cf /etc/sudoers.d/appredict
 
 # Create folder to link data volume
 USER appredict
