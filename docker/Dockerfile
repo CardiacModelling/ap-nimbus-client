@@ -68,4 +68,4 @@ CMD ["/bin/sh", "-c", \
       python /opt/django/ap-nimbus-client/client/manage.py create_admin && \
       sudo /etc/init.d/nginx restart && \
       exec sudo --preserve-env /opt/venv/bin/uwsgi \
-      --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini --uid appredict"]
+      --ini /opt/django/ap-nimbus-client/docker/client_uwsgi.ini"]
