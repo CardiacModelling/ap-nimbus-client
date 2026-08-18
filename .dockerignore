@@ -3,7 +3,11 @@
 
 # Secrets / local environment
 .env
-*.env
+**/*.env
+# The env file this project uses is named `env`, not `*.env`, so the patterns
+# above do not cover it and it needs naming explicitly. It is read at runtime
+# via --env-file / env_file, never during the build.
+docker/env*
 
 # Virtual environments
 .venv*

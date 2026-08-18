@@ -1,3 +1,5 @@
+# This is a template. Copy it, fill in the values, and keep your copy outside the repository -- this file is version controlled, so filling it in place risks committing secrets.
+
 # The environment variable used by the docker components for AP Nimbus (cloudified AP predict) are listed below. They are listed as VAR=VALUE pairs (without any spaces)
 
 # Please pick a secret key; a long random string is ideal.
