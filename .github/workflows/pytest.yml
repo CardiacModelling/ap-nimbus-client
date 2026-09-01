@@ -14,7 +14,7 @@ jobs:
           - 1389:389
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
     - name: Start PostgreSQL on Ubuntu
       run: |
@@ -77,6 +77,6 @@ jobs:
         PGPORT: 5432
         DJANGO_SECRET_KEY: 'django very secret key, honest'
 
-    - uses: codecov/codecov-action@v6
+    - uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
