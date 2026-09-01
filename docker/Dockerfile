@@ -2,13 +2,15 @@
 # docker build -t cardiacmodelling/ap-nimbus-client-direct:local -f docker/Dockerfile .
 
 # Starting a container:
-# 1. Create an env file (see docker/env for a template)
+# 1. Create an env file: copy docker/env and fill in the values. Keep your copy
+#    outside the repository -- docker/env is version controlled, so filling it
+#    in place risks committing secrets. The commands below assume ../env
 # 2. Create a network
 #    docker network create ap-nimbus-network
 # 3. Start a postgres container
-#    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file docker/env -p 5432:5432 postgres:17.10-trixie
+#    docker run --name name-postgres --network ap-nimbus-network --user postgres --env-file ../env -p 5432:5432 postgres:17.10-trixie
 # 4. Start the client container
-#    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file docker/env cardiacmodelling/ap-nimbus-client-direct:local
+#    docker run --init -it --network ap-nimbus-network -p 4240:80 --env-file ../env cardiacmodelling/ap-nimbus-client-direct:local
 
 # NOTE: When upgrading an existing deployment with an older postgres major
 # version, migrate the data first (pg_dump from the old server, restore into a
@@ -17,7 +19,7 @@
 
 FROM debian:trixie-slim
 
-LABEL version="2.0.0"
+LABEL version="2.1.0"
 
 USER root
 RUN useradd -ms /bin/bash appredict

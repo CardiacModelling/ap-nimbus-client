@@ -22,7 +22,7 @@ jobs:
       sign: auto
       meta-images: cardiacmodelling/ap-nimbus-client-direct
       meta-tags: |
-        type=semver,pattern={{version}},value=2.0.0
+        type=semver,pattern={{version}},value=2.1.0
     secrets:
       registry-auths: |
         - registry: docker.io
